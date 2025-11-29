@@ -1,3 +1,4 @@
+<!-- overview.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,167 +6,117 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Matside — Tournament Overview</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
 <style>
-  body {
-    margin: 0;
-    background: #000;
-    color: #fff;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
-    padding: 0;
+  :root{
+    --bg:#070809; --panel:#15161a; --muted:#9aa0a6;
+    --red:#c62828; --green:#2e7d32;
+  }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:#fff;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  }
+  .header-bar{
+    background:#070809;
+    border-bottom:1px solid #111215;
+  }
+  .header-inner{
+    max-width:1100px;
+    margin:0 auto;
+    padding:4px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-logo{height:42px;border-radius:8px;}
+  .brand-title{font-size:18px;font-weight:700;}
+  .header-accent{
+    height:2px;
+    background:linear-gradient(90deg,rgba(30,136,229,0.12),rgba(30,136,229,0.5),rgba(30,136,229,0.12));
   }
 
-  /* Branding Bar */
-  .brand-bar {
-    background: #111;
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-bottom: 2px solid #222;
-  }
-  .brand-bar img {
-    height: 46px;
-  }
-  .brand-title {
-    font-size: 22px;
-    font-weight: 700;
-  }
+  .wrap{padding:14px;max-width:1100px;margin:0 auto;}
+  h1{font-size:22px;margin:0 0 14px 0;text-align:center;}
 
-  /* Layout grid */
-  .wrap {
-    padding: 14px;
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:16px;
   }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-  @media (max-width: 800px) {
-    .grid { grid-template-columns: 1fr; }
-  }
+  @media(max-width:800px){ .grid{grid-template-columns:1fr;} }
 
-  /* Mat card */
-  .mat-card {
-    background: #111;
-    padding: 12px;
-    border-radius: 12px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-    text-align: center;
-    border: 2px solid transparent;
-    position: relative;
+  .mat-card{
+    background:#111;
+    padding:10px;
+    border-radius:10px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.6);
+    text-align:center;
+    border:2px solid transparent;
+    position:relative;
   }
+  .mat-title{font-size:18px;font-weight:800;margin-bottom:6px;}
+  .period{font-size:14px;opacity:0.8;}
+  .timer{font-size:40px;font-weight:800;margin:6px 0 10px;}
+  @keyframes flash{
+    0% {color:#fff;}
+    50%{color:#ff3333;}
+    100%{color:#fff;}
+  }
+  .flash{animation:flash 1s infinite;}
 
-  .mat-title {
-    font-size: 18px;
-    font-weight: 800;
-    margin-bottom: 6px;
+  .names{
+    display:flex;justify-content:space-between;font-size:14px;
+    opacity:0.9;font-weight:600;margin:6px 0;
   }
-  .period {
-    font-size: 14px;
-    opacity: 0.8;
+  .scores{
+    display:flex;justify-content:space-between;gap:8px;
   }
-
-  .timer {
-    font-size: 40px;
-    font-weight: 800;
-    margin: 6px 0 10px;
-    transition: 0.2s;
+  .red-box,.green-box{
+    flex:1;padding:14px 0;font-size:42px;font-weight:800;border-radius:10px;
   }
-
-  /* Flashing effect at 00:00 */
-  @keyframes flash {
-    0% { color: #fff; }
-    50% { color: #ff3333; }
-    100% { color: #fff; }
+  .red-box{background:var(--red);}
+  .green-box{background:var(--green);}
+  .winner-banner{
+    position:absolute;left:0;right:0;bottom:0;
+    padding:6px 0;font-size:18px;font-weight:900;
+    text-transform:uppercase;border-radius:0 0 8px 8px;display:none;
   }
-  .flash {
-    animation: flash 1s infinite;
-  }
-
-  /* Names */
-  .names {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    opacity: 0.9;
-    font-weight: 600;
-    margin: 6px 0;
-  }
-
-  /* Scores */
-  .scores {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .red-box, .green-box {
-    flex: 1;
-    padding: 14px 0;
-    font-size: 42px;
-    font-weight: 800;
-    border-radius: 10px;
-    opacity: 1;
-    transition: all 0.3s ease;
-  }
-  .red-box { background: #c62828; }
-  .green-box { background: #2e7d32; }
-
-  /* Winner Bar */
-  .winner-banner {
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    padding: 8px 0;
-    font-size: 20px;
-    font-weight: 900;
-    text-transform: uppercase;
-    border-radius: 0 0 10px 10px;
-    display: none;
-  }
-
-  .winner-red .winner-banner {
-    background: #c62828;
-    display: block;
-  }
-  .winner-green .winner-banner {
-    background: #2e7d32;
-    display: block;
-  }
-  .winner-red {
-    border-color: #c62828;
-  }
-  .winner-green {
-    border-color: #2e7d32;
-  }
-  .winner-red .red-box,
-  .winner-green .green-box {
-    opacity: 1;
-  }
+  .winner-red .winner-banner{background:var(--red);display:block;}
+  .winner-green .winner-banner{background:var(--green);display:block;}
+  .winner-red{border-color:var(--red);}
+  .winner-green{border-color:var(--green);}
   .winner-red .green-box,
-  .winner-green .red-box {
-    opacity: 0.3;
-  }
+  .winner-green .red-box{opacity:0.3;}
+  .small-info{margin-top:4px;font-size:12px;opacity:0.6;}
 
-  .small-info {
-    margin-top: 6px;
-    font-size: 12px;
-    opacity: 0.6;
+  #version-tag{
+    position:fixed;
+    bottom:6px;
+    right:10px;
+    font-size:11px;
+    color:#666;
+    opacity:0.75;
+    pointer-events:none;
+    user-select:none;
+    font-weight:600;
+    z-index:99999;
   }
 </style>
 </head>
-
 <body>
-
-<!-- Branding Bar -->
-<div class="brand-bar">
-  <img src="https://www.matside.org/assets/images/image01.png" alt="Matside Logo">
-  <div class="brand-title">Matside Tournament Overview</div>
+<div class="header-bar">
+  <div class="header-inner">
+    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="brand-logo"/>
+    <div class="brand-title">Matside</div>
+  </div>
+  <div class="header-accent"></div>
 </div>
 
 <div class="wrap">
+  <h1>Live Tournament Overview</h1>
   <div class="grid">
-
-    <!-- Mat Cards 1–4 -->
+    <!-- Mat 1–4 cards (same as before, condensed) -->
     <div class="mat-card" id="mat1">
       <div class="mat-title">MAT 1</div>
       <div class="period">Period: <span class="period-num">1</span></div>
@@ -254,28 +205,18 @@ socket.on("stateUpdate", state => {
     const timerEl = card.querySelector(".timer");
     const winnerEl = card.querySelector(".winner-banner");
 
-    /* Default reset state */
-    card.classList.remove("winner-red", "winner-green");
+    card.classList.remove("winner-red","winner-green");
     winnerEl.style.display = "none";
 
-    /* Update UI */
     card.querySelector(".period-num").textContent = m.period;
-    card.querySelector(".timer").textContent = fmt(m.timeRemaining);
+    timerEl.textContent = fmt(m.timeRemaining);
     card.querySelector(".red-score").textContent = m.player1;
     card.querySelector(".green-score").textContent = m.player2;
-
     card.querySelector(".red-name").textContent = m.redName || "RED";
     card.querySelector(".green-name").textContent = m.greenName || "GREEN";
 
-    /* Flash timer at 00:00 */
     if (m.timeRemaining === 0) {
       timerEl.classList.add("flash");
-    } else {
-      timerEl.classList.remove("flash");
-    }
-
-    /* Winner logic */
-    if (m.timeRemaining === 0) {
       if (m.player1 > m.player2) {
         card.classList.add("winner-red");
         winnerEl.textContent = "WINNER — RED";
@@ -286,10 +227,12 @@ socket.on("stateUpdate", state => {
         winnerEl.textContent = "MATCH OVER";
       }
       winnerEl.style.display = "block";
+    } else {
+      timerEl.classList.remove("flash");
     }
   }
 });
 </script>
-
+<script src="version-loader.js"></script>
 </body>
 </html>
