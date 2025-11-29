@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Matside — Control Panel</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
 <style>
   :root{
     --bg:#070809; --panel:#15161a; --muted:#9aa0a6;
@@ -23,11 +24,31 @@
   }
   .brand img{height:36px;border-radius:8px;}
   .brand-title{font-weight:700;font-size:18px;}
-  .top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+
+  .icon-btn{
+    height:38px;width:38px;
+    border-radius:50%;
+    border:2px solid #2f3135;
+    background:transparent;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:18px;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .icon-btn:hover{
+    border-color:#4a4d52;
+    background:#111318;
+  }
+
+  .top-right{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
   select{
     padding:8px 10px;border-radius:8px;border:0;background:#0e1012;color:#fff;
   }
   .status{font-size:13px;color:var(--muted);}
+
+  /* SUMMARY BAR */
   .summary{
     margin-top:8px;
     padding:8px 10px;
@@ -41,14 +62,16 @@
   }
   .summary span{font-weight:600;}
   .summary strong{font-weight:800;}
+  .redText{color:var(--red);font-weight:800;}
+  .greenText{color:var(--green);font-weight:800;}
 
-  /* GRID LAYOUT */
+  /* GRID */
   .grid{
     display:grid;
     grid-template-columns:2fr 3fr;
     gap:var(--gap);
   }
-  @media (max-width:900px){ .grid{grid-template-columns:1fr;} }
+  @media(max-width:900px){ .grid{grid-template-columns:1fr;} }
 
   .card{
     background:var(--panel);
@@ -63,90 +86,114 @@
     font-weight:700;cursor:pointer;
     font-size:15px;
   }
+
+  .small{padding:8px 10px;font-size:13px;border-radius:8px;}
   .btn-wide{flex:1;min-width:120px;}
+
   .blue{background:var(--accent);color:#fff;}
   .gray{background:#2a2b2c;color:#fff;}
   .red{background:var(--red);color:#fff;}
   .green{background:var(--green);color:#fff;}
   .gold{background:var(--gold);color:#000;}
-  .small{padding:8px 10px;font-size:13px;border-radius:8px;min-width:80px;}
 
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-  label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px;}
-  .muted{font-size:13px;color:var(--muted);}
   .divider{height:1px;background:#101215;margin:8px 0;border-radius:2px;}
 
-  .timer-main{
-    font-size:42px;font-weight:800;margin-top:4px;
-  }
-
-  .preset-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
-  .preset-row button{flex:1;min-width:70px;}
-
-  /* scoring columns */
+  /* scoring */
   .score-columns{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:10px;
   }
-  @media (max-width:600px){ .score-columns{grid-template-columns:1fr;} }
+  @media(max-width:600px){ .score-columns{grid-template-columns:1fr;} }
 
   .scoring-grid{
     display:grid;
     grid-template-columns:repeat(3,1fr);
     gap:8px;
   }
-  @media (max-width:450px){ .scoring-grid{grid-template-columns:repeat(2,1fr);} }
+  @media(max-width:450px){ .scoring-grid{grid-template-columns:repeat(2,1fr);} }
 
-  /* SLIDING DRAWER */
-  .drawer-toggle{
-    padding:8px 12px;border-radius:999px;border:1px solid #2b2d30;
-    background:#111318;color:#fff;font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;
-  }
-  .drawer-toggle span.icon{font-size:13px;transform:translateY(1px);}
+  /* ==== DRAWERS ==== */
+
   .drawer-backdrop{
     position:fixed;inset:0;background:rgba(0,0,0,0.35);
     opacity:0;pointer-events:none;transition:opacity .2s;
   }
-  .drawer{
-    position:fixed;top:0;right:0;width:300px;max-width:80vw;height:100%;
-    background:#101116;border-left:1px solid #202127;box-shadow:-6px 0 20px rgba(0,0,0,.7);
-    transform:translateX(100%);transition:transform .25s;
-    display:flex;flex-direction:column;
+  .drawer-backdrop.open{
+    opacity:1;pointer-events:auto;
   }
-  .drawer.open{transform:translateX(0);}
-  .drawer-backdrop.open{opacity:1;pointer-events:auto;}
+
+  /* LEFT drawer */
+  #drawerLeft{
+    position:fixed;top:0;left:0;height:100%;
+    width:300px;max-width:80vw;
+    background:#101116;border-right:1px solid #202127;
+    transform:translateX(-100%);
+    transition:transform .25s;
+    display:flex;flex-direction:column;
+    z-index:99999;
+  }
+  #drawerLeft.open{
+    transform:translateX(0);
+  }
+
+  /* RIGHT drawer */
+  #drawerRight{
+    position:fixed;top:0;right:0;height:100%;
+    width:300px;max-width:80vw;
+    background:#101116;border-left:1px solid #202127;
+    transform:translateX(100%);
+    transition:transform .25s;
+    display:flex;flex-direction:column;
+    z-index:99999;
+  }
+  #drawerRight.open{
+    transform:translateX(0);
+  }
+
   .drawer-header{
     padding:12px;border-bottom:1px solid #202127;
     display:flex;align-items:center;justify-content:space-between;
   }
   .drawer-header h3{margin:0;font-size:15px;}
   .drawer-body{
-    padding:12px;
-    overflow-y:auto;
-    font-size:13px;
+    padding:12px;overflow-y:auto;font-size:13px;
   }
-  .drawer-section{margin-bottom:16px;}
-  .drawer-section h4{margin:0 0 6px 0;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
-  input[type="text"],input[type="number"]{
-    width:100%;padding:8px 9px;border-radius:8px;border:0;background:#0d0e11;color:#fff;outline:none;
+
+  .drawer-section{margin-bottom:18px;}
+  .drawer-section h4{
+    margin:0 0 6px 0;font-size:13px;
+    text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+  }
+
+  input[type=text],input[type=number]{
+    width:100%;padding:8px 9px;border-radius:8px;border:0;
+    background:#0d0e11;color:#fff;outline:none;
   }
 
   .timeline-list{
-    max-height:220px;overflow-y:auto;font-size:12px;background:#0b0c0f;border-radius:8px;padding:8px;
+    max-height:220px;overflow-y:auto;font-size:12px;
+    background:#0b0c0f;border-radius:8px;padding:8px;
   }
   .timeline-item{margin-bottom:4px;white-space:nowrap;}
 </style>
 </head>
+
 <body>
 <div class="wrap">
 
   <!-- TOP BAR -->
   <div class="top-bar">
+    <!-- LEFT ICON BUTTON -->
+    <button id="openDrawerLeft" class="icon-btn">⚡</button>
+
     <div class="brand">
       <img src="https://www.matside.org/assets/images/image01.png" alt="Matside">
       <div class="brand-title">Matside Control</div>
     </div>
+
+    <!-- RIGHT ICON BUTTONS -->
     <div class="top-right">
       <div>
         <label for="matSelect">Mat</label>
@@ -158,25 +205,25 @@
         </select>
       </div>
       <div class="status">Status: <span id="conn">connecting…</span></div>
-      <button id="openDrawer" class="drawer-toggle">
-        <span class="icon">⚙️</span> More / Settings
-      </button>
+
+      <!-- RIGHT DRAWER BUTTON -->
+      <button id="openDrawerRight" class="icon-btn">⚙️</button>
     </div>
   </div>
 
-  <!-- LIVE SUMMARY -->
-  <div class="summary" id="summaryBar">
+  <!-- SUMMARY BAR -->
+  <div class="summary">
     <div><span>Mat:</span> <strong id="sumMat">1</strong></div>
     <div><span>Period:</span> <strong id="sumPeriod">1</strong></div>
     <div><span>Time:</span> <strong id="sumTime">00:00</strong></div>
-    <div><span>Red:</span> <strong id="sumRed">0</strong></div>
-    <div><span>Green:</span> <strong id="sumGreen">0</strong></div>
+    <div><span>Red:</span> <strong id="sumRed" class="redText">0</strong></div>
+    <div><span>Green:</span> <strong id="sumGreen" class="greenText">0</strong></div>
   </div>
 
   <!-- MAIN GRID -->
   <div class="grid" style="margin-top:10px;">
 
-    <!-- TIMER / CONTROL CARD -->
+    <!-- Timer / Controls -->
     <div class="card">
       <h3>Timer</h3>
 
@@ -190,44 +237,10 @@
       </div>
 
       <div class="divider"></div>
-
-      <div class="row" style="justify-content:space-between;align-items:center;">
-        <div>
-          <div class="muted">Current Period Length</div>
-          <div class="timer-main" id="periodLengthDisplay">01:00</div>
-        </div>
-        <div style="text-align:right;">
-          <label>Presets</label>
-          <div class="preset-row">
-            <button class="small gray presetBtn" data-secs="60">1:00</button>
-            <button class="small gray presetBtn" data-secs="90">1:30</button>
-            <button class="small gray presetBtn" data-secs="120">2:00</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="row" style="justify-content:space-between;align-items:center;">
-        <div>
-          <label>Buzzer</label>
-          <div class="row">
-            <button id="buzzerTest" class="small blue">Test</button>
-            <button id="buzzerEmit" class="small gray">Trigger</button>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <label>Auto-Advance</label>
-          <div class="row" style="justify-content:flex-end;">
-            <input id="autoAdvance" type="checkbox" checked style="margin-right:6px;"/>
-            <span class="muted">Next Period</span>
-          </div>
-        </div>
-      </div>
-
+      <div class="muted">Timer presets & advanced controls moved to ⚡ drawer</div>
     </div>
 
-    <!-- SCORING CARD -->
+    <!-- Scoring -->
     <div class="card">
       <h3>Scoring</h3>
 
@@ -268,28 +281,64 @@
         <button id="resetScores" class="small gold">Reset Scores</button>
         <button id="subGreen" class="small gray">-1 Green</button>
       </div>
-
-      <div class="muted" style="margin-top:6px;">TIP: Use presets & E/R/T/N buttons for most scoring; adjust with -1 if needed.</div>
     </div>
 
   </div>
 </div>
 
-<!-- SLIDING DRAWER -->
-<div id="drawerBackdrop" class="drawer-backdrop"></div>
-<div id="drawer" class="drawer">
+<!-- LEFT DRAWER: TIMER SETTINGS -->
+<div id="drawerLeft" class="drawer">
   <div class="drawer-header">
-    <h3>More / Settings</h3>
-    <button id="closeDrawer" class="small gray">Close</button>
+    <h3>Timer Settings</h3>
+    <button id="closeDrawerLeft" class="small gray">Close</button>
+  </div>
+  <div class="drawer-body">
+
+    <div class="drawer-section">
+      <h4>Current Period Length</h4>
+      <div id="periodLengthDisplay" style="font-size:24px;font-weight:800;margin-bottom:10px;">01:00</div>
+
+      <h4>Presets</h4>
+      <div class="row">
+        <button class="small gray presetBtn" data-secs="60">1:00</button>
+        <button class="small gray presetBtn" data-secs="90">1:30</button>
+        <button class="small gray presetBtn" data-secs="120">2:00</button>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <h4>Buzzer</h4>
+      <div class="row">
+        <button id="buzzerTest" class="small blue">Test</button>
+        <button id="buzzerEmit" class="small gray">Trigger</button>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <h4>Auto-Advance</h4>
+      <div class="row" style="align-items:center;">
+        <input id="autoAdvance" type="checkbox" style="margin-right:6px;"/>
+        <span class="muted">Advance to next period automatically</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RIGHT DRAWER: MATCH INFO -->
+<div id="drawerRight" class="drawer">
+  <div class="drawer-header">
+    <h3>Match Settings</h3>
+    <button id="closeDrawerRight" class="small gray">Close</button>
   </div>
   <div class="drawer-body">
 
     <div class="drawer-section">
       <h4>Match Info</h4>
-      <label for="periodInput">Period #</label>
-      <input id="periodInput" type="number" min="1" placeholder="1"/>
+      <label>Period #</label>
+      <input id="periodInput" type="number" min="1"/>
       <div class="row" style="margin-top:6px;">
-        <button id="setPeriod" class="small blue">Set Period</button>
+        <button id="setPeriod" class="small blue">Set</button>
         <button id="incPeriod" class="small gray">+1</button>
         <button id="decPeriod" class="small gray">-1</button>
       </div>
@@ -297,11 +346,11 @@
 
     <div class="drawer-section">
       <h4>Wrestler Names</h4>
-      <label for="redName">Red Wrestler</label>
-      <input id="redName" type="text" placeholder="Red Wrestler"/>
-      <label for="greenName" style="margin-top:6px;">Green Wrestler</label>
-      <input id="greenName" type="text" placeholder="Green Wrestler"/>
-      <div class="row" style="margin-top:6px;">
+      <label>Red Wrestler</label>
+      <input id="redName" type="text"/>
+      <label style="margin-top:6px;">Green Wrestler</label>
+      <input id="greenName" type="text"/>
+      <div class="row" style="margin-top:8px;">
         <button id="setNames" class="small blue">Set Names</button>
         <button id="clearNames" class="small gray">Clear</button>
       </div>
@@ -309,89 +358,97 @@
 
     <div class="drawer-section">
       <h4>Custom Timer</h4>
-      <label for="customTime">Custom Period (MM:SS or seconds)</label>
-      <input id="customTime" type="text" placeholder="e.g. 2:00 or 90"/>
-      <div class="row" style="margin-top:6px;">
-        <button id="setCustomBtn" class="small gray">Set Custom Period</button>
-      </div>
-      <div class="muted" style="margin-top:4px;">Applies to the selected mat only. Resets time to new length.</div>
+      <input id="customTime" type="text" placeholder="MM:SS or seconds"/>
+      <button id="setCustomBtn" class="small gray" style="margin-top:6px;">Set</button>
     </div>
 
     <div class="drawer-section">
-      <h4>Match Timeline (local)</h4>
-      <div class="muted" style="margin-bottom:4px;">Records scoring events for this operator session.</div>
+      <h4>Timeline</h4>
       <div id="timeline" class="timeline-list"></div>
     </div>
 
   </div>
 </div>
 
+<!-- BACKDROP -->
+<div id="backdropLeft" class="drawer-backdrop"></div>
+<div id="backdropRight" class="drawer-backdrop"></div>
+
 <script>
+/* ============================================================
+   BASIC SETUP
+============================================================ */
 const SERVER = "https://scoreboard-server-er33.onrender.com";
-const socket = io(SERVER, { transports:["websocket"], reconnectionAttempts: Infinity });
+const socket = io(SERVER, { transports:["websocket"] });
 
 const $ = id => document.getElementById(id);
-let currentMat = Number($('matSelect').value || 1);
+let currentMat = 1;
+
 let latestState = null;
-const timelinePerMat = { 1: [], 2: [], 3: [], 4: [] };
+const timelinePerMat = {1:[],2:[],3:[],4:[]};
 
-/* connection status */
-socket.on('connect', ()=> $('conn').innerText = 'connected');
-socket.on('disconnect', ()=> $('conn').innerText = 'disconnected');
-socket.on('connect_error', ()=> $('conn').innerText = 'error');
+/* ============================================================
+   DRAWER LOGIC (LEFT + RIGHT)
+============================================================ */
+function openLeft(){ $('drawerLeft').classList.add('open'); $('backdropLeft').classList.add('open'); }
+function closeLeft(){ $('drawerLeft').classList.remove('open'); $('backdropLeft').classList.remove('open'); }
+function openRight(){ $('drawerRight').classList.add('open'); $('backdropRight').classList.add('open'); }
+function closeRight(){ $('drawerRight').classList.remove('open'); $('backdropRight').classList.remove('open'); }
 
-/* format mm:ss */
+$('openDrawerLeft').onclick = openLeft;
+$('closeDrawerLeft').onclick = closeLeft;
+$('backdropLeft').onclick = closeLeft;
+
+$('openDrawerRight').onclick = openRight;
+$('closeDrawerRight').onclick = closeRight;
+$('backdropRight').onclick = closeRight;
+
+/* ============================================================
+   SOCKET CONNECTION STATUS
+============================================================ */
+socket.on("connect", ()=> $('conn').innerText = "connected");
+socket.on("disconnect", ()=> $('conn').innerText = "disconnected");
+socket.on("connect_error", ()=> $('conn').innerText = "error");
+
+/* ============================================================
+   FORMAT TIME
+============================================================ */
 function fmt(sec){
   sec = Math.max(0, Number(sec)||0);
   const m = Math.floor(sec/60), s = sec%60;
-  return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
 }
 
-/* update summary + inputs from state */
-socket.on('stateUpdate', state => {
+/* ============================================================
+   RECEIVE STATE UPDATES
+============================================================ */
+socket.on("stateUpdate", state=>{
   latestState = state;
-  const mObj = state?.mats?.[currentMat];
-  if(!mObj) return;
+  const m = state.mats[currentMat];
+  if(!m) return;
 
   $('sumMat').innerText = currentMat;
-  $('sumPeriod').innerText = mObj.period;
-  $('sumTime').innerText = fmt(mObj.timeRemaining);
-  $('sumRed').innerText = mObj.player1;
-  $('sumGreen').innerText = mObj.player2;
-  $('periodLengthDisplay').innerText = fmt(mObj.periodLength);
+  $('sumPeriod').innerText = m.period;
+  $('sumTime').innerText = fmt(m.timeRemaining);
+  $('sumRed').innerText = m.player1;
+  $('sumGreen').innerText = m.player2;
+  $('periodLengthDisplay').innerText = fmt(m.periodLength);
 
-  if(!$('periodInput').value) $('periodInput').value = mObj.period;
-  if(!$('redName').value) $('redName').value = mObj.redName || '';
-  if(!$('greenName').value) $('greenName').value = mObj.greenName || '';
+  if(!$('periodInput').value) $('periodInput').value = m.period;
+  if(!$('redName').value) $('redName').value = m.redName||"";
+  if(!$('greenName').value) $('greenName').value = m.greenName||"";
 
   renderTimeline();
 });
 
-/* buzzer from server (we only care sound; visual is on scoreboard) */
-socket.on('buzzer', ({mat}) => {
-  if(Number(mat) === currentMat) playBuzzerLocal();
-});
-
-function playBuzzerLocal(){
-  try{
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 440;
-    gain.gain.value = 0.001;
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.start();
-    gain.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.02);
-    setTimeout(()=>{ gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.02); osc.stop(ctx.currentTime + 0.03); ctx.close().catch(()=>{}); }, 800);
-  }catch(e){ console.warn(e); }
-}
-
-/* mat selector */
+/* ============================================================
+   MAT SELECTOR
+============================================================ */
 $('matSelect').addEventListener('change', ()=>{
-  currentMat = Number($('matSelect').value || 1);
-  $('sumMat').innerText = currentMat;
-  if(latestState?.mats?.[currentMat]){
+  currentMat = Number($('matSelect').value||1);
+  renderTimeline();
+
+  if(latestState?.mats[currentMat]){
     const m = latestState.mats[currentMat];
     $('sumPeriod').innerText = m.period;
     $('sumTime').innerText = fmt(m.timeRemaining);
@@ -399,170 +456,162 @@ $('matSelect').addEventListener('change', ()=>{
     $('sumGreen').innerText = m.player2;
     $('periodLengthDisplay').innerText = fmt(m.periodLength);
     $('periodInput').value = m.period;
-    $('redName').value = m.redName || '';
-    $('greenName').value = m.greenName || '';
+    $('redName').value = m.redName||"";
+    $('greenName').value = m.greenName||"";
   }
-  renderTimeline();
 });
 
-/* drawer controls */
-const drawer = $('drawer');
-const backdrop = $('drawerBackdrop');
-$('openDrawer').addEventListener('click', ()=>{
-  drawer.classList.add('open');
-  backdrop.classList.add('open');
-});
-$('closeDrawer').addEventListener('click', closeDrawer);
-backdrop.addEventListener('click', closeDrawer);
-function closeDrawer(){
-  drawer.classList.remove('open');
-  backdrop.classList.remove('open');
-}
+/* ============================================================
+   TIMER CONTROLS
+============================================================ */
+$('startBtn').onclick = ()=> socket.emit('startPeriod',{mat:currentMat});
+$('stopBtn').onclick  = ()=> socket.emit('stopTimer',{mat:currentMat});
+$('resetTimerBtn').onclick = ()=> socket.emit('resetTimer',{mat:currentMat});
 
-/* timer controls */
-$('startBtn').addEventListener('click', ()=> socket.emit('startPeriod',{mat:currentMat}));
-$('stopBtn').addEventListener('click', ()=> socket.emit('stopTimer',{mat:currentMat}));
-$('resetTimerBtn').addEventListener('click', ()=> socket.emit('resetTimer',{mat:currentMat}));
-
-/* presets (default: 1:00) */
+/* PERIOD PRESETS */
 document.querySelectorAll('.presetBtn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
+  btn.onclick = ()=>{
     const secs = Number(btn.dataset.secs)||60;
     socket.emit('setPeriodLength',{mat:currentMat,seconds:secs});
-  });
-});
-
-/* on first connect, set default 1:00 for current mat (once) */
-socket.on('connect', ()=>{
-  socket.emit('setPeriodLength',{mat:currentMat,seconds:60});
-});
-
-/* auto-advance */
-$('autoAdvance').addEventListener('change', ()=>{
-  socket.emit('toggleAutoAdvance',{mat:currentMat,value:!!$('autoAdvance').checked});
-});
-
-/* buzzer buttons */
-$('buzzerTest').addEventListener('click', playBuzzerLocal);
-$('buzzerEmit').addEventListener('click', ()=> socket.emit('playBuzzer',{mat:currentMat}));
-
-/* parse MM:SS or seconds */
-function parseTimeInput(str){
-  if(!str) return null;
-  str = String(str).trim();
-  if(str.includes(':')){
-    const [mm,ss] = str.split(':').map(x=>x.trim());
-    const m = Number(mm)||0, s = Number(ss)||0;
-    if(m<0||s<0||s>=60) return null;
-    return m*60 + s;
-  }else{
-    const n = Number(str);
-    if(Number.isFinite(n) && n>=0) return Math.round(n);
-    return null;
-  }
-}
-
-/* custom timer in drawer */
-$('setCustomBtn').addEventListener('click', ()=>{
-  const val = $('customTime').value;
-  const secs = parseTimeInput(val);
-  if(secs==null){ alert('Enter MM:SS or seconds (e.g. 2:00 or 90)'); return; }
-  socket.emit('setPeriodLength',{mat:currentMat,seconds:secs});
-});
-
-/* scoring */
-function emitAddPoints(wrestler, pts, label){
-  socket.emit('addPoints',{mat:currentMat,wrestler,points:Number(pts)});
-  logTimeline(wrestler, pts, label);
-}
-
-/* Red */
-$('E1R').addEventListener('click', ()=> emitAddPoints('red',1,'E1'));
-$('R2R').addEventListener('click', ()=> emitAddPoints('red',2,'R2'));
-$('T3R').addEventListener('click', ()=> emitAddPoints('red',3,'T3'));
-$('N2R').addEventListener('click', ()=> emitAddPoints('red',2,'N2'));
-$('N3R').addEventListener('click', ()=> emitAddPoints('red',3,'N3'));
-$('N4R').addEventListener('click', ()=> emitAddPoints('red',4,'N4'));
-
-/* Green */
-$('E1G').addEventListener('click', ()=> emitAddPoints('green',1,'E1'));
-$('R2G').addEventListener('click', ()=> emitAddPoints('green',2,'R2'));
-$('T3G').addEventListener('click', ()=> emitAddPoints('green',3,'T3'));
-$('N2G').addEventListener('click', ()=> emitAddPoints('green',2,'N2'));
-$('N3G').addEventListener('click', ()=> emitAddPoints('green',3,'N3'));
-$('N4G').addEventListener('click', ()=> emitAddPoints('green',4,'N4'));
-
-/* subtract (local log as -1) */
-$('subRed').addEventListener('click', ()=> emitAddPoints('red',-1,'-1 adj'));
-$('subGreen').addEventListener('click', ()=> emitAddPoints('green',-1,'-1 adj'));
-
-$('resetScores').addEventListener('click', ()=>{
-  if(confirm('Reset scores for this mat?')){
-    socket.emit('resetScores',{mat:currentMat});
-    timelinePerMat[currentMat].push({time:currentTimeForTimeline(),'who':'--','label':'RESET SCORES'});
-    renderTimeline();
-  }
-});
-
-/* match info */
-$('setPeriod').addEventListener('click', ()=>{
-  const v = Math.max(1, Number($('periodInput').value)||1);
-  socket.emit('setPeriod',{mat:currentMat,value:v});
-});
-$('incPeriod').addEventListener('click', ()=>{
-  const cur = Math.max(1, Number($('periodInput').value)||1);
-  $('periodInput').value = cur+1;
-  $('setPeriod').click();
-});
-$('decPeriod').addEventListener('click', ()=>{
-  const cur = Math.max(1, Number($('periodInput').value)||1);
-  $('periodInput').value = Math.max(1, cur-1);
-  $('setPeriod').click();
-});
-
-/* names */
-$('setNames').addEventListener('click', ()=>{
-  const red = String($('redName').value||'').trim() || 'RED WRESTLER';
-  const green = String($('greenName').value||'').trim() || 'GREEN WRESTLER';
-  socket.emit('setNames',{mat:currentMat,red,green});
-});
-$('clearNames').addEventListener('click', ()=>{
-  $('redName').value = '';
-  $('greenName').value = '';
-  socket.emit('setNames',{mat:currentMat,red:'RED WRESTLER',green:'GREEN WRESTLER'});
-});
-
-/* timeline helpers (local only) */
-function currentTimeForTimeline(){
-  const m = latestState?.mats?.[currentMat];
-  return m ? fmt(m.timeRemaining) : '??:??';
-}
-function logTimeline(wrestler, pts, label){
-  const side = wrestler === 'red' ? 'RED' : 'GREEN';
-  const entry = {
-    time: currentTimeForTimeline(),
-    who: side,
-    label: label + ` (${pts>=0?'+':''}${pts})`
   };
-  if(!timelinePerMat[currentMat]) timelinePerMat[currentMat] = [];
-  timelinePerMat[currentMat].unshift(entry);
+});
+
+/* AUTO-ADVANCE */
+$('autoAdvance').addEventListener('change', ()=>{
+  socket.emit('toggleAutoAdvance',{mat:currentMat,value: $('autoAdvance').checked});
+});
+
+/* BUZZER */
+$('buzzerTest').onclick = playBuzzerLocal;
+$('buzzerEmit').onclick = ()=> socket.emit('playBuzzer',{mat:currentMat});
+
+socket.on("buzzer",({mat})=>{
+  if(mat===currentMat) playBuzzerLocal();
+});
+function playBuzzerLocal(){
+  try{
+    const ctx = new(AudioContext||webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.type="sine"; osc.frequency.value=440;
+    gain.gain.value=0.15;
+    osc.start();
+    setTimeout(()=>{gain.gain.value=0;osc.stop();ctx.close();},700);
+  }catch(e){}
+}
+
+/* ============================================================
+   CUSTOM TIMER
+============================================================ */
+function parseTime(t){
+  t=String(t).trim();
+  if(t.includes(":")){
+    const [mm,ss]=t.split(":");
+    return (Number(mm)||0)*60+(Number(ss)||0);
+  }
+  const n=Number(t);
+  return Number.isFinite(n)?n:null;
+}
+$('setCustomBtn').onclick=()=>{
+  const secs=parseTime($('customTime').value);
+  if(secs==null){alert("Enter MM:SS or seconds");return;}
+  socket.emit('setPeriodLength',{mat:currentMat,seconds:secs});
+};
+
+/* ============================================================
+   PERIOD CONTROL
+============================================================ */
+$('setPeriod').onclick=()=>{
+  const v=Math.max(1,Number($('periodInput').value)||1);
+  socket.emit('setPeriod',{mat:currentMat,value:v});
+};
+$('incPeriod').onclick=()=>{
+  $('periodInput').value = (Number($('periodInput').value)||1)+1;
+  $('setPeriod').click();
+};
+$('decPeriod').onclick=()=>{
+  $('periodInput').value = Math.max(1,(Number($('periodInput').value)||1)-1);
+  $('setPeriod').click();
+};
+
+/* ============================================================
+   SET NAMES
+============================================================ */
+$('setNames').onclick=()=>{
+  const red=$('redName').value.trim()||"RED WRESTLER";
+  const green=$('greenName').value.trim()||"GREEN WRESTLER";
+  socket.emit('setNames',{mat:currentMat,red,green});
+};
+$('clearNames').onclick=()=>{
+  $('redName').value="";
+  $('greenName').value="";
+  socket.emit('setNames',{mat:currentMat,red:"RED WRESTLER",green:"GREEN WRESTLER"});
+};
+
+/* ============================================================
+   SCORING + TIMELINE
+============================================================ */
+function logTimeline(wrestler,pts,tag){
+  const time=fmt(latestState?.mats[currentMat]?.timeRemaining||0);
+  timelinePerMat[currentMat].unshift({
+    time,who:(wrestler==='red'?'RED':'GREEN'),
+    label:`${tag} (${pts>=0?'+':''}${pts})`
+  });
   renderTimeline();
 }
 function renderTimeline(){
-  const list = $('timeline');
-  list.innerHTML = '';
-  const arr = timelinePerMat[currentMat] || [];
-  if(arr.length === 0){
-    list.innerHTML = '<div class="muted">No events yet.</div>';
+  const box=$('timeline');
+  box.innerHTML="";
+  const list=timelinePerMat[currentMat];
+  if(!list||list.length===0){
+    box.innerHTML='<div class="muted">No events yet.</div>';
     return;
   }
-  arr.forEach(item=>{
-    const div = document.createElement('div');
-    div.className = 'timeline-item';
-    div.textContent = `${item.time} — ${item.who}: ${item.label}`;
-    list.appendChild(div);
+  list.forEach(item=>{
+    const div=document.createElement('div');
+    div.className='timeline-item';
+    div.textContent=`${item.time} — ${item.who}: ${item.label}`;
+    box.appendChild(div);
   });
 }
+
+function add(who,pts,label){
+  socket.emit('addPoints',{mat:currentMat,wrestler:who,points:pts});
+  logTimeline(who,pts,label);
+}
+
+/* Red */
+$('E1R').onclick=()=>add("red",1,"E1");
+$('R2R').onclick=()=>add("red",2,"R2");
+$('T3R').onclick=()=>add("red",3,"T3");
+$('N2R').onclick=()=>add("red",2,"N2");
+$('N3R').onclick=()=>add("red",3,"N3");
+$('N4R').onclick=()=>add("red",4,"N4");
+
+/* Green */
+$('E1G').onclick=()=>add("green",1,"E1");
+$('R2G').onclick=()=>add("green",2,"R2");
+$('T3G').onclick=()=>add("green",3,"T3");
+$('N2G').onclick=()=>add("green",2,"N2");
+$('N3G').onclick=()=>add("green",3,"N3");
+$('N4G').onclick=()=>add("green",4,"N4");
+
+/* Adjustments */
+$('subRed').onclick=()=>add("red",-1,"-1");
+$('subGreen').onclick=()=>add("green",-1,"-1");
+
+$('resetScores').onclick=()=>{
+  if(confirm("Reset scores?")){
+    socket.emit("resetScores",{mat:currentMat});
+    timelinePerMat[currentMat].push({
+      time:fmt(latestState?.mats[currentMat]?.timeRemaining||0),
+      who:"--",label:"RESET SCORES"
+    });
+    renderTimeline();
+  }
+};
 </script>
+
 </body>
 </html>
