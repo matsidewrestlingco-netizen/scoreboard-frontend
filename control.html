@@ -571,6 +571,17 @@ function fmt(sec){
 ------------------------ */
 socket.on("stateUpdate", state => {
   latestState = state;
+
+// Auto-apply event default period length once per mat (optional simple behavior)
+if (currentEventConfig && currentEventConfig.periodSeconds && !state.mats[currentMat].eventPeriodApplied) {
+  socket.emit('setPeriodLength', {
+    mat: currentMat,
+    seconds: currentEventConfig.periodSeconds
+  });
+  // mark that we applied it (frontend-only flag)
+  state.mats[currentMat].eventPeriodApplied = true;
+}
+  
   const m = state.mats[currentMat];
   if(!m) return;
 
