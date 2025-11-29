@@ -273,6 +273,10 @@
 <div class="header-bar">
   <div class="header-inner">
     <img src="https://www.matside.org/assets/images/image01.png" class="brand-logo" alt="Matside"/>
+    <button id="logoutBtn" class="btn" 
+        style="background:#2a2b2c;color:#fff;border-radius:8px;padding:6px 12px;">
+        Log Out
+    </button>
     <div class="brand-title">Matside</div>
   </div>
   <div class="header-accent"></div>
@@ -584,6 +588,13 @@ function fmt(sec){
   return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
 }
 
+  // Log Out Button
+  document.getElementById("logoutBtn").onclick = function(){
+  localStorage.removeItem("matside_selected_event");
+  location.reload();
+};
+
+  
 /* -----------------------
    STATE UPDATES
 ------------------------ */
