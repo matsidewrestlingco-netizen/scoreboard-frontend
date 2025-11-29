@@ -1,33 +1,134 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Control Panel</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
   <style>
-    body { font-family:Arial, sans-serif; text-align:center; padding:20px; }
-    button { padding:10px 20px; margin:6px; font-size:16px; }
+    body {
+      background: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 25px;
+      margin: 0;
+    }
+
+    h1, h3 {
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .section {
+      background: #1e1e1e;
+      padding: 20px;
+      margin: 20px auto;
+      border-radius: 10px;
+      max-width: 650px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.4);
+    }
+
+    button {
+      padding: 14px 20px;
+      margin: 6px;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    button:hover { opacity: 0.75; }
+
+    .blue { background:#1e88e5; color:white; }
+    .red { background:#d32f2f; color:white; }
+    .green { background:#388e3c; color:white; }
+    .gray { background:#555; color:white; }
+    .yellow { background:#fbc02d; color:black; }
+    .orange { background:#f57c00; color:white; }
+
+    input {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+      width: 60%;
+    }
   </style>
 </head>
+
 <body>
 
-  <h1>Control Panel</h1>
+<h1>Matside Control Panel</h1>
 
-  <button onclick="socket.emit('startTimer')">Start Timer</button>
-  <button onclick="socket.emit('stopTimer')">Stop Timer</button>
+<!-- TIMER SECTION -->
+<div class="section">
+  <h3>Timer</h3>
+  <button class="blue" onclick="socket.emit('startTimer')">Start</button>
+  <button class="gray" onclick="socket.emit('stopTimer')">Stop</button>
+  <button class="yellow" onclick="socket.emit('resetTimer')">Reset Timer</button>
+</div>
 
-  <h3>Points:</h3>
-  <button onclick="socket.emit('addPoint', 'player1')">+1 Player 1</button>
-  <button onclick="socket.emit('addPoint', 'player2')">+1 Player 2</button>
+<!-- SCORE SECTION -->
+<div class="section">
+  <h3>Scoring</h3>
 
-  <h3>Winner:</h3>
-  <button onclick="socket.emit('setWinner', 'player1')">Player 1 Wins</button>
-  <button onclick="socket.emit('setWinner', 'player2')">Player 2 Wins</button>
-  <button onclick="socket.emit('setWinner', null)">Clear Winner</button>
+  <div>
+    <button class="red" onclick="socket.emit('addPoint','player1')">+1 Red</button>
+    <button class="green" onclick="socket.emit('addPoint','player2')">+1 Green</button>
+  </div>
+
+  <div>
+    <button class="orange" onclick="socket.emit('subtractPoint','player1')">-1 Red</button>
+    <button class="orange" onclick="socket.emit('subtractPoint','player2')">-1 Green</button>
+  </div>
+
+  <button class="yellow" onclick="socket.emit('resetScores')">Reset Both Scores</button>
+</div>
+
+<!-- MATCH INFO -->
+<div class="section">
+  <h3>Match Info</h3>
+
+  <input id="matInput" placeholder="Mat #" type="number">
+  <button onclick="updateMat()">Set Mat</button>
+  <br>
+
+  <input id="periodInput" placeholder="Period #" type="number">
+  <button onclick="updatePeriod()">Set Period</button>
+</div>
+
+<!-- WRESTLER NAMES -->
+<div class="section">
+  <h3>Wrestler Names</h3>
+
+  <input id="redName" placeholder="Red Wrestler Name"><br>
+  <input id="greenName" placeholder="Green Wrestler Name"><br><br>
+
+  <button class="blue" onclick="updateNames()">Set Names</button>
+</div>
 
 <script>
   const SERVER = "https://scoreboard-server-er33.onrender.com";
   const socket = io(SERVER, { transports:["websocket"] });
+
+  function updateMat() {
+    const mat = Number(document.getElementById("matInput").value);
+    socket.emit("setMat", mat);
+  }
+
+  function updatePeriod() {
+    const period = Number(document.getElementById("periodInput").value);
+    socket.emit("setPeriod", period);
+  }
+
+  function updateNames() {
+    const red = document.getElementById("redName").value;
+    const green = document.getElementById("greenName").value;
+    socket.emit("setNames", { red, green });
+  }
 </script>
 
 </body>
