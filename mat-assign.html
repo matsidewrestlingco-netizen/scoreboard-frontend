@@ -1,3 +1,4 @@
+<!-- mat-assign.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Matside — Mat Assignment</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
 <style>
   :root {
     --bg:#070809;
@@ -17,18 +17,40 @@
     --accent:#1e88e5;
     --radius:14px;
   }
-
   body {
     margin:0;
     background:var(--bg);
     color:#fff;
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-    padding:20px;
+  }
+  .header-bar{
+    background:#070809;
+    border-bottom:1px solid #111215;
+  }
+  .header-inner{
+    max-width:1100px;
+    margin:0 auto;
+    padding:4px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-logo{height:42px;border-radius:8px;}
+  .brand-title{font-size:18px;font-weight:700;}
+  .header-accent{
+    height:2px;
+    background:linear-gradient(90deg,rgba(30,136,229,0.12),rgba(30,136,229,0.5),rgba(30,136,229,0.12));
+  }
+
+  .wrap{
+    max-width:1100px;
+    margin:0 auto;
+    padding:14px;
     text-align:center;
   }
 
   h1 {
-    font-size:26px;
+    font-size:24px;
     margin-bottom:18px;
     font-weight:800;
   }
@@ -37,8 +59,6 @@
     display:grid;
     grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
     gap:18px;
-    max-width:1100px;
-    margin:0 auto;
   }
 
   .card {
@@ -110,72 +130,93 @@
     background:#1873c7;
   }
 
+  #version-tag{
+    position:fixed;
+    bottom:6px;
+    right:10px;
+    font-size:11px;
+    color:#666;
+    opacity:0.75;
+    pointer-events:none;
+    user-select:none;
+    font-weight:600;
+    z-index:99999;
+  }
 </style>
 </head>
-
 <body>
 
-<h1>Select a Mat</h1>
-
-<div class="grid">
-  <!-- 4 mats -->
-  <div class="card" id="mat1">
-    <div class="mat-name">MAT 1</div>
-    <div class="info-line" id="m1period">Period: --</div>
-    <div class="info-line" id="m1time">Time: --:--</div>
-    <div class="score-line">
-      <span class="score-red" id="m1red">0</span> —
-      <span class="score-green" id="m1green">0</span>
-    </div>
-    <div class="info-line" id="m1names">Red vs Green</div>
-    <div class="btn-row">
-      <button class="btn btn-blue" onclick="goControl(1)">Control</button>
-      <button class="btn" onclick="goScore(1)">Scoreboard</button>
-    </div>
+<div class="header-bar">
+  <div class="header-inner">
+    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="brand-logo"/>
+    <div class="brand-title">Matside</div>
   </div>
+  <div class="header-accent"></div>
+</div>
 
-  <div class="card" id="mat2">
-    <div class="mat-name">MAT 2</div>
-    <div class="info-line" id="m2period">Period: --</div>
-    <div class="info-line" id="m2time">Time: --:--</div>
-    <div class="score-line">
-      <span class="score-red" id="m2red">0</span> —
-      <span class="score-green" id="m2green">0</span>
-    </div>
-    <div class="info-line" id="m2names">Red vs Green</div>
-    <div class="btn-row">
-      <button class="btn btn-blue" onclick="goControl(2)">Control</button>
-      <button class="btn" onclick="goScore(2)">Scoreboard</button>
-    </div>
-  </div>
+<div class="wrap">
 
-  <div class="card" id="mat3">
-    <div class="mat-name">MAT 3</div>
-    <div class="info-line" id="m3period">Period: --</div>
-    <div class="info-line" id="m3time">Time: --:--</div>
-    <div class="score-line">
-      <span class="score-red" id="m3red">0</span> —
-      <span class="score-green" id="m3green">0</span>
-    </div>
-    <div class="info-line" id="m3names">Red vs Green</div>
-    <div class="btn-row">
-      <button class="btn btn-blue" onclick="goControl(3)">Control</button>
-      <button class="btn" onclick="goScore(3)">Scoreboard</button>
-    </div>
-  </div>
+  <h1>Select a Mat</h1>
 
-  <div class="card" id="mat4">
-    <div class="mat-name">MAT 4</div>
-    <div class="info-line" id="m4period">Period: --</div>
-    <div class="info-line" id="m4time">Time: --:--</div>
-    <div class="score-line">
-      <span class="score-red" id="m4red">0</span> —
-      <span class="score-green" id="m4green">0</span>
+  <div class="grid">
+    <div class="card" id="mat1">
+      <div class="mat-name">MAT 1</div>
+      <div class="info-line" id="m1period">Period: --</div>
+      <div class="info-line" id="m1time">Time: --:--</div>
+      <div class="score-line">
+        <span class="score-red" id="m1red">0</span> —
+        <span class="score-green" id="m1green">0</span>
+      </div>
+      <div class="info-line" id="m1names">Red vs Green</div>
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="goControl(1)">Control</button>
+        <button class="btn" onclick="goScore(1)">Scoreboard</button>
+      </div>
     </div>
-    <div class="info-line" id="m4names">Red vs Green</div>
-    <div class="btn-row">
-      <button class="btn btn-blue" onclick="goControl(4)">Control</button>
-      <button class="btn" onclick="goScore(4)">Scoreboard</button>
+
+    <div class="card" id="mat2">
+      <div class="mat-name">MAT 2</div>
+      <div class="info-line" id="m2period">Period: --</div>
+      <div class="info-line" id="m2time">Time: --:--</div>
+      <div class="score-line">
+        <span class="score-red" id="m2red">0</span> —
+        <span class="score-green" id="m2green">0</span>
+      </div>
+      <div class="info-line" id="m2names">Red vs Green</div>
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="goControl(2)">Control</button>
+        <button class="btn" onclick="goScore(2)">Scoreboard</button>
+      </div>
+    </div>
+
+    <div class="card" id="mat3">
+      <div class="mat-name">MAT 3</div>
+      <div class="info-line" id="m3period">Period: --</div>
+      <div class="info-line" id="m3time">Time: --:--</div>
+      <div class="score-line">
+        <span class="score-red" id="m3red">0</span> —
+        <span class="score-green" id="m3green">0</span>
+      </div>
+      <div class="info-line" id="m3names">Red vs Green</div>
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="goControl(3)">Control</button>
+        <button class="btn" onclick="goScore(3)">Scoreboard</button>
+      </div>
+    </div>
+
+    <div class="card" id="mat4">
+      <div class="mat-name">MAT 4</div>
+      <div class="info-line" id="m4period">Period: --</div>
+      <div class="info-line" id="m4time">Time: --:--</div>
+      <div class="score-line">
+        <span class="score-red" id="m4red">0</span> —
+        <span class="score-green" id="m4green">0</span>
+      </div>
+      <div class="info-line" id="m4names">Red vs Green</div>
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="goControl(4)">Control</button>
+        <button class="btn" onclick="goScore(4)">Scoreboard</button>
+      </div>
     </div>
   </div>
 </div>
@@ -213,6 +254,6 @@ socket.on("stateUpdate", state=>{
   }
 });
 </script>
-
+<script src="version-loader.js"></script>
 </body>
 </html>
