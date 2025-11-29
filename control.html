@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Control Panel</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    body { font-family:Arial, sans-serif; text-align:center; padding:20px; }
+    button { padding:10px 20px; margin:6px; font-size:16px; }
+  </style>
+</head>
+<body>
+
+  <h1>Control Panel</h1>
+
+  <button onclick="socket.emit('startTimer')">Start Timer</button>
+  <button onclick="socket.emit('stopTimer')">Stop Timer</button>
+
+  <h3>Points:</h3>
+  <button onclick="socket.emit('addPoint', 'player1')">+1 Player 1</button>
+  <button onclick="socket.emit('addPoint', 'player2')">+1 Player 2</button>
+
+  <h3>Winner:</h3>
+  <button onclick="socket.emit('setWinner', 'player1')">Player 1 Wins</button>
+  <button onclick="socket.emit('setWinner', 'player2')">Player 2 Wins</button>
+  <button onclick="socket.emit('setWinner', null)">Clear Winner</button>
+
+<script>
+  const SERVER = "https://scoreboard-server-er33.onrender.com";
+  const socket = io(SERVER, { transports:["websocket"] });
+</script>
+
+</body>
+</html>
