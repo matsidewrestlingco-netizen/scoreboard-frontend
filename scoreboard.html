@@ -1,59 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Matside Scoreboard</title>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<meta charset="UTF-8" />
+<title>Matside Scoreboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
-  <style>
-    body {
-      background:black;
-      color:white;
-      font-family:Arial, sans-serif;
-      text-align:center;
-      padding:20px;
-    }
+<style>
+  body {
+    background:black;
+    color:white;
+    font-family:Arial, sans-serif;
+    text-align:center;
+    padding:20px;
+  }
 
-    #scoreboard table {
-      width:733px;
-      margin:0 auto;
-      border-collapse:collapse;
-    }
+  #scoreboard table {
+    width:733px;
+    max-width:100%;
+    margin:0 auto;
+    border-collapse:collapse;
+  }
 
-    .label {
-      font-size:18px;
-      font-weight:bold;
-      padding:5px 0;
-    }
+  .label {
+    font-size:18px;
+    font-weight:bold;
+    padding:5px 0;
+  }
 
-    #timer {
-      font-size:58px;
-      font-weight:900;
-      padding:10px 0;
-    }
+  #timer {
+    font-size:58px;
+    font-weight:900;
+    padding:10px 0;
+  }
 
-    .name {
-      font-size:22px;
-      font-weight:bold;
-      padding:8px 0;
-    }
+  .name {
+    font-size:22px;
+    font-weight:bold;
+    padding:8px 0;
+  }
 
-    .score-box {
-      font-size:140px;
-      font-weight:900;
-      padding:20px;
-      color:black;
-      text-align:center;
-    }
+  .score-box {
+    font-size:140px;
+    font-weight:900;
+    padding:20px;
+    color:black;
+    text-align:center;
+  }
 
-    .red { background:#ff0000; }
-    .green { background:#00ff00; }
-  </style>
+  .red { background:#ff0000; }
+  .green { background:#00ff00; }
+
+  /* Flash animation on buzzer */
+  .flash {
+    animation: flashAnim 0.5s ease-in-out 3;
+  }
+  @keyframes flashAnim {
+    0% { background:black; }
+    50% { background:#fffb00; }
+    100% { background:black; }
+  }
+
+  /* Auto-advance highlight */
+  #period-number.flash-period {
+    animation: periodFlash 1.5s ease-out;
+  }
+  @keyframes periodFlash {
+    0% { color:#fff; }
+    25% { color:#fffb00; }
+    50% { color:#fff; }
+    75% { color:#fffb00; }
+    100% { color:#fff; }
+  }
+</style>
 </head>
 
 <body>
 
-<p>Matside Scoreboard</p>
+<p style="font-size:24px;margin-bottom:12px;">Matside Scoreboard</p>
 
 <div id="scoreboard">
 <table>
@@ -86,9 +110,9 @@
 </tr>
 
 <tr>
-<td colspan="4" style="background:black;">
+<td colspan="4" style="background:black;padding:10px 0;">
   <img src="https://www.matside.org/assets/images/image01.png?v=809bcd3f"
-       width="150" height="138">
+       width="150" height="138" />
 </td>
 </tr>
 
@@ -100,6 +124,14 @@
   const SERVER = "https://scoreboard-server-er33.onrender.com";
   const socket = io(SERVER, { transports:["websocket"] });
 
+  const timerEl = document.getElementById("timer");
+  const p1El = document.getElementById("sb-p1");
+  const p2El = document.getElementById("sb-p2");
+  const matEl = document.getElementById("mat-number");
+  const periodEl = document.getElementById("period-number");
+  const redNameEl = document.getElementById("red-name");
+  const greenNameEl = document.getElementById("green-name");
+
   function fmt(sec){
     const m = Math.floor(sec/60);
     const s = sec % 60;
@@ -107,16 +139,24 @@
   }
 
   socket.on("stateUpdate", state => {
-    document.getElementById("sb-p1").innerText = state.player1;
-    document.getElementById("sb-p2").innerText = state.player2;
+    p1El.innerText = state.player1;
+    p2El.innerText = state.player2;
 
-    document.getElementById("mat-number").innerText = state.mat;
-    document.getElementById("period-number").innerText = state.period;
+    matEl.innerText = state.mat;
+    periodEl.innerText = state.period;
 
-    document.getElementById("red-name").innerText = state.redName;
-    document.getElementById("green-name").innerText = state.greenName;
+    redNameEl.innerText = state.redName;
+    greenNameEl.innerText = state.greenName;
 
-    document.getElementById("timer").innerText = fmt(state.timeRemaining);
+    timerEl.innerText = fmt(state.timeRemaining);
+  });
+
+  // Buzzer event → flash background + pulse period number
+  socket.on("buzzer", () => {
+    document.body.classList.add("flash");
+    periodEl.classList.add("flash-period");
+    setTimeout(()=>document.body.classList.remove("flash"),1500);
+    setTimeout(()=>periodEl.classList.remove("flash-period"),1500);
   });
 </script>
 
