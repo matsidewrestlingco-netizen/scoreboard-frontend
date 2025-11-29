@@ -248,6 +248,10 @@
   <div class="lock-card">
     <div class="lock-header">
       <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="lock-logo"/>
+      <button id="logoutBtn" class="btn" 
+        style="background:#2a2b2c;color:#fff;border-radius:8px;padding:6px 12px;">
+  Log Out
+</button>
       <div class="lock-title">Matside Events</div>
       <div class="lock-sub">Select your event and enter the event password.</div>
     </div>
@@ -433,6 +437,12 @@
     unlockForEvent(evt);
   }
 
+  // Log Out Button
+    document.getElementById("logoutBtn").onclick = function(){
+    localStorage.removeItem("matside_selected_event");
+    location.reload();
+  };
+  
   // Load events.json
   fetch("events.json")
     .then(r => r.json())
