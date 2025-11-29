@@ -1,12 +1,11 @@
+<!-- scoreboard.html -->
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Matside Scoreboard</title>
-
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
 <style>
   body {
     margin: 0;
@@ -16,14 +15,11 @@
     text-align: center;
     overflow: hidden;
   }
-
   #wrap {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
   }
-
-  /* MAT + PERIOD */
   .top-bar {
     font-size: 32px;
     font-weight: 700;
@@ -31,15 +27,12 @@
     justify-content: space-between;
     padding: 0 10px 20px;
   }
-
-  /* TIMER */
   #timer {
     font-size: 160px;
     font-weight: 900;
     margin: 10px 0 20px;
     line-height: 1;
   }
-
   @keyframes flash {
     0%   { color: #fff; }
     50%  { color: #ff3333; }
@@ -47,7 +40,6 @@
   }
   .flash { animation: flash 1s infinite; }
 
-  /* NAME BARS */
   .name-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -66,29 +58,21 @@
     padding: 18px 8px;
     border-radius: 4px 12px 12px 4px;
   }
-
-  /* SCORES */
   .score-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
     margin-top: 16px;
   }
-
   .score-box {
     font-size: 220px;
     font-weight: 900;
     padding: 40px 0;
     border-radius: 16px;
   }
-  .score-red {
-    background: #c62828;
-  }
-  .score-green {
-    background: #2e7d32;
-  }
+  .score-red { background: #c62828; }
+  .score-green { background: #2e7d32; }
 
-  /* WINNER */
   @keyframes glowRed {
     0% { box-shadow: 0 0 0px #c62828; }
     50% { box-shadow: 0 0 26px #c62828; }
@@ -99,7 +83,6 @@
     50% { box-shadow: 0 0 26px #2e7d32; }
     100% { box-shadow: 0 0 0px #2e7d32; }
   }
-
   .winner-banner {
     margin-top: 26px;
     font-size: 64px;
@@ -108,7 +91,6 @@
     border-radius: 12px;
     display: none;
   }
-
   .winner-red {
     background: #c62828;
     animation: glowRed 1s infinite;
@@ -117,12 +99,37 @@
     background: #2e7d32;
     animation: glowGreen 1s infinite;
   }
+
+  /* Subtle watermark */
+  .brand-watermark {
+    position: fixed;
+    bottom: 8px;
+    left: 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    pointer-events:none;
+    user-select:none;
+  }
+
+  /* Version tag smaller on scoreboard */
+  #version-tag{
+    position:fixed;
+    bottom:6px;
+    right:10px;
+    font-size:10px;
+    color:#666;
+    opacity:0.7;
+    pointer-events:none;
+    user-select:none;
+    font-weight:600;
+    z-index:99999;
+  }
 </style>
 </head>
-
 <body>
 <div id="wrap">
-
   <div class="top-bar">
     <div>MAT <span id="mat-number">1</span></div>
     <div>PERIOD <span id="period-number">1</span></div>
@@ -141,20 +148,18 @@
   </div>
 
   <div class="winner-banner" id="winner-banner"></div>
-
 </div>
 
+<div class="brand-watermark">Matside</div>
+
 <script>
-/* --- Read mat from URL --- */
 const params = new URLSearchParams(window.location.search);
 const mat = Number(params.get("mat")) || 1;
 document.getElementById("mat-number").textContent = mat;
 
-/* --- Connect to server --- */
 const SERVER = "https://scoreboard-server-er33.onrender.com";
 const socket = io(SERVER, { transports:["websocket"] });
 
-/* --- Format mm:ss --- */
 function fmt(sec){
   sec = Number(sec) || 0;
   const m = Math.floor(sec / 60);
@@ -162,44 +167,34 @@ function fmt(sec){
   return (m<10?"0":"") + m + ":" + (s<10?"0":"") + s;
 }
 
-/* --- DOM refs --- */
 const periodEl = document.getElementById("period-number");
 const timerEl  = document.getElementById("timer");
-
 const redNameEl   = document.getElementById("red-name");
 const greenNameEl = document.getElementById("green-name");
-
 const redScoreEl   = document.getElementById("sb-red");
 const greenScoreEl = document.getElementById("sb-green");
-
 const winnerBanner = document.getElementById("winner-banner");
 
-/* --- Handle incoming updates --- */
 socket.on("stateUpdate", state => {
   const m = state?.mats?.[mat];
   if (!m) return;
 
-  /* Clear winner state */
   winnerBanner.style.display = "none";
-  winnerBanner.classList.remove("winner-red", "winner-green");
+  winnerBanner.classList.remove("winner-red","winner-green");
 
-  /* Update UI */
   periodEl.textContent = m.period;
   timerEl.textContent = fmt(m.timeRemaining);
   redScoreEl.textContent = m.player1;
   greenScoreEl.textContent = m.player2;
-
   redNameEl.textContent = m.redName || "RED WRESTLER";
   greenNameEl.textContent = m.greenName || "GREEN WRESTLER";
 
-  /* Flash timer if 0 */
   if (m.timeRemaining === 0) {
     timerEl.classList.add("flash");
   } else {
     timerEl.classList.remove("flash");
   }
 
-  /* Winner Logic */
   if (m.timeRemaining === 0) {
     if (m.player1 > m.player2) {
       winnerBanner.style.display = "block";
@@ -216,5 +211,6 @@ socket.on("stateUpdate", state => {
   }
 });
 </script>
+<script src="version-loader.js"></script>
 </body>
 </html>
