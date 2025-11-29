@@ -487,6 +487,42 @@
 /* Helper */
 const $ = id => document.getElementById(id);
 
+// Read selected event from index.html (if set)
+const EVENT_STORAGE_KEY = "matside_selected_event";
+let currentEventConfig = null;
+try {
+  const savedEvent = localStorage.getItem(EVENT_STORAGE_KEY);
+  if (savedEvent) {
+    currentEventConfig = JSON.parse(savedEvent);
+  }
+} catch (e) {
+  currentEventConfig = null;
+}
+
+// If we have an event config, we can:
+// - limit mat options
+// - set initial period length automatically on connect
+
+// Limit visible mats in the dropdown (if configured)
+if (currentEventConfig && currentEventConfig.mats) {
+  const maxMats = Number(currentEventConfig.mats) || 1;
+  const matSelectEl = $('matSelect');
+  if (matSelectEl) {
+    Array.from(matSelectEl.options).forEach(opt => {
+      const val = Number(opt.value);
+      if (val > maxMats) {
+        opt.disabled = true;
+        opt.hidden = true;
+      }
+    });
+    // If currently selected mat is > maxMats, reset to 1
+    if (Number(matSelectEl.value) > maxMats) {
+      matSelectEl.value = "1";
+      currentMat = 1;
+    }
+  }
+}
+  
 /* Socket */
 const SERVER = "https://scoreboard-server-er33.onrender.com";
 const socket = io(SERVER, {
