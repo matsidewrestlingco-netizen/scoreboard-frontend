@@ -1,238 +1,317 @@
-<!-- overview.html -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Tournament Overview</title>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Matside — Overview v2.5.3</title>
+
+<!-- Socket.IO -->
+<script src="https://scoreboard-server-er33.onrender.com/socket.io/socket.io.js"></script>
+
 <style>
-  :root{
-    --bg:#070809; --panel:#15161a; --muted:#9aa0a6;
-    --red:#c62828; --green:#2e7d32;
+  :root {
+    --red: #d32f2f;
+    --green: #00c853;
+    --panel: #111216;
+    --bg: #000;
+    --muted: #888;
+    --gold: #fbc02d;
   }
-  body{
+
+  html, body {
     margin:0;
-    background:var(--bg);
+    padding:0;
+    background:#000;
     color:#fff;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
   }
-  .header-bar{
-    background:#070809;
-    border-bottom:1px solid #111215;
+
+  h1 {
+    text-align:center;
+    font-weight:800;
+    margin:12px 0;
+    font-size:26px;
+    color:#fff;
   }
-  .header-inner{
+
+  .grid {
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:12px;
+    padding:10px;
     max-width:1100px;
     margin:0 auto;
-    padding:4px 14px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-  .brand-logo{height:42px;border-radius:8px;}
-  .brand-title{font-size:18px;font-weight:700;}
-  .header-accent{
-    height:2px;
-    background:linear-gradient(90deg,rgba(30,136,229,0.12),rgba(30,136,229,0.5),rgba(30,136,229,0.12));
   }
 
-  .wrap{padding:14px;max-width:1100px;margin:0 auto;}
-  h1{font-size:22px;margin:0 0 14px 0;text-align:center;}
-
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:16px;
+  @media(max-width:750px){
+    .grid{ grid-template-columns:1fr; }
   }
-  @media(max-width:800px){ .grid{grid-template-columns:1fr;} }
 
-  .mat-card{
-    background:#111;
+  .mat-card {
+    background:#000;
+    border:2px solid #111;
+    border-radius:12px;
     padding:10px;
-    border-radius:10px;
-    box-shadow:0 4px 14px rgba(0,0,0,0.6);
+  }
+
+  table {
+    width:100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  td {
+    padding:3px;
     text-align:center;
-    border:2px solid transparent;
-    position:relative;
   }
-  .mat-title{font-size:18px;font-weight:800;margin-bottom:6px;}
-  .period{font-size:14px;opacity:0.8;}
-  .timer{font-size:40px;font-weight:800;margin:6px 0 10px;}
-  @keyframes flash{
-    0% {color:#fff;}
-    50%{color:#ff3333;}
-    100%{color:#fff;}
-  }
-  .flash{animation:flash 1s infinite;}
 
-  .names{
-    display:flex;justify-content:space-between;font-size:14px;
-    opacity:0.9;font-weight:600;margin:6px 0;
-  }
-  .scores{
-    display:flex;justify-content:space-between;gap:8px;
-  }
-  .red-box,.green-box{
-    flex:1;padding:14px 0;font-size:42px;font-weight:800;border-radius:10px;
-  }
-  .red-box{background:var(--red);}
-  .green-box{background:var(--green);}
-  .winner-banner{
-    position:absolute;left:0;right:0;bottom:0;
-    padding:6px 0;font-size:18px;font-weight:900;
-    text-transform:uppercase;border-radius:0 0 8px 8px;display:none;
-  }
-  .winner-red .winner-banner{background:var(--red);display:block;}
-  .winner-green .winner-banner{background:var(--green);display:block;}
-  .winner-red{border-color:var(--red);}
-  .winner-green{border-color:var(--green);}
-  .winner-red .green-box,
-  .winner-green .red-box{opacity:0.3;}
-  .small-info{margin-top:4px;font-size:12px;opacity:0.6;}
-
-  #version-tag{
-    position:fixed;
-    bottom:6px;
-    right:10px;
+  .label {
+    background:var(--panel);
     font-size:11px;
-    color:#666;
-    opacity:0.75;
-    pointer-events:none;
-    user-select:none;
-    font-weight:600;
-    z-index:99999;
+    font-weight:700;
+    text-transform:uppercase;
+  }
+
+  .mat-num, .period-num {
+    font-size:22px;
+    font-weight:800;
+  }
+
+  .timer {
+    font-size:38px;
+    font-weight:900;
+    padding:4px 0;
+  }
+
+  @keyframes timerPulse {
+    0% { opacity:1; }
+    50% { opacity:.4; }
+    100% { opacity:1; }
+  }
+  .timer-running {
+    animation: timerPulse 1.1s infinite ease-in-out;
+  }
+
+  .timer-zero {
+    color: var(--gold);
+  }
+
+  .name {
+    font-size:14px;
+    font-weight:700;
+    opacity:.9;
+  }
+  .name-red { color:var(--red); }
+  .name-green { color:var(--green); }
+
+  .score-box {
+    font-size:64px;
+    font-weight:900;
+  }
+  .score-red {
+    background:var(--red);
+    color:#fff;
+  }
+  .score-green {
+    background:var(--green);
+    color:#000;
+  }
+
+  .winner-tag {
+    display:inline-block;
+    margin-left:4px;
+    padding:1px 5px;
+    border-radius:999px;
+    background:var(--gold);
+    color:#000;
+    font-size:10px;
+    font-weight:700;
+  }
+
+  .branding {
+    font-size:10px;
+    color:var(--muted);
+    padding-top:4px;
   }
 </style>
 </head>
+
 <body>
-<div class="header-bar">
-  <div class="header-inner">
-    <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="brand-logo"/>
-    <div class="brand-title">Matside</div>
-  </div>
-  <div class="header-accent"></div>
-</div>
 
-<div class="wrap">
-  <h1>Live Tournament Overview</h1>
-  <div class="grid">
-    <!-- Mat 1–4 cards (same as before, condensed) -->
-    <div class="mat-card" id="mat1">
-      <div class="mat-title">MAT 1</div>
-      <div class="period">Period: <span class="period-num">1</span></div>
-      <div class="timer">00:00</div>
-      <div class="names">
-        <span class="red-name">RED</span>
-        <span class="green-name">GREEN</span>
-      </div>
-      <div class="scores">
-        <div class="red-box"><span class="red-score">0</span></div>
-        <div class="green-box"><span class="green-score">0</span></div>
-      </div>
-      <div class="winner-banner"></div>
-      <div class="small-info">• Live •</div>
-    </div>
+<h1>Matside — Mat Overview</h1>
 
-    <div class="mat-card" id="mat2">
-      <div class="mat-title">MAT 2</div>
-      <div class="period">Period: <span class="period-num">1</span></div>
-      <div class="timer">00:00</div>
-      <div class="names">
-        <span class="red-name">RED</span>
-        <span class="green-name">GREEN</span>
-      </div>
-      <div class="scores">
-        <div class="red-box"><span class="red-score">0</span></div>
-        <div class="green-box"><span class="green-score">0</span></div>
-      </div>
-      <div class="winner-banner"></div>
-      <div class="small-info">• Live •</div>
-    </div>
-
-    <div class="mat-card" id="mat3">
-      <div class="mat-title">MAT 3</div>
-      <div class="period">Period: <span class="period-num">1</span></div>
-      <div class="timer">00:00</div>
-      <div class="names">
-        <span class="red-name">RED</span>
-        <span class="green-name">GREEN</span>
-      </div>
-      <div class="scores">
-        <div class="red-box"><span class="red-score">0</span></div>
-        <div class="green-box"><span class="green-score">0</span></div>
-      </div>
-      <div class="winner-banner"></div>
-      <div class="small-info">• Live •</div>
-    </div>
-
-    <div class="mat-card" id="mat4">
-      <div class="mat-title">MAT 4</div>
-      <div class="period">Period: <span class="period-num">1</span></div>
-      <div class="timer">00:00</div>
-      <div class="names">
-        <span class="red-name">RED</span>
-        <span class="green-name">GREEN</span>
-      </div>
-      <div class="scores">
-        <div class="red-box"><span class="red-score">0</span></div>
-        <div class="green-box"><span class="green-score">0</span></div>
-      </div>
-      <div class="winner-banner"></div>
-      <div class="small-info">• Live •</div>
-    </div>
-
-  </div>
+<div class="grid">
+  <!-- Mat cards generated below -->
+  <div id="mat1" class="mat-card"></div>
+  <div id="mat2" class="mat-card"></div>
+  <div id="mat3" class="mat-card"></div>
+  <div id="mat4" class="mat-card"></div>
 </div>
 
 <script>
-const SERVER = "https://scoreboard-server-er33.onrender.com";
-const socket = io(SERVER, { transports:["websocket"] });
+/* ============================================================
+   PRE-BUILT TEMPLATE FOR EACH MAT
+============================================================ */
+function templateForMat(matID){
+return `
+  <table>
+    <tbody>
 
-function fmt(sec){
-  sec = Math.max(0, Number(sec)||0);
-  const m = Math.floor(sec/60), s = sec%60;
-  return (m<10?'0':'')+m+':' + (s<10?'0':'')+s;
+      <tr>
+        <td class="label">MAT</td>
+        <td class="label" colspan="2">MATSIDE SCOREBOARD</td>
+        <td class="label">PERIOD</td>
+      </tr>
+
+      <tr>
+        <td><div id="matNum${matID}" class="mat-num">${matID}</div></td>
+        <td></td>
+        <td></td>
+        <td><div id="period${matID}" class="period-num">1</div></td>
+      </tr>
+
+      <tr><td colspan="4" class="label">TIME</td></tr>
+
+      <tr>
+        <td colspan="4">
+          <div id="timer${matID}" class="timer">00:00</div>
+        </td>
+      </tr>
+
+      <tr>
+        <td id="redName${matID}" class="name name-red" colspan="2">RED WRESTLER</td>
+        <td id="greenName${matID}" class="name name-green" colspan="2">GREEN WRESTLER</td>
+      </tr>
+
+      <tr>
+        <td class="score-box score-red" colspan="2"><span id="scoreRed${matID}">0</span></td>
+        <td class="score-box score-green" colspan="2"><span id="scoreGreen${matID}">0</span></td>
+      </tr>
+
+      <tr>
+        <td colspan="4"><div class="branding">Matside — Live Overview</div></td>
+      </tr>
+
+    </tbody>
+  </table>
+`;
 }
 
-socket.on("stateUpdate", state => {
-  if (!state || !state.mats) return;
+/* Inject all 4 mats */
+for(let i=1;i<=4;i++){
+  document.getElementById("mat"+i).innerHTML = templateForMat(i);
+}
 
-  for (let mat = 1; mat <= 4; mat++) {
-    const m = state.mats[mat];
-    if (!m) continue;
+/* ============================================================
+   SOCKET.IO LIVE UPDATES
+============================================================ */
+const socket = io("https://scoreboard-server-er33.onrender.com", {
+  transports:["websocket","polling"]
+});
 
-    const card = document.getElementById("mat" + mat);
-    const timerEl = card.querySelector(".timer");
-    const winnerEl = card.querySelector(".winner-banner");
+socket.on("stateUpdate", (state) => {
+  for(let mat=1;mat<=4;mat++){
+    const m = state.mats?.[mat];
+    if(!m) continue;
 
-    card.classList.remove("winner-red","winner-green");
-    winnerEl.style.display = "none";
-
-    card.querySelector(".period-num").textContent = m.period;
-    timerEl.textContent = fmt(m.timeRemaining);
-    card.querySelector(".red-score").textContent = m.player1;
-    card.querySelector(".green-score").textContent = m.player2;
-    card.querySelector(".red-name").textContent = m.redName || "RED";
-    card.querySelector(".green-name").textContent = m.greenName || "GREEN";
-
-    if (m.timeRemaining === 0) {
-      timerEl.classList.add("flash");
-      if (m.player1 > m.player2) {
-        card.classList.add("winner-red");
-        winnerEl.textContent = "WINNER — RED";
-      } else if (m.player2 > m.player1) {
-        card.classList.add("winner-green");
-        winnerEl.textContent = "WINNER — GREEN";
-      } else {
-        winnerEl.textContent = "MATCH OVER";
-      }
-      winnerEl.style.display = "block";
-    } else {
-      timerEl.classList.remove("flash");
-    }
+    updateTime(mat, m);
+    updateScores(mat, m);
+    updateNames(mat, m);
   }
 });
+
+/* ============================================================
+   FORMATTER
+============================================================ */
+function formatTime(sec){
+  sec = Math.max(0, sec);
+  const m = String(Math.floor(sec/60)).padStart(2,"0");
+  const s = String(sec%60).padStart(2,"0");
+  return `${m}:${s}`;
+}
+
+/* ============================================================
+   UPDATE TIME
+============================================================ */
+function updateTime(matID, m){
+  const tEl = document.getElementById("timer"+matID);
+  const pEl = document.getElementById("period"+matID);
+
+  tEl.textContent = formatTime(m.time);
+  pEl.textContent = m.period;
+
+  if(m.running){
+    tEl.classList.add("timer-running");
+  } else {
+    tEl.classList.remove("timer-running");
+  }
+
+  if(m.time <= 0){
+    tEl.classList.add("timer-zero");
+  } else {
+    tEl.classList.remove("timer-zero");
+  }
+}
+
+/* ============================================================
+   UPDATE SCORES + WINNER TAGS
+============================================================ */
+function updateScores(matID, m){
+  document.getElementById("scoreRed"+matID).textContent = m.red ?? 0;
+  document.getElementById("scoreGreen"+matID).textContent = m.green ?? 0;
+
+  const redName = document.getElementById("redName"+matID);
+  const greenName = document.getElementById("greenName"+matID);
+
+  removeWinnerTags(redName, greenName);
+
+  if(m.time <= 0 && !m.running && m.red !== m.green){
+    if(m.red > m.green) attachWinner(redName);
+    else attachWinner(greenName);
+  }
+}
+
+function removeWinnerTags(...elements){
+  elements.forEach(e=>{
+    e.querySelectorAll(".winner-tag").forEach(t=>t.remove());
+  });
+}
+
+function attachWinner(el){
+  const tag = document.createElement("span");
+  tag.className = "winner-tag";
+  tag.textContent = "WINNER";
+  el.appendChild(tag);
+}
+
+/* ============================================================
+   NAME PRIORITY:
+   1. events.json (future)
+   2. localStorage (control panel)
+   3. defaults
+============================================================ */
+function updateNames(matID, m){
+  const redEl = document.getElementById("redName"+matID);
+  const greenEl = document.getElementById("greenName"+matID);
+
+  // --- Event-based names (coming soon) ---
+
+  // --- Local control panel names ---
+  try{
+    const raw = localStorage.getItem("matsideNames");
+    if(raw){
+      const names = JSON.parse(raw);
+      if(names[matID]?.red) redEl.textContent = names[matID].red;
+      if(names[matID]?.green) greenEl.textContent = names[matID].green;
+      return;
+    }
+  }catch(e){}
+
+  // defaults
+  redEl.textContent = "RED WRESTLER";
+  greenEl.textContent = "GREEN WRESTLER";
+}
 </script>
-<script src="version-loader.js"></script>
+
 </body>
 </html>
