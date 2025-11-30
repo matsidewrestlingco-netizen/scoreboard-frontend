@@ -7,8 +7,9 @@
 
 <style>
   :root{
-    --bg:#070809; --panel:#15161a;
+    --bg:#070809; --panel:#15161a; --panel-soft:#191b20;
     --muted:#9aa0a6; --accent:#1e88e5;
+    --red:#d32f2f;
     --radius:12px;
   }
   body{
@@ -21,13 +22,14 @@
     background:var(--panel);
     padding:16px;
     border-radius:var(--radius);
-    max-width:800px;
+    max-width:900px;
     margin:0 auto;
     box-shadow:0 6px 18px rgba(0,0,0,.6);
   }
   h1{margin-top:0;}
+
   label{font-size:12px;color:var(--muted);}
-  input,select{
+  input{
     width:100%;
     padding:8px;
     border:0;
@@ -46,48 +48,124 @@
   }
   .blue{background:var(--accent);color:#fff;}
   .gray{background:#2a2b2c;color:#fff;}
-  .red{background:#b71c1c;color:#fff;}
+  .red{background:var(--red);color:#fff;}
+
   .event-block{
     border:1px solid #2a2b2c;
     padding:12px;
     border-radius:10px;
     margin-bottom:12px;
   }
+
+  /* LOCK SCREEN */
+  #lock-screen{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:radial-gradient(circle at top, #1a1c22, #050608);
+    z-index:9999;
+  }
+  .lock-card{
+    background:#111318;
+    padding:20px;
+    border-radius:14px;
+    max-width:360px;
+    width:100%;
+    box-shadow:0 12px 40px rgba(0,0,0,.8);
+    text-align:center;
+  }
+  .lock-card h2{margin:0 0 10px 0;}
+  .lock-input{margin-top:10px;}
+  .lock-error{color:#ef5350;font-size:12px;height:16px;margin-top:6px;}
 </style>
 </head>
+
 <body>
 
-<div class="card">
-  <h1>Matside — Admin Events Editor</h1>
+<!-- ADMIN PASSWORD GATE -->
+<div id="lock-screen">
+  <div class="lock-card">
+    <h2>Matside Admin Login</h2>
+    <p style="color:#9aa0a6;font-size:13px;">Enter your admin password to manage events.</p>
 
-  <p style="color:var(--muted);">Add, edit, or remove events. Export the final JSON to upload to GitHub as <strong>events.json</strong>.</p>
+    <input id="adminPass" type="password" placeholder="Admin Password" class="lock-input"/>
+    <button id="adminSubmit" class="btn blue" style="margin-top:10px;width:100%;">Unlock</button>
 
-  <div id="eventsList"></div>
+    <div id="lockError" class="lock-error"></div>
 
-  <h2>Add New Event</h2>
-  <label>Event Name</label>
-  <input id="newName" type="text"/>
+    <p style="color:#666;font-size:11px;margin-top:18px;">
+      This page is for Matside Administrators only.
+    </p>
+  </div>
+</div>
 
-  <label>Event ID (URL-friendly)</label>
-  <input id="newId" type="text" placeholder="lincoln-vs-north"/>
+<!-- MAIN PAGE -->
+<div id="app" style="display:none;">
+  <div class="card">
+    <h1>Matside — Admin Events Editor</h1>
+    <p style="color:var(--muted);">
+      Add, edit, or remove events below. Save changes directly to the server or export events.json manually.
+    </p>
 
-  <label>Event Password</label>
-  <input id="newPass" type="text"/>
+    <h2>Existing Events</h2>
+    <div id="eventsList"></div>
 
-  <label>Number of Mats</label>
-  <input id="newMats" type="number" min="1" max="12"/>
+    <h2>Add New Event</h2>
+    <label>Event Name</label>
+    <input id="newName" type="text"/>
 
-  <label>Default Period (seconds)</label>
-  <input id="newPeriod" type="number" min="30" max="600"/>
+    <label>Event ID (URL-friendly)</label>
+    <input id="newId" type="text" placeholder="lincoln-vs-north"/>
 
-  <button class="btn blue" onclick="addEvent()">Add Event</button>
+    <label>Event Password</label>
+    <input id="newPass" type="text"/>
 
-  <h2>Export JSON</h2>
-  <button class="btn gray" onclick="exportJSON()">Download events.json</button>
+    <label>Number of Mats</label>
+    <input id="newMats" type="number" min="1" max="12"/>
 
+    <label>Default Period (seconds)</label>
+    <input id="newPeriod" type="number" min="30" max="600"/>
+
+    <button class="btn blue" onclick="addEvent()">Add Event</button>
+
+    <h2>Save / Export</h2>
+    <button class="btn gray" onclick="exportJSON()">Download events.json</button>
+    <button class="btn blue" onclick="saveToServer()">Save to Server</button>
+    <div id="saveMsg" style="margin-top:10px;font-size:13px;color:var(--muted);"></div>
+  </div>
 </div>
 
 <script>
+/* ---------- ADMIN PASSWORD GATE ---------- */
+
+const ADMIN_PASSWORD = "SuperAdmin2024!";  // 🔥 CHANGE THIS
+
+const lockScreen = document.getElementById("lock-screen");
+const app = document.getElementById("app");
+const lockError = document.getElementById("lockError");
+
+function unlockApp(){
+  lockScreen.style.display = "none";
+  app.style.display = "block";
+}
+
+document.getElementById("adminSubmit").onclick = function(){
+  const pw = document.getElementById("adminPass").value.trim();
+  if(pw === ADMIN_PASSWORD){
+    unlockApp();
+  } else {
+    lockError.textContent = "Incorrect admin password.";
+  }
+};
+
+document.getElementById("adminPass").addEventListener("keydown", e=>{
+  if(e.key === "Enter") document.getElementById("adminSubmit").click();
+});
+
+/* ---------- EVENTS EDITOR LOGIC ---------- */
+
 let EVENTS = [];
 
 function render(){
@@ -132,14 +210,16 @@ function deleteEvent(i){
 
 function addEvent(){
   EVENTS.push({
-    id: document.getElementById("newId").value,
-    name: document.getElementById("newName").value,
-    code: document.getElementById("newPass").value,
-    mats: Number(document.getElementById("newMats").value),
-    periodSeconds: Number(document.getElementById("newPeriod").value)
+    id: newId.value.trim(),
+    name: newName.value.trim(),
+    code: newPass.value.trim(),
+    mats: Number(newMats.value),
+    periodSeconds: Number(newPeriod.value)
   });
   render();
 }
+
+/* ---------- EXPORT TO FILE ---------- */
 
 function exportJSON(){
   const blob = new Blob([JSON.stringify({events: EVENTS}, null, 2)], {type:'application/json'});
@@ -149,7 +229,25 @@ function exportJSON(){
   a.click();
 }
 
-// Load existing events.json
+/* ---------- SAVE DIRECTLY TO SERVER ---------- */
+
+function saveToServer(){
+  fetch("/save-events", {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({events: EVENTS})
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    document.getElementById("saveMsg").textContent = "Saved to server successfully ✔";
+  })
+  .catch(err=>{
+    document.getElementById("saveMsg").textContent = "Error saving to server.";
+  });
+}
+
+/* ---------- LOAD EXISTING events.json ---------- */
+
 fetch("events.json")
   .then(r=>r.json())
   .then(j=>{
