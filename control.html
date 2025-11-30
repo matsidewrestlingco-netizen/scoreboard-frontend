@@ -401,6 +401,14 @@ input[type=text],input[type=number]{
   </div>
 </div>
 
+<div id="toast" style="
+  position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+  background:#1e88e5; padding:12px 18px; border-radius:8px;
+  color:white; font-weight:600; font-size:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);
+  display:none; z-index:9999999;
+">Submitted</div>
+     
 <script>
 
 // ===== Modal Control Variables ======
@@ -457,7 +465,7 @@ function suggestWinner(matState) {
 };
 
 // ===== Submit result
-     document.getElementById("submitMatchEnd").onclick = () => {
+document.getElementById("submitMatchEnd").onclick = () => {
   if (!selectedWinner) {
     alert("Please choose a winner.");
     return;
@@ -466,12 +474,29 @@ function suggestWinner(matState) {
   const mat = parseInt(matSelect.value, 10);
   const method = document.querySelector("input[name='winMethod']:checked").value;
 
+  const matState = window.lastState?.mats?.[mat] || {};
+
+  // broadcast result to server
   socket.emit("matchEnded", {
     mat,
     winner: selectedWinner,
-    method
+    method,
+    redScore: matState.red || 0,
+    greenScore: matState.green || 0,
+    period: matState.period || 1,
+    timestamp: new Date().toISOString()
   });
 
+  // write to timeline
+  pushTimeline(mat, `Match Ended — Winner: ${selectedWinner.toUpperCase()} (${method.toUpperCase()})`);
+
+  // show confirmation
+  showToast("Match submitted");
+
+  // reset mat
+  doFullMatReset(mat);
+
+  // close modal
   modal.style.display = "none";
 };
      
@@ -480,6 +505,14 @@ const periodLengthByMat = { 1:60, 2:60, 3:60, 4:60 };
 let lastState = null;
 let timeline = { 1:[], 2:[], 3:[], 4:[] };
 let tbChoicePendingForMat = null;
+
+// ===== Toast Confirmation =====  
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  setTimeout(() => { t.style.display = "none"; }, 2500);
+}
 
 // ===== Drawer helpers =====
 function openLeft(){drawerLeft.classList.add("open");backdropLeft.classList.add("open");}
