@@ -2,174 +2,142 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel (v2.5)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Matside — Control Panel (v2.5.2)</title>
 
-<!-- Socket.IO client served from your own server -->
-<script src="https://scoreboard-server-er33.onrender.com/socket.io/socket.io.js"></script>
+<!-- SOCKET.IO -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 <style>
-  :root{
-    --bg:#070809; --panel:#15161a; --muted:#9aa0a6;
-    --accent:#1e88e5; --red:#d32f2f; --green:#388e3c; --gold:#fbc02d;
-    --radius:12px; --gap:12px;
-  }
-  html,body{
-    margin:0;padding:0;background:var(--bg);color:#fff;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-  }
+:root{
+  --bg:#070809; --panel:#15161a; --muted:#9aa0a6;
+  --accent:#1e88e5; --red:#d32f2f; --green:#388e3c; --gold:#fbc02d;
+  --radius:12px; --gap:12px;
+}
 
-  /* HEADER */
-  .header-bar{ background:#070809;border-bottom:1px solid #111215; }
-  .header-inner{
-    max-width:1100px;margin:0 auto;padding:4px 14px;
-    display:flex;align-items:center;gap:10px;
-  }
-  .brand-logo{ height:42px;border-radius:8px; }
-  .brand-title{ font-size:18px;font-weight:700; }
-  .header-accent{
-    height:2px;
-    background:linear-gradient(90deg,
-      rgba(30,136,229,0.12),
-      rgba(30,136,229,0.5),
-      rgba(30,136,229,0.12)
-    );
-  }
+html,body{
+  margin:0;padding:0;background:var(--bg);color:#fff;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+}
 
-  select{
-    padding:8px 10px;border-radius:8px;border:0;
-    background:#0e1012;color:#fff;
-  }
+.header-bar{background:#070809;border-bottom:1px solid #111215;}
+.header-inner{max-width:1100px;margin:0 auto;padding:4px 14px;
+  display:flex;align-items:center;gap:10px;}
+.brand-logo{height:42px;border-radius:8px;}
+.brand-title{font-size:18px;font-weight:700;}
+.header-accent{
+  height:2px;background:linear-gradient(90deg,
+    rgba(30,136,229,.12),rgba(30,136,229,.5),rgba(30,136,229,.12));
+}
 
-  .wrap{ max-width:1100px;margin:0 auto;padding:14px; }
+.wrap{max-width:1100px;margin:0 auto;padding:14px;}
 
-  .icon-btn{
-    height:38px;width:38px;border-radius:50%;
-    border:2px solid #2f3135;background:transparent;
-    color:#fff;display:flex;align-items:center;
-    justify-content:center;cursor:pointer;font-size:18px;
-  }
+.icon-btn{
+  height:38px;width:38px;border-radius:50%;border:2px solid #2f3135;
+  background:#0c0d10;color:#fff;cursor:pointer;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+}
+.icon-btn:hover{background:#141518;}
 
-  .status{ color:var(--muted);font-size:13px; }
+.status{color:var(--muted);font-size:13px;}
 
-  /* SUMMARY */
-  .summary{
-    margin-top:8px;padding:8px 10px;border-radius:10px;
-    display:flex;flex-wrap:wrap;justify-content:space-between;
-    background:linear-gradient(135deg,#15171c,#101216);
-  }
-  .summary strong{ font-weight:800; }
-  .redText{ color:var(--red); }
-  .greenText{ color:var(--green); }
+.summary{
+  margin-top:10px;padding:10px;border-radius:10px;
+  background:linear-gradient(135deg,#15171c,#101216);
+  display:flex;justify-content:space-between;flex-wrap:wrap;
+}
+.summary strong{font-weight:800;}
+.redText{color:var(--red);} .greenText{color:var(--green);}
 
-  /* Timer pulse when running */
-  @keyframes timerPulse {
-    0% { opacity:1; } 50% { opacity:0.55; } 100% { opacity:1; }
-  }
-  .timer-running{ animation:timerPulse 1.2s infinite ease-in-out; }
+@keyframes timerPulse {
+  0%{opacity:1;} 50%{opacity:.55;} 100%{opacity:1;}
+}
+.timer-running{animation:timerPulse 1.2s infinite;}
 
-  .grid{ display:grid;grid-template-columns:2fr 3fr;gap:var(--gap); }
-  @media(max-width:900px){ .grid{grid-template-columns:1fr;} }
+.grid{display:grid;grid-template-columns:2fr 3fr;gap:var(--gap);}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}}
 
-  .card{
-    background:var(--panel);border-radius:var(--radius);
-    padding:12px;box-shadow:0 6px 18px rgba(0,0,0,.6);
-  }
-  .card h3{ margin:0 0 8px 0;font-size:15px; }
+.card{
+  background:var(--panel);padding:12px;border-radius:var(--radius);
+  box-shadow:0 6px 18px rgba(0,0,0,.6);
+}
+.card h3{margin:0 0 8px 0;font-size:15px;}
 
-  button{
-    border:0;border-radius:10px;
-    padding:10px 12px;font-weight:700;
-    cursor:pointer;font-size:15px;
-  }
+button{
+  border:0;border-radius:10px;padding:10px 12px;font-weight:700;
+  cursor:pointer;font-size:15px;
+}
 
-  .small{ padding:8px 10px;font-size:13px; }
-  .btn-wide{ min-width:120px; }
-  .blue{ background:var(--accent);color:#fff; }
-  .gray{ background:#2a2b2c;color:#fff; }
-  .red{ background:var(--red);color:#fff; }
-  .green{ background:var(--green);color:#fff; }
-  .gold{ background:var(--gold);color:#000; }
-  .row{ display:flex;gap:8px;flex-wrap:wrap; }
+.small{padding:8px 10px;font-size:13px;}
+.btn-wide{min-width:120px;}
+.blue{background:var(--accent);color:#fff;}
+.gray{background:#2a2b2c;color:#fff;}
+.red{background:var(--red);color:#fff;}
+.green{background:var(--green);color:#fff;}
+.gold{background:var(--gold);color:#000;}
 
-  .score-columns{
-    display:grid;grid-template-columns:1fr 1fr;gap:10px;
-  }
-  @media(max-width:600px){ .score-columns{grid-template-columns:1fr;} }
+.row{display:flex;gap:8px;flex-wrap:wrap;}
 
-  .scoring-grid{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-  }
-  @media(max-width:450px){ .scoring-grid{grid-template-columns:repeat(2,1fr);} }
+.score-columns{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+@media(max-width:600px){.score-columns{grid-template-columns:1fr;}}
 
-  /* DRAWERS */
-  .drawer-backdrop{
-    position:fixed;inset:0;
-    background:rgba(0,0,0,0.4);
-    opacity:0;pointer-events:none;
-    transition:opacity .2s;
-    z-index:9998;
-  }
-  .drawer-backdrop.open{
-    opacity:1;pointer-events:auto;
-  }
+.scoring-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+}
+@media(max-width:450px){.scoring-grid{grid-template-columns:repeat(2,1fr);}}
 
-  .drawer-panel{
-    position:fixed;top:0;height:100%;width:300px;
-    max-width:80vw;background:#101116;
-    border-left:1px solid #202127;
-    border-right:1px solid #202127;
-    display:flex;flex-direction:column;
-    transform:translateX(-100%);
-    transition:transform .2s;
-    z-index:9999;
-  }
-  #drawerLeft{ left:0; }
-  #drawerRight{
-    right:0;left:auto;
-    transform:translateX(100%);
-  }
-  .drawer-panel.open{
-    transform:translateX(0);
-  }
-  .drawer-header{
-    padding:12px;border-bottom:1px solid #202127;
-    display:flex;justify-content:space-between;align-items:center;
-  }
-  .drawer-title{
-    font-size:13px;text-transform:uppercase;
-    letter-spacing:.08em;color:var(--muted);
-  }
-  .drawer-close-btn{
-    border:0;background:transparent;color:#fff;
-    cursor:pointer;font-size:18px;
-  }
-  .drawer-body{
-    padding:12px;font-size:13px;overflow-y:auto;
-  }
-  .drawer-section{ margin-bottom:18px; }
-  .drawer-section h4{
-    margin:0 0 6px 0;font-size:13px;
-    text-transform:uppercase;color:var(--muted);
-  }
-  .drawer-note{ font-size:12px;color:var(--muted); }
+/* DRAWER BACKDROP */
+.drawer-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);
+  opacity:0;pointer-events:none;transition:opacity .25s;
+  z-index:9998;
+}
+.drawer-backdrop.open{opacity:1;pointer-events:auto;}
 
-  input[type=text],input[type=number]{
-    width:100%;padding:8px 9px;border-radius:8px;
-    border:0;background:#0d0e11;color:#fff;
-  }
+/* LEFT DRAWER */
+#drawerLeft{
+  position:fixed;top:0;left:0;height:100%;width:300px;max-width:80vw;
+  background:#101116;border-right:1px solid #202127;
+  transform:translateX(-100%);transition:transform .25s ease;
+  z-index:9999;
+}
+#drawerLeft.open{transform:translateX(0);}
 
-  .toggle-row{
-    display:flex;align-items:center;justify-content:space-between;
-    margin-top:6px;
-  }
-  .toggle-row label{ font-size:13px;color:var(--muted); }
+/* RIGHT DRAWER (FIXED) */
+#drawerRight{
+  position:fixed;top:0;right:0;height:100%;width:300px;max-width:80vw;
+  background:#101116;border-left:1px solid #202127;
+  transform:translateX(100%);transition:transform .25s ease;
+  z-index:9999;
+}
+#drawerRight.open{transform:translateX(0);}
 
-  #version-tag{
-    position:fixed;bottom:6px;right:10px;font-size:11px;
-    color:#666;opacity:.75;pointer-events:none;
-    font-weight:600;z-index:99999;
-  }
+.drawer-header{
+  padding:12px;border-bottom:1px solid #202127;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.drawer-title{font-size:14px;font-weight:700;}
+.drawer-close-btn{
+  border:0;background:#2a2b2c;color:#fff;border-radius:6px;
+  height:28px;width:28px;cursor:pointer;
+}
+.drawer-body{padding:12px;font-size:13px;}
+.drawer-section{margin-bottom:16px;}
+.drawer-section h4{
+  margin:0 0 6px 0;font-size:12px;text-transform:uppercase;
+  color:var(--muted);
+}
+input[type=text],input[type=number]{
+  width:100%;padding:8px;border-radius:8px;border:0;
+  background:#0d0e11;color:#fff;margin-top:4px;
+}
+
+#version-tag{
+  position:fixed;bottom:6px;right:10px;font-size:11px;
+  color:#666;opacity:.75;font-weight:600;
+}
 </style>
 </head>
 <body>
@@ -177,7 +145,7 @@
 <!-- HEADER -->
 <div class="header-bar">
   <div class="header-inner">
-    <img src="https://www.matside.org/assets/images/image01.png" class="brand-logo">
+    <img src="control-logo.png" class="brand-logo" alt="logo"/>
     <div class="brand-title">Matside</div>
   </div>
   <div class="header-accent"></div>
@@ -186,8 +154,8 @@
 <div class="wrap">
 
   <!-- TOP BAR -->
-  <div class="top-bar" style="display:flex;justify-content:space-between;align-items:center;">
-    <button id="openDrawerLeft" class="icon-btn" title="Timer Settings">⚡</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <button id="openDrawerLeft" class="icon-btn">⚡</button>
 
     <div style="display:flex;align-items:center;gap:10px;">
       <label>Mat</label>
@@ -197,11 +165,10 @@
         <option value="3">Mat 3</option>
         <option value="4">Mat 4</option>
       </select>
-
       <div class="status">Status: <span id="conn">connecting…</span></div>
     </div>
 
-    <button id="openDrawerRight" class="icon-btn" title="Match Settings">⚙️</button>
+    <button id="openDrawerRight" class="icon-btn">⚙️</button>
   </div>
 
   <!-- SUMMARY -->
@@ -226,40 +193,34 @@
       <div class="row" style="margin-top:6px;">
         <button id="resetTimerBtn" class="gold btn-wide">Reset Timer</button>
       </div>
-      <div style="margin-top:8px;font-size:13px;color:var(--muted);">
-        Timer presets, buzzer, and auto-advance live in ⚡ Timer Settings.
-      </div>
     </div>
 
     <!-- SCORING -->
     <div class="card">
       <h3>Scoring</h3>
-
       <div class="score-columns">
 
-        <!-- RED -->
         <div>
           <div class="status" style="margin-bottom:4px;">Red Wrestler</div>
           <div class="scoring-grid">
-            <button class="red small" data-color="red" data-pts="1">E1 (+1)</button>
-            <button class="red small" data-color="red" data-pts="2">R2 (+2)</button>
-            <button class="red small" data-color="red" data-pts="3">T3 (+3)</button>
-            <button class="red small" data-color="red" data-pts="2">N2 (+2)</button>
-            <button class="red small" data-color="red" data-pts="3">N3 (+3)</button>
-            <button class="red small" data-color="red" data-pts="4">N4 (+4)</button>
+            <button class="red small" data-color="red" data-pts="1">E1</button>
+            <button class="red small" data-color="red" data-pts="2">R2</button>
+            <button class="red small" data-color="red" data-pts="3">T3</button>
+            <button class="red small" data-color="red" data-pts="2">N2</button>
+            <button class="red small" data-color="red" data-pts="3">N3</button>
+            <button class="red small" data-color="red" data-pts="4">N4</button>
           </div>
         </div>
 
-        <!-- GREEN -->
         <div>
           <div class="status" style="margin-bottom:4px;">Green Wrestler</div>
           <div class="scoring-grid">
-            <button class="green small" data-color="green" data-pts="1">E1 (+1)</button>
-            <button class="green small" data-color="green" data-pts="2">R2 (+2)</button>
-            <button class="green small" data-color="green" data-pts="3">T3 (+3)</button>
-            <button class="green small" data-color="green" data-pts="2">N2 (+2)</button>
-            <button class="green small" data-color="green" data-pts="3">N3 (+3)</button>
-            <button class="green small" data-color="green" data-pts="4">N4 (+4)</button>
+            <button class="green small" data-color="green" data-pts="1">E1</button>
+            <button class="green small" data-color="green" data-pts="2">R2</button>
+            <button class="green small" data-color="green" data-pts="3">T3</button>
+            <button class="green small" data-color="green" data-pts="2">N2</button>
+            <button class="green small" data-color="green" data-pts="3">N3</button>
+            <button class="green small" data-color="green" data-pts="4">N4</button>
           </div>
         </div>
 
@@ -267,448 +228,191 @@
 
       <div class="row" style="margin-top:10px;">
         <button id="subRed" class="small gray">-1 Red</button>
-        <button id="resetScores" class="small gold">Reset Scores</button>
+        <button id="resetScores" class="small gold">Reset</button>
         <button id="subGreen" class="small gray">-1 Green</button>
       </div>
-
     </div>
 
   </div>
 </div>
 
-<!-- DRAWERS + BACKDROPS -->
-<div id="drawerLeft" class="drawer-panel">
+<!-- LEFT DRAWER -->
+<div id="drawerLeft">
   <div class="drawer-header">
     <div class="drawer-title">Timer Settings</div>
-    <button class="drawer-close-btn" id="closeDrawerLeft">✕</button>
+    <button id="closeDrawerLeft" class="drawer-close-btn">✕</button>
   </div>
   <div class="drawer-body">
-    <div class="drawer-section">
-      <h4>Current Period Length</h4>
-      <div id="currentPeriodLabel">1:00 (default)</div>
-      <div class="drawer-note">Displayed time counts <strong>down</strong> from this length.</div>
-    </div>
 
     <div class="drawer-section">
       <h4>Presets</h4>
       <div class="row">
-        <button class="small blue preset-btn" data-seconds="60">1:00</button>
-        <button class="small blue preset-btn" data-seconds="90">1:30</button>
-        <button class="small blue preset-btn" data-seconds="120">2:00</button>
+        <button class="small blue presetBtn" data-sec="60">1:00</button>
+        <button class="small blue presetBtn" data-sec="90">1:30</button>
+        <button class="small blue presetBtn" data-sec="120">2:00</button>
       </div>
     </div>
 
     <div class="drawer-section">
-      <h4>Custom Length</h4>
-      <input id="customSeconds" type="number" min="10" step="5" placeholder="Seconds (e.g. 75)"/>
-      <button id="setCustomBtn" class="small gray" style="margin-top:6px;">Set Custom Length</button>
-      <div class="drawer-note">This applies to the currently selected mat only.</div>
+      <h4>Custom Time</h4>
+      <input id="customTime" type="number" placeholder="Seconds">
+      <button id="applyCustom" class="small gold" style="margin-top:6px;">Apply</button>
     </div>
 
-    <div class="drawer-section">
-      <h4>End of Period</h4>
-      <div class="toggle-row">
-        <label><input type="checkbox" id="buzzerToggle" checked> Buzzer at 0:00</label>
-      </div>
-      <div class="toggle-row">
-        <label><input type="checkbox" id="autoAdvanceToggle"> Auto-advance to next period</label>
-      </div>
-      <div class="drawer-note">
-        When enabled, time reaching 0:00 will beep and auto-advance (stop + next period).
-      </div>
-    </div>
   </div>
 </div>
 
-<div id="drawerRight" class="drawer-panel">
+<!-- RIGHT DRAWER -->
+<div id="drawerRight">
   <div class="drawer-header">
     <div class="drawer-title">Match Settings</div>
-    <button class="drawer-close-btn" id="closeDrawerRight">✕</button>
+    <button id="closeDrawerRight" class="drawer-close-btn">✕</button>
   </div>
   <div class="drawer-body">
+
     <div class="drawer-section">
       <h4>Wrestler Names</h4>
-      <label style="font-size:12px;">Red Wrestler</label>
-      <input id="redNameInput" type="text" placeholder="Red wrestler name"/>
-      <label style="font-size:12px;margin-top:8px;display:block;">Green Wrestler</label>
-      <input id="greenNameInput" type="text" placeholder="Green wrestler name"/>
-      <div class="drawer-note">
-        For now these names are local to this device. We can wire them to the scoreboard later.
-      </div>
+      <label>Red</label>
+      <input id="redNameInput" type="text" placeholder="Red wrestler name">
+
+      <label style="margin-top:8px;display:block;">Green</label>
+      <input id="greenNameInput" type="text" placeholder="Green wrestler name">
     </div>
 
     <div class="drawer-section">
       <h4>Period Controls</h4>
       <div class="row">
-        <button id="prevPeriodBtn" class="small gray">Previous Period</button>
-        <button id="nextPeriodBtn" class="small blue">Next Period</button>
-      </div>
-      <div class="drawer-note">
-        Use these if you need to manually fix the current period.
+        <button id="prevPeriodBtn" class="small gray">Previous</button>
+        <button id="nextPeriodBtn" class="small blue">Next</button>
       </div>
     </div>
+
   </div>
 </div>
 
+<!-- BACKDROPS -->
 <div id="backdropLeft" class="drawer-backdrop"></div>
 <div id="backdropRight" class="drawer-backdrop"></div>
 
-<!-- VERSION TAG -->
-<div id="version-tag">v2.5</div>
+<div id="version-tag">v2.5.2</div>
 
 <script>
-/* ========= Drawer wiring ========= */
-const drawerLeft = document.getElementById("drawerLeft");
-const drawerRight = document.getElementById("drawerRight");
-const backdropLeft = document.getElementById("backdropLeft");
-const backdropRight = document.getElementById("backdropRight");
-const openDrawerLeft = document.getElementById("openDrawerLeft");
-const openDrawerRight = document.getElementById("openDrawerRight");
-const closeDrawerLeft = document.getElementById("closeDrawerLeft");
-const closeDrawerRight = document.getElementById("closeDrawerRight");
+// ---------------------------
+// SOCKET.IO
+// ---------------------------
+const socket = io("https://scoreboard-server-er33.onrender.com");
 
-function openLeft() {
-  drawerLeft.classList.add("open");
-  backdropLeft.classList.add("open");
-}
-function closeLeft() {
-  drawerLeft.classList.remove("open");
-  backdropLeft.classList.remove("open");
-}
-function openRight() {
-  drawerRight.classList.add("open");
-  backdropRight.classList.add("open");
-}
-function closeRight() {
-  drawerRight.classList.remove("open");
-  backdropRight.classList.remove("open");
-}
+socket.on("connect", () => conn.textContent = "connected");
+socket.on("disconnect", () => conn.textContent = "disconnected");
 
-openDrawerLeft.addEventListener("click", openLeft);
-openDrawerRight.addEventListener("click", openRight);
-closeDrawerLeft.addEventListener("click", closeLeft);
-closeDrawerRight.addEventListener("click", closeRight);
-backdropLeft.addEventListener("click", closeLeft);
-backdropRight.addEventListener("click", closeRight);
+socket.on("stateUpdate", state => updateUI(state));
 
-/* ========= Per-mat settings (period length, buzzer, auto-advance) ========= */
-const matSelect = document.getElementById("matSelect");
-const currentPeriodLabel = document.getElementById("currentPeriodLabel");
-const buzzerToggle = document.getElementById("buzzerToggle");
-const autoAdvanceToggle = document.getElementById("autoAdvanceToggle");
-
-let controlSettings = {
-  mats: {
-    1: { periodLength: 60, buzzer: true, autoAdvance: false },
-    2: { periodLength: 60, buzzer: true, autoAdvance: false },
-    3: { periodLength: 60, buzzer: true, autoAdvance: false },
-    4: { periodLength: 60, buzzer: true, autoAdvance: false }
-  }
-};
-
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem("matsideControlSettings");
-    if (!raw) return;
-    const obj = JSON.parse(raw);
-    if (obj && obj.mats) {
-      controlSettings = { ...controlSettings, mats: { ...controlSettings.mats, ...obj.mats } };
-    }
-  } catch(e) { /* ignore */ }
-}
-function saveSettings() {
-  localStorage.setItem("matsideControlSettings", JSON.stringify(controlSettings));
-}
-function getMatSettings(mat) {
-  return controlSettings.mats[mat] || controlSettings.mats[1];
-}
-function setMatSettings(mat, partial) {
-  controlSettings.mats[mat] = { ...getMatSettings(mat), ...partial };
-  saveSettings();
-  refreshDrawerUI();
-}
-function secondsToLabel(sec) {
-  const m = Math.floor(sec / 60).toString().padStart(1,"0");
-  const s = (sec % 60).toString().padStart(2,"0");
+// ---------------------------
+// FORMAT TIME
+// ---------------------------
+function formatTime(sec){
+  const m = String(Math.floor(sec/60)).padStart(2,"0");
+  const s = String(sec%60).padStart(2,"0");
   return `${m}:${s}`;
 }
 
-/* ========= Socket.IO ========= */
-const socket = io("https://scoreboard-server-er33.onrender.com", {
-  transports:["websocket"]
-});
+// ---------------------------
+// UPDATE UI
+// ---------------------------
+function updateUI(state){
+  const mat = parseInt(matSelect.value);
+  const m = state.mats[mat];
+  if(!m) return;
 
-socket.on("connect", () => {
-  document.getElementById("conn").textContent = "connected";
-});
-
-socket.on("disconnect", () => {
-  document.getElementById("conn").textContent = "disconnected";
-});
-
-let lastState = null;
-const lastRemaining = {}; // track remaining time per mat for buzzer
-
-socket.on("stateUpdate", (state) => {
-  lastState = state;
-  updateUI(state);
-});
-
-/* ========= TIME FORMAT ========= */
-function formatTime(sec) {
-  const m = Math.floor(sec / 60).toString().padStart(2,"0");
-  const s = (sec % 60).toString().padStart(2,"0");
-  return `${m}:${s}`;
+  sumMat.textContent = mat;
+  sumPeriod.textContent = m.period;
+  sumTime.textContent = formatTime(m.time);
+  sumRed.textContent = m.red;
+  sumGreen.textContent = m.green;
 }
 
-/* ========= Simple beep on 0:00 ========= */
-let audioCtx = null;
-function playBeep() {
-  try {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = "square";
-    osc.frequency.value = 1000;
-    const now = audioCtx.currentTime;
-    gain.gain.setValueAtTime(0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
-    osc.start(now);
-    osc.stop(now + 0.4);
-  } catch(e) {
-    // Some browsers block audio until interaction; safe to ignore
-  }
-}
-
-/* ========= UI UPDATE (counts DOWN using period length) ========= */
-function updateUI(state) {
-  const mat = parseInt(matSelect.value, 10);
-  const m = state.mats?.[mat];
-  if (!m) return;
-
-  const settings = getMatSettings(mat);
-  const periodLen = m.periodLength || settings.periodLength || 60;
-
-  // remaining time (never below 0)
-  const remaining = Math.max(periodLen - (m.time || 0), 0);
-
-  // Summary
-  document.getElementById("sumMat").textContent = mat;
-  document.getElementById("sumPeriod").textContent = m.period ?? 1;
-  document.getElementById("sumTime").textContent = formatTime(remaining);
-  document.getElementById("sumRed").textContent = m.red ?? 0;
-  document.getElementById("sumGreen").textContent = m.green ?? 0;
-
-  const sumTimeEl = document.getElementById("sumTime");
-  if (m.running) sumTimeEl.classList.add("timer-running");
-  else sumTimeEl.classList.remove("timer-running");
-
-  // Drawer UI (current mat)
-  refreshDrawerUI();
-
-  // Buzzer + auto-advance at 0:00
-  const prev = lastRemaining[mat];
-  if (prev !== undefined && prev > 0 && remaining <= 0) {
-    if (settings.buzzer) playBeep();
-    if (settings.autoAdvance) {
-      socket.emit("updateState", {
-        mat,
-        updates: {
-          running: false,
-          period: (m.period || 1) + 1,
-          time: 0
-        }
-      });
-    } else {
-      // stop at 0 if not auto-advancing
-      socket.emit("updateState", { mat, updates:{ running:false } });
-    }
-  }
-  lastRemaining[mat] = remaining;
-}
-
-/* ========= Refresh drawer UI for current mat ========= */
-function refreshDrawerUI() {
-  const mat = parseInt(matSelect.value, 10);
-  const settings = getMatSettings(mat);
-  const label = secondsToLabel(settings.periodLength || 60);
-  currentPeriodLabel.textContent = `${label}`;
-  buzzerToggle.checked = !!settings.buzzer;
-  autoAdvanceToggle.checked = !!settings.autoAdvance;
-}
-
-/* ========= BUTTON HANDLERS ========= */
-document.getElementById("startBtn").onclick = () => {
-  const mat = parseInt(matSelect.value, 10);
-  socket.emit("updateState", { mat, updates:{ running:true }});
+// ---------------------------
+// TIMER BUTTONS
+// ---------------------------
+startBtn.onclick = () => {
+  const mat = parseInt(matSelect.value);
+  socket.emit("updateState",{mat,updates:{running:true}});
+};
+stopBtn.onclick = () => {
+  const mat = parseInt(matSelect.value);
+  socket.emit("updateState",{mat,updates:{running:false}});
+};
+resetTimerBtn.onclick = () => {
+  const mat = parseInt(matSelect.value);
+  socket.emit("updateState",{mat,updates:{time:0,running:false}});
 };
 
-document.getElementById("stopBtn").onclick = () => {
-  const mat = parseInt(matSelect.value, 10);
-  socket.emit("updateState", { mat, updates:{ running:false }});
-};
-
-document.getElementById("resetTimerBtn").onclick = () => {
-  const mat = parseInt(matSelect.value, 10);
-  lastRemaining[mat] = undefined;
-  socket.emit("updateState", { mat, updates:{ time:0, running:false }});
-};
-
-/* scoring buttons */
-document.querySelectorAll(".scoring-grid button").forEach(btn => {
+// ---------------------------
+// PRESETS
+// ---------------------------
+document.querySelectorAll(".presetBtn").forEach(btn=>{
   btn.onclick = () => {
-    const color = btn.dataset.color;
-    const pts = parseInt(btn.dataset.pts, 10);
-    const mat = parseInt(matSelect.value, 10);
-    socket.emit("addPoints", { mat, color, pts });
+    const sec = parseInt(btn.dataset.sec);
+    const mat = parseInt(matSelect.value);
+    socket.emit("updateState",{mat,updates:{time:sec}});
   };
 });
-
-document.getElementById("subRed").onclick = () => {
-  const mat = parseInt(matSelect.value, 10);
-  socket.emit("subPoint", { mat, color:"red" });
+applyCustom.onclick = () => {
+  const sec = parseInt(customTime.value);
+  const mat = parseInt(matSelect.value);
+  if(!isNaN(sec))
+    socket.emit("updateState",{mat,updates:{time:sec}});
 };
 
-document.getElementById("subGreen").onclick = () => {
-  const mat = parseInt(matSelect.value, 10);
-  socket.emit("subPoint", { mat, color:"green" });
+// ---------------------------
+// SCORING
+// ---------------------------
+document.querySelectorAll(".scoring-grid button").forEach(btn=>{
+  btn.onclick = () => {
+    const color = btn.dataset.color;
+    const pts = parseInt(btn.dataset.pts);
+    const mat = parseInt(matSelect.value);
+    socket.emit("addPoints",{mat,color,pts});
+  };
+});
+subRed.onclick = () => {
+  socket.emit("subPoint",{mat:parseInt(matSelect.value),color:"red"});
+};
+subGreen.onclick = () => {
+  socket.emit("subPoint",{mat:parseInt(matSelect.value),color:"green"});
+};
+resetScores.onclick = () => {
+  socket.emit("updateState",{mat:parseInt(matSelect.value),updates:{red:0,green:0}});
 };
 
-document.getElementById("resetScores").onclick = () => {
-  const mat = parseInt(matSelect.value, 10);
-  socket.emit("updateState", { mat, updates:{ red:0, green:0 }});
+// ---------------------------
+// PERIOD CONTROLS
+// ---------------------------
+prevPeriodBtn.onclick = () => {
+  const mat = parseInt(matSelect.value);
+  socket.emit("updateState",{mat,updates:{periodChange:-1}});
+};
+nextPeriodBtn.onclick = () => {
+  const mat = parseInt(matSelect.value);
+  socket.emit("updateState",{mat,updates:{periodChange:1}});
 };
 
-/* ========= Presets + custom period length ========= */
-document.querySelectorAll(".preset-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const sec = parseInt(btn.dataset.seconds, 10);
-    const mat = parseInt(matSelect.value, 10);
-    setMatSettings(mat, { periodLength: sec });
-    lastRemaining[mat] = sec;
-    socket.emit("updateState", { mat, updates:{ periodLength: sec, time:0, running:false }});
-  });
-});
+// ---------------------------
+// DRAWERS
+// ---------------------------
+function openLeft(){drawerLeft.classList.add("open");backdropLeft.classList.add("open");}
+function closeLeft(){drawerLeft.classList.remove("open");backdropLeft.classList.remove("open");}
 
-document.getElementById("setCustomBtn").addEventListener("click", () => {
-  const input = document.getElementById("customSeconds");
-  const sec = parseInt(input.value, 10);
-  if (!sec || sec <= 0) return;
-  const mat = parseInt(matSelect.value, 10);
-  setMatSettings(mat, { periodLength: sec });
-  lastRemaining[mat] = sec;
-  socket.emit("updateState", { mat, updates:{ periodLength: sec, time:0, running:false }});
-  input.value = "";
-});
+function openRight(){drawerRight.classList.add("open");backdropRight.classList.add("open");}
+function closeRight(){drawerRight.classList.remove("open");backdropRight.classList.remove("open");}
 
-/* ========= Toggles ========= */
-buzzerToggle.addEventListener("change", () => {
-  const mat = parseInt(matSelect.value, 10);
-  setMatSettings(mat, { buzzer: buzzerToggle.checked });
-});
+openDrawerLeft.onclick = openLeft;
+closeDrawerLeft.onclick = closeLeft;
+backdropLeft.onclick = closeLeft;
 
-autoAdvanceToggle.addEventListener("change", () => {
-  const mat = parseInt(matSelect.value, 10);
-  setMatSettings(mat, { autoAdvance: autoAdvanceToggle.checked });
-});
-
-/* ========= Match settings: period ++ / -- (local -> server) ========= */
-document.getElementById("nextPeriodBtn").addEventListener("click", () => {
-  if (!lastState) return;
-  const mat = parseInt(matSelect.value, 10);
-  const m = lastState.mats?.[mat];
-  if (!m) return;
-  socket.emit("updateState", {
-    mat,
-    updates:{ period:(m.period || 1) + 1, time:0, running:false }
-  });
-});
-
-document.getElementById("prevPeriodBtn").addEventListener("click", () => {
-  if (!lastState) return;
-  const mat = parseInt(matSelect.value, 10);
-  const m = lastState.mats?.[mat];
-  if (!m) return;
-  const newP = Math.max(1, (m.period || 1) - 1);
-  socket.emit("updateState", {
-    mat,
-    updates:{ period:newP, time:0, running:false }
-  });
-});
-
-/* ========= Mat select change ========= */
-matSelect.addEventListener("change", () => {
-  refreshDrawerUI();
-  if (lastState) updateUI(lastState);
-});
-
-/* ========= Local wrestler names (for future wiring) ========= */
-function loadNames() {
-  try {
-    const raw = localStorage.getItem("matsideNames");
-    if (!raw) return {};
-    return JSON.parse(raw);
-  } catch(e) { return {}; }
-}
-function saveNames(names) {
-  localStorage.setItem("matsideNames", JSON.stringify(names));
-}
-let localNames = loadNames();
-
-const redNameInput = document.getElementById("redNameInput");
-const greenNameInput = document.getElementById("greenNameInput");
-
-function refreshNameInputs() {
-  const mat = parseInt(matSelect.value, 10);
-  const matNames = localNames[mat] || {};
-  redNameInput.value = matNames.red || "";
-  greenNameInput.value = matNames.green || "";
-}
-
-redNameInput.addEventListener("blur", () => {
-  const mat = parseInt(matSelect.value, 10);
-  const current = localNames[mat] || {};
-  localNames[mat] = { ...current, red:redNameInput.value };
-  saveNames(localNames);
-});
-
-greenNameInput.addEventListener("blur", () => {
-  const mat = parseInt(matSelect.value, 10);
-  const current = localNames[mat] || {};
-  localNames[mat] = { ...current, green:greenNameInput.value };
-  saveNames(localNames);
-});
-
-/* ========= Init ========= */
-loadSettings();
-refreshDrawerUI();
-refreshNameInputs();
-
-/* ==== SAFER DRAWER WIRING (v2.5.1) ==== */
-
-function safeBind(id, handler) {
-  const el = document.getElementById(id);
-  if (!el) {
-    console.warn("Missing element:", id);
-    return;
-  }
-  el.addEventListener("click", handler);
-}
-
-// LEFT
-safeBind("openDrawerLeft", openLeft);
-safeBind("closeDrawerLeft", closeLeft);
-safeBind("backdropLeft", closeLeft);
-
-// RIGHT
-safeBind("openDrawerRight", openRight);
-safeBind("closeDrawerRight", closeRight);
-safeBind("backdropRight", closeRight);
-  
+openDrawerRight.onclick = openRight;
+closeDrawerRight.onclick = closeRight;
+backdropRight.onclick = closeRight;
 </script>
 
 </body>
