@@ -104,9 +104,17 @@
   .name-red { color:var(--red); }
   .name-green { color:var(--green); }
 
+  .score-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 16px;
+  }
   .score-box {
-    font-size:64px;
-    font-weight:900;
+    font-size: 64px;
+    font-weight: 700;
+    padding: 40px 0;
+    border-radius: 16px;
   }
   .score-red {
     background:var(--red);
