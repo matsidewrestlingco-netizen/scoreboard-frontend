@@ -328,7 +328,17 @@ input[type=text],input[type=number]{
         <button id="nextPeriodBtn" class="small blue">Next Period</button>
       </div>
     </div>
-
+       
+<div class="drawer-section">
+  <h4>Reset Mat</h4>
+  <button id="resetMatBtn" class="small red" style="width:100%;margin-top:6px;">
+    Reset Entire Mat
+  </button>
+  <div style="margin-top:4px;font-size:12px;color:var(--muted);">
+    Resets period, scores, timeline, OT state, and timer back to the mat's preset length.
+  </div>
+</div>
+       
     <div class="drawer-section">
       <h4>Match Timeline</h4>
       <div id="timelineList" class="timeline-list"></div>
@@ -570,6 +580,12 @@ resetTimerBtn.onclick = () => {
   socket.emit("updateState",{mat,updates:{time:0,running:false}});
 };
 
+// Reset entire mat
+document.getElementById("resetMatBtn").onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  doFullMatReset(mat);
+};
+     
 // presets + custom (period length memory)
 document.querySelectorAll(".presetBtn").forEach(btn => {
   btn.onclick = () => {
@@ -598,6 +614,29 @@ function pushTimeline(mat, entry){
   renderTimeline(mat);
 }
 
+function doFullMatReset(mat) {
+  // Reg period length stored in periodLengthByMat
+  const baseLen = periodLengthByMat[mat] || 60;
+
+  // clear timeline data
+  timeline[mat] = [];
+  renderTimeline(mat);
+
+  // Emit reset to server
+  socket.emit("updateState", {
+    mat,
+    updates: {
+      period: 1,
+      otPhase: null,
+      otChoice: null,
+      red: 0,
+      green: 0,
+      time: baseLen,
+      running: false
+    }
+  });
+}
+     
 function renderTimeline(mat){
   const list = document.getElementById("timelineList");
   list.innerHTML = "";
