@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Matside — Control Panel (v2.5.2)</title>
+<title>Matside — Control Panel (v2.5.3)</title>
 
-<!-- SOCKET.IO -->
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<!-- Socket.IO client served from your own server -->
+<script src="https://scoreboard-server-er33.onrender.com/socket.io/socket.io.js"></script>
 
 <style>
 :root{
@@ -14,28 +14,35 @@
   --accent:#1e88e5; --red:#d32f2f; --green:#388e3c; --gold:#fbc02d;
   --radius:12px; --gap:12px;
 }
-
 html,body{
   margin:0;padding:0;background:var(--bg);color:#fff;
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
 }
 
+/* HEADER */
 .header-bar{background:#070809;border-bottom:1px solid #111215;}
-.header-inner{max-width:1100px;margin:0 auto;padding:4px 14px;
-  display:flex;align-items:center;gap:10px;}
+.header-inner{
+  max-width:1100px;margin:0 auto;padding:4px 14px;
+  display:flex;align-items:center;gap:10px;
+}
 .brand-logo{height:42px;border-radius:8px;}
 .brand-title{font-size:18px;font-weight:700;}
 .header-accent{
-  height:2px;background:linear-gradient(90deg,
-    rgba(30,136,229,.12),rgba(30,136,229,.5),rgba(30,136,229,.12));
+  height:2px;
+  background:linear-gradient(90deg,
+    rgba(30,136,229,.12),
+    rgba(30,136,229,.5),
+    rgba(30,136,229,.12)
+  );
 }
 
 .wrap{max-width:1100px;margin:0 auto;padding:14px;}
 
 .icon-btn{
-  height:38px;width:38px;border-radius:50%;border:2px solid #2f3135;
-  background:#0c0d10;color:#fff;cursor:pointer;font-size:18px;
+  height:38px;width:38px;border-radius:50%;
+  border:2px solid #2f3135;background:#0c0d10;color:#fff;
   display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;
 }
 .icon-btn:hover{background:#141518;}
 
@@ -47,7 +54,8 @@ html,body{
   display:flex;justify-content:space-between;flex-wrap:wrap;
 }
 .summary strong{font-weight:800;}
-.redText{color:var(--red);} .greenText{color:var(--green);}
+.redText{color:var(--red);}
+.greenText{color:var(--green);}
 
 @keyframes timerPulse {
   0%{opacity:1;} 50%{opacity:.55;} 100%{opacity:1;}
@@ -67,7 +75,6 @@ button{
   border:0;border-radius:10px;padding:10px 12px;font-weight:700;
   cursor:pointer;font-size:15px;
 }
-
 .small{padding:8px 10px;font-size:13px;}
 .btn-wide{min-width:120px;}
 .blue{background:var(--accent);color:#fff;}
@@ -105,9 +112,9 @@ button{
 }
 #drawerLeft.open{transform:translateX(0);}
 
-/* RIGHT DRAWER (FIXED) */
+/* RIGHT DRAWER */
 #drawerRight{
-  position:fixed;top:0;right:0;height:100%;width:300px;max-width:80vw;
+  position:fixed;top:0;right:0;height:100%;width:320px;max-width:85vw;
   background:#101116;border-left:1px solid #202127;
   transform:translateX(100%);transition:transform .25s ease;
   z-index:9999;
@@ -134,6 +141,20 @@ input[type=text],input[type=number]{
   background:#0d0e11;color:#fff;margin-top:4px;
 }
 
+/* TIMELINE */
+.timeline-list{
+  max-height:260px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:6px;
+}
+.timeline-card{
+  background:#0c0e12;border-radius:8px;padding:6px 8px;
+  font-size:12px;line-height:1.3;
+}
+.timeline-card.red{border-left:3px solid var(--red);}
+.timeline-card.green{border-left:3px solid var(--green);}
+.timeline-main{font-weight:600;}
+.timeline-meta{color:var(--muted);font-size:11px;margin-top:2px;}
+
 #version-tag{
   position:fixed;bottom:6px;right:10px;font-size:11px;
   color:#666;opacity:.75;font-weight:600;
@@ -145,7 +166,7 @@ input[type=text],input[type=number]{
 <!-- HEADER -->
 <div class="header-bar">
   <div class="header-inner">
-    <img src="control-logo.png" class="brand-logo" alt="logo"/>
+    <img src="https://www.matside.org/assets/images/image01.png" class="brand-logo" alt="Matside"/>
     <div class="brand-title">Matside</div>
   </div>
   <div class="header-accent"></div>
@@ -155,7 +176,7 @@ input[type=text],input[type=number]{
 
   <!-- TOP BAR -->
   <div style="display:flex;justify-content:space-between;align-items:center;">
-    <button id="openDrawerLeft" class="icon-btn">⚡</button>
+    <button id="openDrawerLeft" class="icon-btn" title="Timer Settings">⚡</button>
 
     <div style="display:flex;align-items:center;gap:10px;">
       <label>Mat</label>
@@ -168,7 +189,7 @@ input[type=text],input[type=number]{
       <div class="status">Status: <span id="conn">connecting…</span></div>
     </div>
 
-    <button id="openDrawerRight" class="icon-btn">⚙️</button>
+    <button id="openDrawerRight" class="icon-btn" title="Match Settings & Timeline">⚙️</button>
   </div>
 
   <!-- SUMMARY -->
@@ -193,6 +214,10 @@ input[type=text],input[type=number]{
       <div class="row" style="margin-top:6px;">
         <button id="resetTimerBtn" class="gold btn-wide">Reset Timer</button>
       </div>
+
+      <div style="margin-top:8px;font-size:13px;color:var(--muted);">
+        Timer presets & custom length are in ⚡ Timer Settings. Timer <strong>counts down</strong>.
+      </div>
     </div>
 
     <!-- SCORING -->
@@ -200,27 +225,29 @@ input[type=text],input[type=number]{
       <h3>Scoring</h3>
       <div class="score-columns">
 
+        <!-- RED -->
         <div>
           <div class="status" style="margin-bottom:4px;">Red Wrestler</div>
           <div class="scoring-grid">
-            <button class="red small" data-color="red" data-pts="1">E1</button>
-            <button class="red small" data-color="red" data-pts="2">R2</button>
-            <button class="red small" data-color="red" data-pts="3">T3</button>
-            <button class="red small" data-color="red" data-pts="2">N2</button>
-            <button class="red small" data-color="red" data-pts="3">N3</button>
-            <button class="red small" data-color="red" data-pts="4">N4</button>
+            <button class="red small score-btn" data-color="red" data-pts="1" data-code="E1">E1 (+1)</button>
+            <button class="red small score-btn" data-color="red" data-pts="2" data-code="R2">R2 (+2)</button>
+            <button class="red small score-btn" data-color="red" data-pts="3" data-code="T3">T3 (+3)</button>
+            <button class="red small score-btn" data-color="red" data-pts="2" data-code="N2">N2 (+2)</button>
+            <button class="red small score-btn" data-color="red" data-pts="3" data-code="N3">N3 (+3)</button>
+            <button class="red small score-btn" data-color="red" data-pts="4" data-code="N4">N4 (+4)</button>
           </div>
         </div>
 
+        <!-- GREEN -->
         <div>
           <div class="status" style="margin-bottom:4px;">Green Wrestler</div>
           <div class="scoring-grid">
-            <button class="green small" data-color="green" data-pts="1">E1</button>
-            <button class="green small" data-color="green" data-pts="2">R2</button>
-            <button class="green small" data-color="green" data-pts="3">T3</button>
-            <button class="green small" data-color="green" data-pts="2">N2</button>
-            <button class="green small" data-color="green" data-pts="3">N3</button>
-            <button class="green small" data-color="green" data-pts="4">N4</button>
+            <button class="green small score-btn" data-color="green" data-pts="1" data-code="E1">E1 (+1)</button>
+            <button class="green small score-btn" data-color="green" data-pts="2" data-code="R2">R2 (+2)</button>
+            <button class="green small score-btn" data-color="green" data-pts="3" data-code="T3">T3 (+3)</button>
+            <button class="green small score-btn" data-color="green" data-pts="2" data-code="N2">N2 (+2)</button>
+            <button class="green small score-btn" data-color="green" data-pts="3" data-code="N3">N3 (+3)</button>
+            <button class="green small score-btn" data-color="green" data-pts="4" data-code="N4">N4 (+4)</button>
           </div>
         </div>
 
@@ -228,7 +255,7 @@ input[type=text],input[type=number]{
 
       <div class="row" style="margin-top:10px;">
         <button id="subRed" class="small gray">-1 Red</button>
-        <button id="resetScores" class="small gold">Reset</button>
+        <button id="resetScores" class="small gold">Reset Scores</button>
         <button id="subGreen" class="small gray">-1 Green</button>
       </div>
     </div>
@@ -236,14 +263,13 @@ input[type=text],input[type=number]{
   </div>
 </div>
 
-<!-- LEFT DRAWER -->
+<!-- LEFT DRAWER: TIMER SETTINGS -->
 <div id="drawerLeft">
   <div class="drawer-header">
     <div class="drawer-title">Timer Settings</div>
     <button id="closeDrawerLeft" class="drawer-close-btn">✕</button>
   </div>
   <div class="drawer-body">
-
     <div class="drawer-section">
       <h4>Presets</h4>
       <div class="row">
@@ -255,17 +281,19 @@ input[type=text],input[type=number]{
 
     <div class="drawer-section">
       <h4>Custom Time</h4>
-      <input id="customTime" type="number" placeholder="Seconds">
+      <input id="customTime" type="number" placeholder="Seconds"/>
       <button id="applyCustom" class="small gold" style="margin-top:6px;">Apply</button>
+      <div style="margin-top:4px;font-size:12px;color:var(--muted);">
+        Applies to current mat only. Timer will count down from this value.
+      </div>
     </div>
-
   </div>
 </div>
 
-<!-- RIGHT DRAWER -->
+<!-- RIGHT DRAWER: MATCH SETTINGS + TIMELINE -->
 <div id="drawerRight">
   <div class="drawer-header">
-    <div class="drawer-title">Match Settings</div>
+    <div class="drawer-title">Match Settings & Timeline</div>
     <button id="closeDrawerRight" class="drawer-close-btn">✕</button>
   </div>
   <div class="drawer-body">
@@ -273,17 +301,27 @@ input[type=text],input[type=number]{
     <div class="drawer-section">
       <h4>Wrestler Names</h4>
       <label>Red</label>
-      <input id="redNameInput" type="text" placeholder="Red wrestler name">
+      <input id="redNameInput" type="text" placeholder="Red wrestler name"/>
 
       <label style="margin-top:8px;display:block;">Green</label>
-      <input id="greenNameInput" type="text" placeholder="Green wrestler name">
+      <input id="greenNameInput" type="text" placeholder="Green wrestler name"/>
+      <div style="margin-top:4px;font-size:12px;color:var(--muted);">
+        Names are local to this device for now.
+      </div>
     </div>
 
     <div class="drawer-section">
       <h4>Period Controls</h4>
       <div class="row">
-        <button id="prevPeriodBtn" class="small gray">Previous</button>
-        <button id="nextPeriodBtn" class="small blue">Next</button>
+        <button id="prevPeriodBtn" class="small gray">Previous Period</button>
+        <button id="nextPeriodBtn" class="small blue">Next Period</button>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <h4>Match Timeline</h4>
+      <div id="timelineList" class="timeline-list">
+        <!-- cards injected here -->
       </div>
     </div>
 
@@ -294,117 +332,26 @@ input[type=text],input[type=number]{
 <div id="backdropLeft" class="drawer-backdrop"></div>
 <div id="backdropRight" class="drawer-backdrop"></div>
 
-<div id="version-tag">v2.5.2</div>
+<div id="version-tag">v2.5.3</div>
 
 <script>
-// ---------------------------
-// SOCKET.IO
-// ---------------------------
-const socket = io("https://scoreboard-server-er33.onrender.com");
-
-socket.on("connect", () => conn.textContent = "connected");
-socket.on("disconnect", () => conn.textContent = "disconnected");
-
-socket.on("stateUpdate", state => updateUI(state));
-
-// ---------------------------
-// FORMAT TIME
-// ---------------------------
-function formatTime(sec){
-  const m = String(Math.floor(sec/60)).padStart(2,"0");
-  const s = String(sec%60).padStart(2,"0");
-  return `${m}:${s}`;
+/* ===== Drawer helpers ===== */
+function openLeft(){
+  drawerLeft.classList.add("open");
+  backdropLeft.classList.add("open");
 }
-
-// ---------------------------
-// UPDATE UI
-// ---------------------------
-function updateUI(state){
-  const mat = parseInt(matSelect.value);
-  const m = state.mats[mat];
-  if(!m) return;
-
-  sumMat.textContent = mat;
-  sumPeriod.textContent = m.period;
-  sumTime.textContent = formatTime(m.time);
-  sumRed.textContent = m.red;
-  sumGreen.textContent = m.green;
+function closeLeft(){
+  drawerLeft.classList.remove("open");
+  backdropLeft.classList.remove("open");
 }
-
-// ---------------------------
-// TIMER BUTTONS
-// ---------------------------
-startBtn.onclick = () => {
-  const mat = parseInt(matSelect.value);
-  socket.emit("updateState",{mat,updates:{running:true}});
-};
-stopBtn.onclick = () => {
-  const mat = parseInt(matSelect.value);
-  socket.emit("updateState",{mat,updates:{running:false}});
-};
-resetTimerBtn.onclick = () => {
-  const mat = parseInt(matSelect.value);
-  socket.emit("updateState",{mat,updates:{time:0,running:false}});
-};
-
-// ---------------------------
-// PRESETS
-// ---------------------------
-document.querySelectorAll(".presetBtn").forEach(btn=>{
-  btn.onclick = () => {
-    const sec = parseInt(btn.dataset.sec);
-    const mat = parseInt(matSelect.value);
-    socket.emit("updateState",{mat,updates:{time:sec}});
-  };
-});
-applyCustom.onclick = () => {
-  const sec = parseInt(customTime.value);
-  const mat = parseInt(matSelect.value);
-  if(!isNaN(sec))
-    socket.emit("updateState",{mat,updates:{time:sec}});
-};
-
-// ---------------------------
-// SCORING
-// ---------------------------
-document.querySelectorAll(".scoring-grid button").forEach(btn=>{
-  btn.onclick = () => {
-    const color = btn.dataset.color;
-    const pts = parseInt(btn.dataset.pts);
-    const mat = parseInt(matSelect.value);
-    socket.emit("addPoints",{mat,color,pts});
-  };
-});
-subRed.onclick = () => {
-  socket.emit("subPoint",{mat:parseInt(matSelect.value),color:"red"});
-};
-subGreen.onclick = () => {
-  socket.emit("subPoint",{mat:parseInt(matSelect.value),color:"green"});
-};
-resetScores.onclick = () => {
-  socket.emit("updateState",{mat:parseInt(matSelect.value),updates:{red:0,green:0}});
-};
-
-// ---------------------------
-// PERIOD CONTROLS
-// ---------------------------
-prevPeriodBtn.onclick = () => {
-  const mat = parseInt(matSelect.value);
-  socket.emit("updateState",{mat,updates:{periodChange:-1}});
-};
-nextPeriodBtn.onclick = () => {
-  const mat = parseInt(matSelect.value);
-  socket.emit("updateState",{mat,updates:{periodChange:1}});
-};
-
-// ---------------------------
-// DRAWERS
-// ---------------------------
-function openLeft(){drawerLeft.classList.add("open");backdropLeft.classList.add("open");}
-function closeLeft(){drawerLeft.classList.remove("open");backdropLeft.classList.remove("open");}
-
-function openRight(){drawerRight.classList.add("open");backdropRight.classList.add("open");}
-function closeRight(){drawerRight.classList.remove("open");backdropRight.classList.remove("open");}
+function openRight(){
+  drawerRight.classList.add("open");
+  backdropRight.classList.add("open");
+}
+function closeRight(){
+  drawerRight.classList.remove("open");
+  backdropRight.classList.remove("open");
+}
 
 openDrawerLeft.onclick = openLeft;
 closeDrawerLeft.onclick = closeLeft;
@@ -413,6 +360,248 @@ backdropLeft.onclick = closeLeft;
 openDrawerRight.onclick = openRight;
 closeDrawerRight.onclick = closeRight;
 backdropRight.onclick = closeRight;
+
+/* ===== Socket.io ===== */
+const socket = io("https://scoreboard-server-er33.onrender.com", {
+  transports:["websocket","polling"]
+});
+
+let lastState = null;
+let timeline = {
+  1: [],
+  2: [],
+  3: [],
+  4: []
+};
+
+socket.on("connect", () => {
+  conn.textContent = "connected";
+});
+socket.on("disconnect", () => {
+  conn.textContent = "disconnected";
+});
+socket.on("stateUpdate", (state) => {
+  lastState = state;
+  updateUI(state);
+});
+
+/* ===== Helpers ===== */
+function formatTime(sec){
+  const s = Math.max(0, sec || 0);
+  const m = String(Math.floor(s/60)).padStart(2,"0");
+  const r = String(s%60).padStart(2,"0");
+  return `${m}:${r}`;
+}
+
+/* ===== UI Update ===== */
+function updateUI(state){
+  const mat = parseInt(matSelect.value, 10) || 1;
+  const m = state.mats?.[mat];
+  if(!m) return;
+
+  sumMat.textContent = mat;
+  sumPeriod.textContent = m.period ?? 1;
+  sumTime.textContent = formatTime(m.time ?? 0);
+  sumRed.textContent = m.red ?? 0;
+  sumGreen.textContent = m.green ?? 0;
+
+  if(m.running) sumTime.classList.add("timer-running");
+  else sumTime.classList.remove("timer-running");
+
+  renderTimeline(mat);
+}
+
+/* ===== Timer controls (countdown) ===== */
+startBtn.onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  socket.emit("updateState",{mat,updates:{running:true}});
+};
+stopBtn.onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  socket.emit("updateState",{mat,updates:{running:false}});
+};
+resetTimerBtn.onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  socket.emit("updateState",{mat,updates:{time:0,running:false}});
+};
+
+/* Presets + Custom */
+document.querySelectorAll(".presetBtn").forEach(btn => {
+  btn.onclick = () => {
+    const sec = parseInt(btn.dataset.sec, 10);
+    if(!sec) return;
+    const mat = parseInt(matSelect.value, 10);
+    socket.emit("updateState",{mat,updates:{time:sec,running:false}});
+  };
+});
+applyCustom.onclick = () => {
+  const sec = parseInt(customTime.value, 10);
+  if(!sec || sec <= 0) return;
+  const mat = parseInt(matSelect.value, 10);
+  socket.emit("updateState",{mat,updates:{time:sec,running:false}});
+  customTime.value = "";
+};
+
+/* ===== Scoring with timeline ===== */
+function pushTimeline(mat, entry){
+  if(!timeline[mat]) timeline[mat] = [];
+  timeline[mat].push(entry);
+  // Keep it reasonable length
+  if(timeline[mat].length > 200){
+    timeline[mat].shift();
+  }
+  renderTimeline(mat);
+}
+
+function renderTimeline(mat){
+  const list = document.getElementById("timelineList");
+  list.innerHTML = "";
+  const items = timeline[mat] || [];
+  items.slice().reverse().forEach(item => {
+    const card = document.createElement("div");
+    card.className = `timeline-card ${item.color || ""}`;
+    card.innerHTML = `
+      <div class="timeline-main">
+        ${item.label}
+      </div>
+      <div class="timeline-meta">
+        ${item.time} &mdash; Period ${item.period} &middot;
+        Red ${item.red} &mdash; Green ${item.green}
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+/* scoring buttons */
+document.querySelectorAll(".score-btn").forEach(btn => {
+  btn.onclick = () => {
+    const color = btn.dataset.color;
+    const pts = parseInt(btn.dataset.pts, 10);
+    const code = btn.dataset.code;
+    const mat = parseInt(matSelect.value, 10);
+
+    socket.emit("addPoints",{mat,color,pts});
+
+    // Timeline entry
+    const m = lastState?.mats?.[mat] || {};
+    const currentRed = m.red ?? 0;
+    const currentGreen = m.green ?? 0;
+    const newRed = color === "red" ? currentRed + pts : currentRed;
+    const newGreen = color === "green" ? currentGreen + pts : currentGreen;
+
+    pushTimeline(mat, {
+      time: formatTime(m.time ?? 0),
+      period: m.period ?? 1,
+      color,
+      label: `${color.toUpperCase()} +${pts} (${code})`,
+      red: newRed,
+      green: newGreen
+    });
+  };
+});
+
+subRed.onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  socket.emit("subPoint",{mat,color:"red"});
+
+  const m = lastState?.mats?.[mat] || {};
+  const currentRed = m.red ?? 0;
+  const currentGreen = m.green ?? 0;
+  pushTimeline(mat, {
+    time: formatTime(m.time ?? 0),
+    period: m.period ?? 1,
+    color:"red",
+    label:"RED -1 (correction)",
+    red: Math.max(0, currentRed - 1),
+    green: currentGreen
+  });
+};
+
+subGreen.onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  socket.emit("subPoint",{mat,color:"green"});
+
+  const m = lastState?.mats?.[mat] || {};
+  const currentRed = m.red ?? 0;
+  const currentGreen = m.green ?? 0;
+  pushTimeline(mat, {
+    time: formatTime(m.time ?? 0),
+    period: m.period ?? 1,
+    color:"green",
+    label:"GREEN -1 (correction)",
+    red: currentRed,
+    green: Math.max(0, currentGreen - 1)
+  });
+};
+
+resetScores.onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  socket.emit("updateState",{mat,updates:{red:0,green:0}});
+
+  const m = lastState?.mats?.[mat] || {};
+  pushTimeline(mat, {
+    time: formatTime(m.time ?? 0),
+    period: m.period ?? 1,
+    color:"",
+    label:"Scores reset",
+    red: 0,
+    green: 0
+  });
+};
+
+/* ===== Period controls (server handles change) ===== */
+prevPeriodBtn.onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  socket.emit("updateState",{mat,updates:{periodChange:-1,time:0,running:false}});
+};
+nextPeriodBtn.onclick = () => {
+  const mat = parseInt(matSelect.value, 10);
+  socket.emit("updateState",{mat,updates:{periodChange:1,time:0,running:false}});
+};
+
+/* ===== Local wrestler names (stored per mat in localStorage) ===== */
+function loadNames(){
+  try{
+    const raw = localStorage.getItem("matsideNames");
+    if(!raw) return {};
+    return JSON.parse(raw);
+  }catch(e){return {};}
+}
+function saveNames(names){
+  localStorage.setItem("matsideNames",JSON.stringify(names));
+}
+let localNames = loadNames();
+
+function refreshNameInputs(){
+  const mat = parseInt(matSelect.value, 10);
+  const matNames = localNames[mat] || {};
+  redNameInput.value = matNames.red || "";
+  greenNameInput.value = matNames.green || "";
+}
+
+redNameInput.addEventListener("blur", () => {
+  const mat = parseInt(matSelect.value, 10);
+  const current = localNames[mat] || {};
+  localNames[mat] = {...current,red:redNameInput.value};
+  saveNames(localNames);
+});
+
+greenNameInput.addEventListener("blur", () => {
+  const mat = parseInt(matSelect.value, 10);
+  const current = localNames[mat] || {};
+  localNames[mat] = {...current,green:greenNameInput.value};
+  saveNames(localNames);
+});
+
+/* ===== Mat change ===== */
+matSelect.addEventListener("change", () => {
+  if(lastState) updateUI(lastState);
+  refreshNameInputs();
+});
+
+/* ===== Init ===== */
+refreshNameInputs();
 </script>
 
 </body>
