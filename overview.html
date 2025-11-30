@@ -1,155 +1,78 @@
+<!-- ===========================
+     public/overview.html v2.7
+     =========================== -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Matside — Overview v2.5.3</title>
+<title>Matside — Overview v2.7</title>
 
-<!-- Socket.IO -->
 <script src="https://scoreboard-server-er33.onrender.com/socket.io/socket.io.js"></script>
 
 <style>
-  :root {
-    --red: #d32f2f;
-    --green: #00c853;
-    --panel: #111216;
-    --bg: #000;
-    --muted: #888;
-    --gold: #fbc02d;
+  :root{
+    --red:#d32f2f; --green:#00c853; --panel:#111216;
+    --bg:#000; --muted:#888; --gold:#fbc02d;
   }
-
-  html, body {
-    margin:0;
-    padding:0;
-    background:#000;
-    color:#fff;
-    font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  html,body{
+    margin:0;padding:0;background:#000;color:#fff;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
   }
-
-  h1 {
-    text-align:center;
-    font-weight:800;
-    margin:12px 0;
-    font-size:26px;
-    color:#fff;
+  h1{
+    text-align:center;font-weight:800;margin:12px 0 4px;font-size:26px;
   }
-
-  .grid {
-    display:grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap:12px;
-    padding:10px;
-    max-width:1100px;
-    margin:0 auto;
+  .grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+    padding:10px;max-width:1100px;margin:0 auto;
   }
-
-  @media(max-width:750px){
-    .grid{ grid-template-columns:1fr; }
+  @media(max-width:750px){.grid{grid-template-columns:1fr;}}
+  .mat-card{
+    background:#000;border:2px solid #111;border-radius:12px;padding:10px;
   }
-
-  .mat-card {
-    background:#000;
-    border:2px solid #111;
-    border-radius:12px;
-    padding:10px;
+  table{
+    width:100%;border-collapse:collapse;table-layout:fixed;
   }
-
-  table {
-    width:100%;
-    border-collapse: collapse;
-    table-layout: fixed;
+  td{padding:3px;text-align:center;}
+  .label{
+    background:var(--panel);font-size:11px;font-weight:700;text-transform:uppercase;
   }
-
-  td {
-    padding:3px;
-    text-align:center;
+  .mat-num,.period-num{
+    font-size:22px;font-weight:800;
   }
-
-  .label {
-    background:var(--panel);
-    font-size:11px;
-    font-weight:700;
-    text-transform:uppercase;
+  .timer{
+    font-size:38px;font-weight:900;padding:4px 0;
   }
-
-  .mat-num, .period-num {
-    font-size:22px;
-    font-weight:800;
+  @keyframes timerPulse{
+    0%{opacity:1;}50%{opacity:.4;}100%{opacity:1;}
   }
-
-  .timer {
-    font-size:38px;
-    font-weight:900;
-    padding:4px 0;
+  .timer-running{animation:timerPulse 1.1s infinite ease-in-out;}
+  .timer-zero{color:var(--gold);}
+  .name{
+    font-size:14px;font-weight:700;opacity:.9;
   }
-
-  @keyframes timerPulse {
-    0% { opacity:1; }
-    50% { opacity:.4; }
-    100% { opacity:1; }
+  .name-red{color:var(--red);}
+  .name-green{color:var(--green);}
+  .score-box{
+    font-size:48px;font-weight:700;padding:18px 0;border-radius:12px;
   }
-  .timer-running {
-    animation: timerPulse 1.1s infinite ease-in-out;
+  .score-red{background:var(--red);color:#fff;}
+  .score-green{background:var(--green);color:#000;}
+  .winner-tag{
+    display:inline-block;margin-left:4px;padding:1px 5px;
+    border-radius:999px;background:var(--gold);color:#000;
+    font-size:10px;font-weight:700;
   }
-
-  .timer-zero {
-    color: var(--gold);
-  }
-
-  .name {
-    font-size:14px;
-    font-weight:700;
-    opacity:.9;
-  }
-  .name-red { color:var(--red); }
-  .name-green { color:var(--green); }
-
-  .score-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-top: 16px;
-  }
-  .score-box {
-    font-size: 64px;
-    font-weight: 700;
-    padding: 40px 0;
-    border-radius: 16px;
-  }
-  .score-red {
-    background:var(--red);
-    color:#fff;
-  }
-  .score-green {
-    background:var(--green);
-    color:#000;
-  }
-
-  .winner-tag {
-    display:inline-block;
-    margin-left:4px;
-    padding:1px 5px;
-    border-radius:999px;
-    background:var(--gold);
-    color:#000;
-    font-size:10px;
-    font-weight:700;
-  }
-
-  .branding {
-    font-size:10px;
-    color:var(--muted);
-    padding-top:4px;
+  .branding{
+    font-size:10px;color:var(--muted);padding-top:4px;
   }
 </style>
 </head>
-
 <body>
 
 <h1>Matside — Mat Overview</h1>
 
 <div class="grid">
-  <!-- Mat cards generated below -->
   <div id="mat1" class="mat-card"></div>
   <div id="mat2" class="mat-card"></div>
   <div id="mat3" class="mat-card"></div>
@@ -157,183 +80,142 @@
 </div>
 
 <script>
-/* ============================================================
-   PRE-BUILT TEMPLATE FOR EACH MAT
-============================================================ */
 function templateForMat(matID){
 return `
   <table>
     <tbody>
-
       <tr>
         <td class="label">MAT</td>
         <td class="label" colspan="2">MATSIDE SCOREBOARD</td>
         <td class="label">PERIOD</td>
       </tr>
-
       <tr>
         <td><div id="matNum${matID}" class="mat-num">${matID}</div></td>
-        <td></td>
-        <td></td>
+        <td></td><td></td>
         <td><div id="period${matID}" class="period-num">1</div></td>
       </tr>
-
       <tr><td colspan="4" class="label">TIME</td></tr>
-
       <tr>
-        <td colspan="4">
-          <div id="timer${matID}" class="timer">00:00</div>
-        </td>
+        <td colspan="4"><div id="timer${matID}" class="timer">00:00</div></td>
       </tr>
-
       <tr>
         <td id="redName${matID}" class="name name-red" colspan="2">RED WRESTLER</td>
         <td id="greenName${matID}" class="name name-green" colspan="2">GREEN WRESTLER</td>
       </tr>
-
       <tr>
         <td class="score-box score-red" colspan="2"><span id="scoreRed${matID}">0</span></td>
         <td class="score-box score-green" colspan="2"><span id="scoreGreen${matID}">0</span></td>
       </tr>
-
       <tr>
         <td colspan="4"><div class="branding">Matside — Live Overview</div></td>
       </tr>
-
     </tbody>
   </table>
 `;
 }
 
-/* Inject all 4 mats */
 for(let i=1;i<=4;i++){
   document.getElementById("mat"+i).innerHTML = templateForMat(i);
 }
 
-/* ============================================================
-   SOCKET.IO LIVE UPDATES
-============================================================ */
 const socket = io("https://scoreboard-server-er33.onrender.com", {
   transports:["websocket","polling"]
 });
 
-socket.on("stateUpdate", (state) => {
+socket.on("stateUpdate",(state)=>{
   for(let mat=1;mat<=4;mat++){
     const m = state.mats?.[mat];
     if(!m) continue;
-
-    updateTime(mat, m);
-    updateScores(mat, m);
-    updateNames(mat, m);
+    updateTime(mat,m);
+    updateScores(mat,m);
+    updateNames(mat,m);
   }
 });
 
-/* ============================================================
-   FORMATTER
-============================================================ */
 function formatTime(sec){
-  sec = Math.max(0, sec);
+  sec = Math.max(0, sec || 0);
   const m = String(Math.floor(sec/60)).padStart(2,"0");
   const s = String(sec%60).padStart(2,"0");
   return `${m}:${s}`;
 }
 
-/* ============================================================
-   UPDATE TIME
-============================================================ */
-function updateTime(matID, m){
+function updateTime(matID,m){
   const tEl = document.getElementById("timer"+matID);
   const pEl = document.getElementById("period"+matID);
-
   tEl.textContent = formatTime(m.time);
   pEl.textContent = m.period;
-
-  if(m.running){
-    tEl.classList.add("timer-running");
-  } else {
-    tEl.classList.remove("timer-running");
-  }
-
-  if(m.time <= 0){
-    tEl.classList.add("timer-zero");
-  } else {
-    tEl.classList.remove("timer-zero");
-  }
+  if(m.running) tEl.classList.add("timer-running");
+  else tEl.classList.remove("timer-running");
+  if(m.time<=0) tEl.classList.add("timer-zero");
+  else tEl.classList.remove("timer-zero");
 }
 
-/* ============================================================
-   UPDATE SCORES + WINNER TAGS
-============================================================ */
-function updateScores(matID, m){
-  const redScore = m.red ?? 0;
-  const greenScore = m.green ?? 0;
+function isWinnerState(m){
+  const red = m.red ?? 0;
+  const green = m.green ?? 0;
+  const diff = Math.abs(red - green);
+  const period = m.period;
+  const time = m.time ?? 0;
+  const running = m.running;
 
-  document.getElementById("scoreRed"+matID).textContent = redScore;
-  document.getElementById("scoreGreen"+matID).textContent = greenScore;
+  if(diff >= 15) return red !== green;
+
+  if(typeof period === "number"){
+    if(period === 3 && time === 0 && !running && red !== green) return true;
+    return false;
+  }
+
+  const otPeriods = ["OT","TB1","TB2","UTB"];
+  if(otPeriods.includes(String(period)) && time === 0 && !running && red !== green){
+    return true;
+  }
+  return false;
+}
+
+function updateScores(matID,m){
+  const red = m.red ?? 0;
+  const green = m.green ?? 0;
+  document.getElementById("scoreRed"+matID).textContent = red;
+  document.getElementById("scoreGreen"+matID).textContent = green;
 
   const redName = document.getElementById("redName"+matID);
   const greenName = document.getElementById("greenName"+matID);
 
-  // Remove old winner tags
-  removeWinnerTags(redName, greenName);
+  removeWinnerTags(redName,greenName);
 
-  const diff = Math.abs(redScore - greenScore);
-
-  // RULE 1 — Tech fall (15-point lead)
-  if (diff >= 15) {
-    if (redScore > greenScore) attachWinner(redName);
-    else attachWinner(greenName);
-    return;
-  }
-
-  // RULE 2 — Match ends after 3rd period + time = 0 + not running
-  const isMatchOver = (m.period >= 3 && m.time === 0 && !m.running);
-
-  if (isMatchOver && redScore !== greenScore) {
-    if (redScore > greenScore) attachWinner(redName);
+  if(isWinnerState(m)){
+    if(red > green) attachWinner(redName);
     else attachWinner(greenName);
   }
 }
 
-function removeWinnerTags(...elements){
-  elements.forEach(e=>{
+function removeWinnerTags(...els){
+  els.forEach(e=>{
     e.querySelectorAll(".winner-tag").forEach(t=>t.remove());
   });
 }
-
 function attachWinner(el){
   const tag = document.createElement("span");
-  tag.className = "winner-tag";
-  tag.textContent = "WINNER";
+  tag.className="winner-tag";
+  tag.textContent="WINNER";
   el.appendChild(tag);
 }
 
-/* ============================================================
-   NAME PRIORITY:
-   1. events.json (future)
-   2. localStorage (control panel)
-   3. defaults
-============================================================ */
-function updateNames(matID, m){
-  const redEl = document.getElementById("redName"+matID);
-  const greenEl = document.getElementById("greenName"+matID);
-
-  // --- Event-based names (coming soon) ---
-
-  // --- Local control panel names ---
+function updateNames(matID,m){
+  const redEl=document.getElementById("redName"+matID);
+  const greenEl=document.getElementById("greenName"+matID);
   try{
-    const raw = localStorage.getItem("matsideNames");
+    const raw=localStorage.getItem("matsideNames");
     if(raw){
-      const names = JSON.parse(raw);
-      if(names[matID]?.red) redEl.textContent = names[matID].red;
-      if(names[matID]?.green) greenEl.textContent = names[matID].green;
+      const names=JSON.parse(raw);
+      const n=names[matID]||{};
+      redEl.textContent = n.red || "RED WRESTLER";
+      greenEl.textContent = n.green || "GREEN WRESTLER";
       return;
     }
   }catch(e){}
-
-  // defaults
-  redEl.textContent = "RED WRESTLER";
-  greenEl.textContent = "GREEN WRESTLER";
+  redEl.textContent="RED WRESTLER";
+  greenEl.textContent="GREEN WRESTLER";
 }
 </script>
 
