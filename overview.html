@@ -265,16 +265,32 @@ function updateTime(matID, m){
    UPDATE SCORES + WINNER TAGS
 ============================================================ */
 function updateScores(matID, m){
-  document.getElementById("scoreRed"+matID).textContent = m.red ?? 0;
-  document.getElementById("scoreGreen"+matID).textContent = m.green ?? 0;
+  const redScore = m.red ?? 0;
+  const greenScore = m.green ?? 0;
+
+  document.getElementById("scoreRed"+matID).textContent = redScore;
+  document.getElementById("scoreGreen"+matID).textContent = greenScore;
 
   const redName = document.getElementById("redName"+matID);
   const greenName = document.getElementById("greenName"+matID);
 
+  // Remove old winner tags
   removeWinnerTags(redName, greenName);
 
-  if(m.time <= 0 && !m.running && m.red !== m.green){
-    if(m.red > m.green) attachWinner(redName);
+  const diff = Math.abs(redScore - greenScore);
+
+  // RULE 1 — Tech fall (15-point lead)
+  if (diff >= 15) {
+    if (redScore > greenScore) attachWinner(redName);
+    else attachWinner(greenName);
+    return;
+  }
+
+  // RULE 2 — Match ends after 3rd period + time = 0 + not running
+  const isMatchOver = (m.period >= 3 && m.time === 0 && !m.running);
+
+  if (isMatchOver && redScore !== greenScore) {
+    if (redScore > greenScore) attachWinner(redName);
     else attachWinner(greenName);
   }
 }
