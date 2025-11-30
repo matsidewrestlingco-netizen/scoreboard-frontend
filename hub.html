@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Matside — Control Hub (v2.5.3)</title>
+
+<style>
+  :root {
+    --bg:#070809;
+    --panel:#15161a;
+    --muted:#9aa0a6;
+    --accent:#1e88e5;
+    --red:#d32f2f;
+    --green:#00c853;
+    --gold:#fbc02d;
+  }
+
+  html, body {
+    margin:0; padding:0;
+    background:var(--bg);
+    font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    color:#fff;
+  }
+
+  h1 {
+    text-align:center;
+    font-size:26px;
+    margin:18px 0 4px;
+    font-weight:800;
+  }
+
+  .grid {
+    max-width:900px;
+    margin:0 auto;
+    padding:12px;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+  }
+
+  @media(max-width:750px){
+    .grid { grid-template-columns:1fr; }
+  }
+
+  .mat-card {
+    background:var(--panel);
+    padding:16px;
+    border-radius:12px;
+    box-shadow:0 6px 18px rgba(0,0,0,.45);
+  }
+
+  .mat-title {
+    font-size:20px;
+    font-weight:800;
+    margin-bottom:12px;
+    text-align:center;
+  }
+
+  button {
+    width:100%;
+    padding:12px 16px;
+    margin-top:8px;
+    border-radius:10px;
+    border:0;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .blue { background:var(--accent); color:#fff; }
+  .gray { background:#2c2d31; color:#fff; }
+  .green { background:var(--green); color:#000; }
+  .gold { background:var(--gold); color:#000; }
+
+  #version-tag {
+    text-align:center;
+    margin:14px 0;
+    font-size:12px;
+    color:#666;
+  }
+
+</style>
+</head>
+
+<body>
+
+<h1>Matside — Control Hub</h1>
+
+<div class="grid">
+  <!-- Mat 1 -->
+  <div class="mat-card">
+    <div class="mat-title">Mat 1</div>
+    <button class="blue" onclick="openScoreboard(1)">Open Scoreboard</button>
+    <button class="green" onclick="openControl(1)">Open Control Panel</button>
+  </div>
+
+  <!-- Mat 2 -->
+  <div class="mat-card">
+    <div class="mat-title">Mat 2</div>
+    <button class="blue" onclick="openScoreboard(2)">Open Scoreboard</button>
+    <button class="green" onclick="openControl(2)">Open Control Panel</button>
+  </div>
+
+  <!-- Mat 3 -->
+  <div class="mat-card">
+    <div class="mat-title">Mat 3</div>
+    <button class="blue" onclick="openScoreboard(3)">Open Scoreboard</button>
+    <button class="green" onclick="openControl(3)">Open Control Panel</button>
+  </div>
+
+  <!-- Mat 4 -->
+  <div class="mat-card">
+    <div class="mat-title">Mat 4</div>
+    <button class="blue" onclick="openScoreboard(4)">Open Scoreboard</button>
+    <button class="green" onclick="openControl(4)">Open Control Panel</button>
+  </div>
+</div>
+
+<div id="version-tag">v2.5.3</div>
+
+<script>
+function openScoreboard(mat){
+  window.open(`scoreboard.html?mat=${mat}`, "_blank");
+}
+
+function openControl(mat){
+  window.open(`control.html?mat=${mat}`, "_blank");
+}
+</script>
+
+</body>
+</html>
