@@ -11,21 +11,10 @@
 
 <!-- Socket.io -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
-<script type="module">
-  import { loadSkin } from "./modules/ui/skins.js";
-  import { applySkinWatcher } from "./modules/ui/skins-watcher.js";
-
-  // Load current theme from server
-  loadSkin("https://scoreboard-server-er33.onrender.com").then(() => {
-    applySkinWatcher("https://scoreboard-server-er33.onrender.com");
-  });
-</script>
  
 <style>
   :root{
-    --bg:background: var(–ms-bg)
-; --panel:var(–ms-panel)
+    --bg:background:#070809; --panel:var(–ms-panel)
 ; --muted:var(–ms-muted)
 ; --accent:var(–ms-accent)
 ; --red:var(–ms-red)
@@ -317,7 +306,7 @@
   }
 </style>
 </head>
-<body class="skinnable">
+<body>
 
 <!-- HEADER -->
 <div class="header-bar">
