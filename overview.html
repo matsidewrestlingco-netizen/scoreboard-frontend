@@ -1,117 +1,26 @@
-<!DOCTYPE html>
+<!doctype html>
+<!-- overview.html v4.0 (modular) -->
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside Overview v3.2.1</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Matside — Overview v4.0</title>
 
-<!-- Correct CSS path -->
-<link rel="stylesheet" href="./modules/core/ui-kit.css?v=3.2.1">
+  <link rel="stylesheet" href="./css/theme.css?v=1.0" />
+  <link rel="stylesheet" href="./css/overview.css?v=1.0" />
 
-<style>
-  body {
-    background: var(--ms-bg, #050608);
-    color: var(--ms-text, #ffffff);
-    margin: 0;
-    padding: 20px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-  }
-
-  .ov-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 22px;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-  .ov-card {
-    background: var(--ms-surface);
-    padding: 18px;
-    border-radius: 16px;
-  }
-
-  .ov-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
-
-  .ov-timer {
-    text-align: center;
-    font-size: 48px;
-    font-weight: 800;
-    margin: 12px 0;
-  }
-
-  .ov-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 0;
-    font-size: 20px;
-  }
-
-  .ov-score {
-    font-size: 36px;
-    font-weight: 700;
-  }
-
-  .ov-red { color: var(--ms-red); }
-  .ov-green { color: var(--ms-green); }
-
-</style>
-
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
+<div class="ov-root" id="ov-root"></div>
 
-<h1 style="text-align:center; font-weight:800; margin-bottom:20px;">Event Overview</h1>
+<script type="module">
+  import { initOverview } from "./modules/overview-data.js";
+  import { createOverviewRenderer } from "./modules/overview-render.js";
 
-<div class="ov-grid">
-  <div class="ov-card" id="mat1"></div>
-  <div class="ov-card" id="mat2"></div>
-  <div class="ov-card" id="mat3"></div>
-  <div class="ov-card" id="mat4"></div>
-</div>
-
-<script>
-const socket = io("https://scoreboard-server-er33.onrender.com");
-
-socket.on("stateUpdate", (state) => {
-  for (const mat of [1,2,3,4]) {
-    const box = document.getElementById("mat" + mat);
-    const m = state.mats[mat];
-    if (!m) continue;
-
-    box.innerHTML = `
-      <div class="ov-header">
-        <div>Mat ${mat}</div>
-        <div>Period ${m.period}</div>
-      </div>
-
-      <div class="ov-timer">${format(m.time)}</div>
-
-      <div class="ov-row">
-        <div class="ov-red">RED</div>
-        <div class="ov-score ov-red">${m.red}</div>
-      </div>
-
-      <div class="ov-row">
-        <div class="ov-green">GREEN</div>
-        <div class="ov-score ov-green">${m.green}</div>
-      </div>
-    `;
-  }
-});
-
-function format(s) {
-  const m = Math.floor(s / 60).toString().padStart(2, "0");
-  const sec = (s % 60).toString().padStart(2, "0");
-  return `${m}:${sec}`;
-}
+  const root = document.getElementById("ov-root");
+  const render = createOverviewRenderer(root);
+  initOverview(render);
 </script>
-
 </body>
 </html>
