@@ -330,6 +330,29 @@
     <div class="system-card-main"><span id="activeMatsCount">0</span> / 4</div>
   </div>
 
+<!-- THEME CONTROL CARD -->
+<div class="system-card" style="max-width:1200px;margin:0 auto 16px auto;">
+  <div class="system-card-title">Theme</div>
+  <div style="margin-bottom:6px;color:var(--muted);font-size:13px;">
+    Choose a look for all scoreboards & control panels.
+  </div>
+
+  <select id="skinSelect" 
+          style="width:100%;padding:8px;border-radius:8px;
+                 background:#111214;color:#fff;border:1px solid var(--border);
+                 margin-bottom:10px;"></select>
+
+  <button id="applySkinBtn" 
+          class="btn btn-primary" 
+          style="width:100%;margin-top:4px;">
+    Apply Theme to Event
+  </button>
+
+  <div id="themeStatus" 
+       style="margin-top:6px;font-size:12px;color:var(--muted);">
+  </div>
+</div>
+  
   <div class="system-card">
     <div class="system-card-title">Most Recent Mat Update</div>
     <div class="system-card-main" id="lastMatUpdate">—</div>
@@ -664,7 +687,33 @@ function notifyReload(type, mat) {
 /* init */
 buildGrid();
 </script>
- 
+
+<script type="module">
+  import { initSkinHub, SKINS } from "./modules/ui/skins.js";
+
+  const serverUrl = "https://scoreboard-server-er33.onrender.com";
+  const { setGlobalSkin, initialSkin } = initSkinHub(serverUrl);
+
+  const selectEl = document.getElementById("skinSelect");
+  const applyBtn = document.getElementById("applySkinBtn");
+  const statusEl = document.getElementById("themeStatus");
+
+  // Populate dropdown
+  selectEl.innerHTML = Object.entries(SKINS)
+    .map(([key, skin]) => {
+      const sel = key === initialSkin ? "selected" : "";
+      return `<option value="${key}" ${sel}>${skin.name}</option>`;
+    })
+    .join("");
+
+  // Apply theme
+  applyBtn.addEventListener("click", () => {
+    const val = selectEl.value;
+    setGlobalSkin(val);
+    statusEl.textContent = `Theme "${SKINS[val].name}" applied to all clients.`;
+    setTimeout(() => (statusEl.textContent = ""), 3000);
+  });
+</script>  
 
 </body>
 </html>
