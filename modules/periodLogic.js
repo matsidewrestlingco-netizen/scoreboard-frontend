@@ -1,4 +1,5 @@
 // modules/periodLogic.js
+
 // All times in seconds
 export const PERIODS = [
   { id: "REG1", label: "1", time: 60 },
@@ -16,7 +17,7 @@ export const OVERTIME = [
 const CHAIN = [...PERIODS, ...OVERTIME];
 
 export function getSegmentById(id) {
-  return CHAIN.find(s => s.id === id);
+  return CHAIN.find((s) => s.id === id);
 }
 
 export function getInitialSegment() {
@@ -24,17 +25,19 @@ export function getInitialSegment() {
 }
 
 export function shouldAutoEndMatch(red, green, segId) {
-  if (segId !== "UT" && Math.abs((red||0) - (green||0)) >= 15) {
+  const r = red ?? 0;
+  const g = green ?? 0;
+  if (segId !== "UT" && Math.abs(r - g) >= 15) {
     return true;
   }
   return false;
 }
 
 export function getNextSegment(currentId, red, green) {
-  const idx = CHAIN.findIndex(s => s.id === currentId);
+  const idx = CHAIN.findIndex((s) => s.id === currentId);
   if (idx === -1) return getInitialSegment();
 
-  const isTie = (red||0) === (green||0);
+  const isTie = (red ?? 0) === (green ?? 0);
   const segment = CHAIN[idx];
 
   if (segment.id === "REG1") return PERIODS[1];
