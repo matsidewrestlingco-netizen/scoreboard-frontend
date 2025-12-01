@@ -1,6 +1,7 @@
-// timer.js module
+// modules/timer.js
+
 import { updateMatState, getLastState } from "./socketHandler.js";
-import { getNextSegment, getSegmentById } from "./periodLogic.js";
+import { getNextSegment, getSegmentById, shouldAutoEndMatch } from "./periodLogic.js";
 import { addTimelineEntry } from "./timeline.js";
 
 let sumTimeEl, sumPeriodEl, timerRunningClassTarget;
@@ -27,7 +28,7 @@ export function initTimer() {
   if (stopBtn) stopBtn.onclick = handleStop;
   if (resetTimerBtn) resetTimerBtn.onclick = handleResetTimer;
 
-  presetButtons.forEach(btn => {
+  presetButtons.forEach((btn) => {
     btn.onclick = () => {
       const sec = parseInt(btn.dataset.sec, 10) || 60;
       updateMatState({ time: sec });
@@ -86,8 +87,13 @@ export function applyTimerState(matState) {
 
 function handleSegmentComplete(m) {
   const segId = m.segmentId || "REG1";
-  const red = m.red || 0;
-  const green = m.green || 0;
+  const red = m.red ?? 0;
+  const green = m.green ?? 0;
+
+  if (shouldAutoEndMatch(red, green, segId)) {
+    addTimelineEntry({ type: "tech-fall", label: "Tech fall (15-point diff)" });
+    return;
+  }
 
   const next = getNextSegment(segId, red, green);
 
@@ -110,8 +116,8 @@ function handleSegmentComplete(m) {
 }
 
 function formatTime(sec) {
-  const s = Math.max(0, sec|0);
-  const m = Math.floor(s / 60).toString().padStart(2,"0");
-  const r = (s % 60).toString().padStart(2,"0");
+  const s = Math.max(0, sec | 0);
+  const m = Math.floor(s / 60).toString().padStart(2, "0");
+  const r = (s % 60).toString().padStart(2, "0");
   return `${m}:${r}`;
 }
