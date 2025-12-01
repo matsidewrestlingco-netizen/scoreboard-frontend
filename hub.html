@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Matside — Control Hub v3.0</title>
+<title>Matside — Control Hub v3.3</title>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 <style>
   :root {
@@ -32,7 +34,7 @@
   /* HEADER */
   .header {
     max-width: 1200px;
-    margin: 0 auto 18px auto;
+    margin: 0 auto 12px auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -62,11 +64,60 @@
 
   .right-info {
     text-align: right;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--muted);
   }
 
-  /* GRID */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #777;
+  }
+  .dot.ok { background: #00c853; }
+  .dot.bad { background: #ff5252; }
+
+  /* SYSTEM SUMMARY BAR */
+  .system-bar {
+    max-width: 1200px;
+    margin: 0 auto 16px auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+  }
+
+  .system-card {
+    background: rgba(255,255,255,0.04);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .system-card-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .system-card-main {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* GRID OF MATS */
   .grid {
     max-width: 1200px;
     margin: 0 auto;
@@ -75,27 +126,32 @@
     gap: 18px;
   }
 
-  /* MAT CARD */
   .mat-card {
     background: var(--panel);
     border-radius: var(--radius);
     border: 1px solid var(--border);
     box-shadow: 0 10px 28px rgba(0,0,0,0.5);
     backdrop-filter: blur(12px);
-    padding: 16px 16px 18px;
+    padding: 14px 14px 16px;
     position: relative;
     overflow: hidden;
+  }
+
+  .mat-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
   }
 
   .mat-label {
     font-size: 18px;
     font-weight: 800;
-    margin-bottom: 4px;
   }
 
   .mat-pill {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 3px 9px;
     border-radius: 999px;
     font-size: 11px;
     letter-spacing: 0.06em;
@@ -103,27 +159,64 @@
     background: var(--accent-soft);
     border: 1px solid rgba(30,136,229,0.4);
     color: var(--muted);
+  }
+
+  /* MINI STATUS LINE */
+  .mat-status-line {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  /* LIVE STATE BAR: TIME / PERIOD / SCORE */
+  .live-row {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1.3fr;
+    gap: 8px;
+    margin: 6px 0 8px 0;
+  }
+
+  .live-box {
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 6px 4px;
+    text-align: center;
+    font-size: 13px;
+  }
+
+  .live-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  .live-value {
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  /* LAST ACTION */
+  .last-action {
+    font-size: 12px;
+    color: var(--muted);
     margin-bottom: 10px;
   }
 
-  .mat-desc {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
-
+  /* BUTTONS */
   .btn-row {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     margin-top: 4px;
   }
 
   .btn {
     border: 0;
     border-radius: 999px;
-    padding: 11px 14px;
-    font-size: 14px;
+    padding: 9px 12px;
+    font-size: 13px;
     font-weight: 800;
     cursor: pointer;
     display: flex;
@@ -145,15 +238,6 @@
     border: 1px solid var(--border);
   }
 
-  .pill-red {
-    color: var(--red-glow);
-  }
-
-  .pill-green {
-    color: var(--green-glow);
-  }
-
-  /* FOOTER TAG */
   .footer-tag {
     max-width: 1200px;
     margin: 18px auto 0 auto;
@@ -166,84 +250,236 @@
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
   <div class="brand">
     <img src="https://www.matside.org/assets/images/image01.png" alt="Matside">
     <div>
       <div class="brand-title">Matside Control Hub</div>
-      <div class="subtitle">Quick access to control panels & scoreboards</div>
+      <div class="subtitle">Monitor mats, panels, and scoreboards at a glance</div>
     </div>
   </div>
 
   <div class="right-info">
-    <div>Scoreboards: v3.2</div>
-    <div>Overview: v3.2 · Control: v2.19+</div>
+    <div>
+      Server:
+      <span id="serverStatusPill" class="status-pill">
+        <span class="dot" id="serverDot"></span>
+        <span id="serverStatusText">Connecting…</span>
+      </span>
+    </div>
+    <div id="serverMeta" style="margin-top:4px;">Last update: —</div>
   </div>
 </div>
 
-<div class="grid">
-
-  <!-- Mat 1 -->
-  <div class="mat-card">
-    <div class="mat-label">Mat 1</div>
-    <div class="mat-pill">Control 1 · Scoreboard 1</div>
-    <div class="btn-row">
-      <a class="btn btn-primary" href="control.html?mat=1" target="_blank">
-        ⚙️ Open Control Panel
-      </a>
-      <a class="btn btn-secondary" href="scoreboard.html?mat=1" target="_blank">
-        📺 Open Scoreboard Display
-      </a>
-    </div>
+<!-- SYSTEM SUMMARY BAR -->
+<div class="system-bar">
+  <div class="system-card">
+    <div class="system-card-title">Active Mats</div>
+    <div class="system-card-main"><span id="activeMatsCount">0</span> / 4</div>
   </div>
 
-  <!-- Mat 2 -->
-  <div class="mat-card">
-    <div class="mat-label">Mat 2</div>
-    <div class="mat-pill">Control 2 · Scoreboard 2</div>
-    <div class="btn-row">
-      <a class="btn btn-primary" href="control.html?mat=2" target="_blank">
-        ⚙️ Open Control Panel
-      </a>
-      <a class="btn btn-secondary" href="scoreboard.html?mat=2" target="_blank">
-        📺 Open Scoreboard Display
-      </a>
-    </div>
+  <div class="system-card">
+    <div class="system-card-title">Most Recent Mat Update</div>
+    <div class="system-card-main" id="lastMatUpdate">—</div>
   </div>
 
-  <!-- Mat 3 -->
-  <div class="mat-card">
-    <div class="mat-label">Mat 3</div>
-    <div class="mat-pill">Control 3 · Scoreboard 3</div>
-    <div class="btn-row">
-      <a class="btn btn-primary" href="control.html?mat=3" target="_blank">
-        ⚙️ Open Control Panel
-      </a>
-      <a class="btn btn-secondary" href="scoreboard.html?mat=3" target="_blank">
-        📺 Open Scoreboard Display
-      </a>
-    </div>
+  <div class="system-card">
+    <div class="system-card-title">Last Scoring Action</div>
+    <div class="system-card-main" id="globalLastAction">No actions yet</div>
   </div>
-
-  <!-- Mat 4 -->
-  <div class="mat-card">
-    <div class="mat-label">Mat 4</div>
-    <div class="mat-pill">Control 4 · Scoreboard 4</div>
-    <div class="btn-row">
-      <a class="btn btn-primary" href="control.html?mat=4" target="_blank">
-        ⚙️ Open Control Panel
-      </a>
-      <a class="btn btn-secondary" href="scoreboard.html?mat=4" target="_blank">
-        📺 Open Scoreboard Display
-      </a>
-    </div>
-  </div>
-
 </div>
+
+<!-- MATS GRID -->
+<div id="matGrid" class="grid"></div>
 
 <div class="footer-tag">
-  Matside Hub · UI Kit v3.2
+  Matside Hub · System Monitor v3.3 · UI Kit v3.2
 </div>
+
+<script>
+const socket = io("https://scoreboard-server-er33.onrender.com");
+
+const matGrid = document.getElementById("matGrid");
+const serverDot = document.getElementById("serverDot");
+const serverStatusText = document.getElementById("serverStatusText");
+const serverMeta = document.getElementById("serverMeta");
+const activeMatsCountEl = document.getElementById("activeMatsCount");
+const lastMatUpdateEl = document.getElementById("lastMatUpdate");
+const globalLastActionEl = document.getElementById("globalLastAction");
+
+const MAT_COUNT = 4;
+const lastStatePerMat = {};
+const lastActionPerMat = {};
+const lastUpdateTimePerMat = {};
+
+let globalLastAction = null;
+let globalLastActionTime = null;
+
+/* Build static cards for 4 mats */
+function buildGrid() {
+  matGrid.innerHTML = "";
+  for (let i = 1; i <= MAT_COUNT; i++) {
+    const card = document.createElement("div");
+    card.className = "mat-card";
+    card.id = "matCard" + i;
+    card.innerHTML = `
+      <div class="mat-header-row">
+        <div class="mat-label">Mat ${i}</div>
+        <div class="mat-pill" id="matStatus${i}">Waiting for data…</div>
+      </div>
+      <div class="mat-status-line" id="matMeta${i}">
+        Last update: —
+      </div>
+
+      <div class="live-row">
+        <div class="live-box">
+          <div class="live-label">Time</div>
+          <div class="live-value" id="matTime${i}">--:--</div>
+        </div>
+        <div class="live-box">
+          <div class="live-label">Period</div>
+          <div class="live-value" id="matPeriod${i}">--</div>
+        </div>
+        <div class="live-box">
+          <div class="live-label">Score</div>
+          <div class="live-value" id="matScore${i}">0 - 0</div>
+        </div>
+      </div>
+
+      <div class="last-action" id="matLastAction${i}">
+        Last action: —
+      </div>
+
+      <div class="btn-row">
+        <a class="btn btn-primary" href="control.html?mat=${i}" target="_blank">
+          ⚙️ Open Control Panel
+        </a>
+        <a class="btn btn-secondary" href="scoreboard.html?mat=${i}" target="_blank">
+          📺 Open Scoreboard Display
+        </a>
+      </div>
+    `;
+    matGrid.appendChild(card);
+  }
+}
+
+function formatTime(sec) {
+  if (sec == null) return "--:--";
+  const m = Math.floor(sec / 60).toString().padStart(2,"0");
+  const s = (sec % 60).toString().padStart(2,"0");
+  return `${m}:${s}`;
+}
+
+function timeAgo(ms) {
+  if (ms == null) return "—";
+  const sec = Math.round(ms / 1000);
+  if (sec < 1) return "just now";
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  return `${min}m ago`;
+}
+
+/* SOCKET EVENTS */
+socket.on("connect", () => {
+  serverDot.classList.remove("bad");
+  serverDot.classList.add("ok");
+  serverStatusText.textContent = "Connected";
+});
+
+socket.on("disconnect", () => {
+  serverDot.classList.remove("ok");
+  serverDot.classList.add("bad");
+  serverStatusText.textContent = "Disconnected";
+});
+
+socket.on("stateUpdate", (state) => {
+  const now = Date.now();
+  let activeMats = 0;
+  let latestUpdateTime = null;
+
+  for (let i = 1; i <= MAT_COUNT; i++) {
+    const matState = state.mats && state.mats[i];
+    if (matState) {
+      activeMats++;
+      lastUpdateTimePerMat[i] = now;
+      latestUpdateTime = latestUpdateTime ? Math.max(latestUpdateTime, now) : now;
+      processMatState(i, matState, now);
+    }
+  }
+
+  activeMatsCountEl.textContent = activeMats;
+  if (latestUpdateTime) {
+    serverMeta.textContent = "Last hub state update: " + new Date(latestUpdateTime).toLocaleTimeString();
+    lastMatUpdateEl.textContent = timeAgo(now - latestUpdateTime);
+  }
+
+  if (globalLastAction) {
+    const ago = now - (globalLastActionTime || now);
+    globalLastActionEl.textContent = `${globalLastAction} · ${timeAgo(ago)}`;
+  }
+});
+
+function processMatState(matNum, mat, now) {
+  const prev = lastStatePerMat[matNum];
+
+  // Basic state display
+  const timeEl = document.getElementById("matTime" + matNum);
+  const periodEl = document.getElementById("matPeriod" + matNum);
+  const scoreEl = document.getElementById("matScore" + matNum);
+  const statusPill = document.getElementById("matStatus" + matNum);
+  const metaEl = document.getElementById("matMeta" + matNum);
+  const lastActionEl = document.getElementById("matLastAction" + matNum);
+
+  timeEl.textContent = formatTime(mat.time);
+  periodEl.textContent = mat.period ?? "--";
+  scoreEl.textContent = `${mat.red ?? 0} - ${mat.green ?? 0}`;
+
+  // Status text
+  const running = mat.running ? "Timer running" : "Timer stopped";
+  metaEl.textContent = `Last update: ${timeAgo(now - (lastUpdateTimePerMat[matNum] || now))} · ${running}`;
+
+  statusPill.textContent = mat.running ? "LIVE" : "Idle";
+
+  // Compute "last action" heuristically
+  let lastAction = lastActionPerMat[matNum] || "—";
+
+  if (prev) {
+    const dRed = (mat.red ?? 0) - (prev.red ?? 0);
+    const dGreen = (mat.green ?? 0) - (prev.green ?? 0);
+    const periodChanged = mat.period !== prev.period;
+    const runningChanged = mat.running !== prev.running;
+
+    if (dRed > 0 && dGreen === 0) {
+      lastAction = `Red +${dRed} pts`;
+    } else if (dGreen > 0 && dRed === 0) {
+      lastAction = `Green +${dGreen} pts`;
+    } else if (dRed !== 0 || dGreen !== 0) {
+      lastAction = `Score changed`;
+    } else if (periodChanged) {
+      lastAction = `Period ${prev.period} → ${mat.period}`;
+    } else if (runningChanged) {
+      lastAction = mat.running ? "Timer started" : "Timer stopped";
+    }
+  } else {
+    lastAction = "Mat state initialized";
+  }
+
+  lastActionPerMat[matNum] = lastAction;
+  lastActionEl.textContent = `Last action: ${lastAction}`;
+
+  if (!prev || lastAction !== (prev._lastActionText || "")) {
+    globalLastAction = `Mat ${matNum}: ${lastAction}`;
+    globalLastActionTime = now;
+  }
+
+  mat._lastActionText = lastAction;
+  lastStatePerMat[matNum] = mat;
+}
+
+/* init */
+buildGrid();
+</script>
 
 </body>
 </html>
