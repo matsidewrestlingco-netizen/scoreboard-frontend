@@ -3,13 +3,12 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel (v2.17)</title>
+<title>Matside — Control Panel (v2.18)</title>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 <style>
   :root{
-    /* Match scoreboard/overview theme */
     --bg:#000;
     --panel:#101114;
     --border:#262626;
@@ -18,12 +17,10 @@
     --red:#c6463c;
     --green:#62c96b;
     --gold:#fbc02d;
-    --radius:12px;
+    --radius:14px;
     --gap:12px;
   }
-
-  * { box-sizing:border-box; }
-
+  *{box-sizing:border-box;}
   html,body{
     margin:0;
     padding:0;
@@ -40,7 +37,7 @@
   .header-inner{
     max-width:1100px;
     margin:0 auto;
-    padding:4px 14px;
+    padding:6px 14px;
     display:flex;
     align-items:center;
     gap:10px;
@@ -95,11 +92,11 @@
     font-size:13px;
   }
 
-  /* SUMMARY – echoing scoreboard info bar feel */
+  /* SUMMARY BAR */
   .summary{
     margin-top:10px;
     padding:10px 12px;
-    border-radius:14px;
+    border-radius:16px;
     display:flex;
     flex-wrap:wrap;
     gap:10px 18px;
@@ -109,23 +106,21 @@
     box-shadow:0 8px 20px rgba(0,0,0,0.8);
     font-size:14px;
   }
-  .summary strong{
-    font-weight:800;
-  }
-  .redText{ color:var(--red); }
-  .greenText{ color:var(--green); }
+  .summary strong{font-weight:800;}
+  .redText{color:var(--red);}
+  .greenText{color:var(--green);}
 
-  /* PULSING TIMER CLASS (used from JS for running timer) */
+  /* TIMER PULSE */
   @keyframes timerPulse{
-    0% { opacity:1; }
-    50%{ opacity:0.55; }
-    100%{ opacity:1; }
+    0%{opacity:1;}
+    50%{opacity:.55;}
+    100%{opacity:1;}
   }
   .timer-running{
     animation:timerPulse 1.2s infinite ease-in-out;
   }
 
-  /* GRID LAYOUT */
+  /* GRID */
   .grid{
     display:grid;
     grid-template-columns:2fr 3fr;
@@ -133,15 +128,13 @@
     margin-top:14px;
   }
   @media(max-width:900px){
-    .grid{
-      grid-template-columns:1fr;
-    }
+    .grid{grid-template-columns:1fr;}
   }
 
   .card{
     background:var(--panel);
-    border-radius:16px;
-    padding:14px 14px 12px;
+    border-radius:var(--radius);
+    padding:14px;
     box-shadow:0 10px 26px rgba(0,0,0,0.9);
     border:1px solid var(--border);
   }
@@ -166,24 +159,15 @@
     transform:translateY(1px);
     box-shadow:none;
   }
-
-  .small{
-    padding:8px 11px;
-    font-size:13px;
-  }
-  .btn-wide{
-    min-width:120px;
-  }
+  .small{padding:8px 11px;font-size:13px;}
+  .btn-wide{min-width:120px;}
 
   .blue{
     background:var(--accent);
     color:#fff;
     box-shadow:0 4px 14px rgba(30,136,229,0.45);
   }
-  .gray{
-    background:#2c2f32;
-    color:#fff;
-  }
+  .gray{background:#2c2f32;color:#fff;}
   .red{
     background:var(--red);
     color:#fff;
@@ -194,10 +178,7 @@
     color:#000;
     box-shadow:0 4px 14px rgba(98,201,107,0.55);
   }
-  .gold{
-    background:var(--gold);
-    color:#000;
-  }
+  .gold{background:var(--gold);color:#000;}
 
   .row{
     display:flex;
@@ -212,23 +193,18 @@
     gap:10px;
   }
   @media(max-width:600px){
-    .score-columns{
-      grid-template-columns:1fr;
-    }
+    .score-columns{grid-template-columns:1fr;}
   }
-
   .scoring-grid{
     display:grid;
     grid-template-columns:repeat(3,1fr);
     gap:8px;
   }
   @media(max-width:450px){
-    .scoring-grid{
-      grid-template-columns:repeat(2,1fr);
-    }
+    .scoring-grid{grid-template-columns:repeat(2,1fr);}
   }
 
-  /* DRAWERS (keep behavior, match dark theme) */
+  /* DRAWERS */
   .drawer-backdrop{
     position:fixed;
     inset:0;
@@ -247,7 +223,7 @@
     position:fixed;
     top:0;
     height:100%;
-    width:320px;
+    width:380px;
     max-width:80vw;
     background:#050608;
     border-left:1px solid var(--border);
@@ -265,30 +241,38 @@
     border-left:none;
     transform:translateX(-100%);
   }
-  #drawerLeft.drawer-panel.open{
-    transform:translateX(0);
-  }
+  #drawerLeft.drawer-panel.open{transform:translateX(0);}
   #drawerRight.drawer-panel{
     right:0;
   }
-  #drawerRight.drawer-panel.open{
-    transform:translateX(0);
-  }
+  #drawerRight.drawer-panel.open{transform:translateX(0);}
 
   .drawer-header{
-    padding:12px 14px;
+    padding:12px 14px 10px;
     border-bottom:1px solid var(--border);
+    background:#08090b;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    background:#08090b;
   }
   .drawer-title{
-    font-size:14px;
+    font-size:13px;
     font-weight:700;
     text-transform:uppercase;
     letter-spacing:0.06em;
     color:var(--muted);
+    position:relative;
+    padding-bottom:4px;
+  }
+  .drawer-title::after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:0;
+    width:32px;
+    height:2px;
+    border-radius:2px;
+    background:var(--accent);
   }
   .drawer-close-btn{
     border:0;
@@ -302,9 +286,7 @@
     font-size:13px;
     overflow-y:auto;
   }
-  .drawer-section{
-    margin-bottom:18px;
-  }
+  .drawer-section{margin-bottom:18px;}
   .drawer-section h4{
     margin:0 0 6px 0;
     font-size:12px;
@@ -317,9 +299,7 @@
     color:var(--muted);
     margin-top:6px;
   }
-
-  input[type=text],
-  input[type=number]{
+  input[type=text]{
     width:100%;
     padding:8px 9px;
     border-radius:8px;
@@ -351,60 +331,7 @@
     margin-top:2px;
   }
 
-  #toast{
-    position:fixed;
-    bottom:26px;
-    left:50%;
-    transform:translateX(-50%);
-    background:#1e88e5;
-    border-radius:8px;
-    padding:10px 16px;
-    font-size:14px;
-    font-weight:600;
-    display:none;
-    z-index:999999;
-    color:#fff;
-    box-shadow:0 8px 22px rgba(0,0,0,0.9);
-  }
-
-  /* MATCH POPUP CARD */
-  #matchPopup{
-    position:fixed;
-    bottom:24px;
-    right:16px;
-    background:#050608;
-    border-radius:12px;
-    border:1px solid var(--gold);
-    padding:10px 14px;
-    max-width:260px;
-    box-shadow:0 10px 24px rgba(0,0,0,.9);
-    font-size:12px;
-    display:none;
-    z-index:100000;
-  }
-  #matchPopupTitle{
-    font-size:13px;
-    font-weight:700;
-    margin-bottom:4px;
-  }
-  #matchPopupBody{
-    font-size:12px;
-    color:#ddd;
-  }
-
-  #version-tag{
-    position:fixed;
-    bottom:6px;
-    right:10px;
-    font-size:11px;
-    color:#666;
-    opacity:.75;
-    font-weight:600;
-  }
-
-  .hidden{display:none !important;}
-
-  /* END MATCH MODAL – untouched behavior, themed to dark */
+  /* END MATCH MODAL */
   #endMatchModal{
     position:fixed;
     inset:0;
@@ -415,7 +342,6 @@
     z-index:100000;
   }
   #endMatchModal.open{display:flex;}
-
   .modal-panel{
     background:#050608;
     padding:22px 18px 18px;
@@ -466,8 +392,23 @@
     font-size:16px;
     cursor:pointer;
   }
+  .modal-summary{
+    font-size:14px;
+    margin-bottom:12px;
+  }
+
+  #version-tag{
+    position:fixed;
+    bottom:6px;
+    right:10px;
+    font-size:11px;
+    color:#666;
+    opacity:.75;
+    font-weight:600;
+  }
+
+  .hidden{display:none !important;}
 </style>
-  
 </head>
 <body>
 
@@ -503,16 +444,6 @@
     <div>Time: <strong id="sumTime">01:00</strong></div>
     <div>Red: <strong id="sumRed" class="redText">0</strong></div>
     <div>Green: <strong id="sumGreen" class="greenText">0</strong></div>
-  </div>
-
-  <!-- LAST MATCH RESULT CARD -->
-  <div id="lastMatchCard" class="last-match-card hidden">
-    <div class="last-match-header">Last Match Result</div>
-    <div class="last-match-main">
-      <div id="lastMatchWinner"><em>No match submitted yet.</em></div>
-      <div id="lastMatchScore"></div>
-    </div>
-    <div class="last-match-meta" id="lastMatchMeta"></div>
   </div>
 
   <div class="grid">
@@ -568,10 +499,10 @@
 </div>
 
 <!-- LEFT DRAWER -->
-<div id="drawerLeft" class="drawer">
+<div id="drawerLeft" class="drawer-panel">
   <div class="drawer-header">
     <div class="drawer-title">Timer Settings</div>
-    <button id="closeDrawerLeft" class="drawer-close">✕</button>
+    <button class="drawer-close-btn" id="closeDrawerLeft">✕</button>
   </div>
   <div class="drawer-body">
     <div class="drawer-section">
@@ -582,20 +513,22 @@
         <button class="small gray preset-btn" data-sec="120">2:00</button>
       </div>
     </div>
-
     <div class="drawer-section">
       <h4>Custom Time</h4>
       <input id="customTimeInput" type="text" placeholder="MM:SS or seconds">
       <button id="applyCustomTime" class="small blue" style="margin-top:6px;width:100%;">Apply Custom Time</button>
+      <div class="drawer-note">
+        Custom time applies to this mat. If the timer is stopped, the new value will appear immediately.
+      </div>
     </div>
   </div>
 </div>
 
 <!-- RIGHT DRAWER -->
-<div id="drawerRight" class="drawer">
+<div id="drawerRight" class="drawer-panel">
   <div class="drawer-header">
     <div class="drawer-title">Match Settings</div>
-    <button id="closeDrawerRight" class="drawer-close">✕</button>
+    <button class="drawer-close-btn" id="closeDrawerRight">✕</button>
   </div>
   <div class="drawer-body">
 
@@ -605,14 +538,14 @@
       <input id="redNameInput" type="text" placeholder="Red wrestler name">
       <label style="font-size:12px;margin-top:8px;display:block;">Green Wrestler</label>
       <input id="greenNameInput" type="text" placeholder="Green wrestler name">
-      <div class="drawer-note">Names save per mat and clear when you reset the mat.</div>
+      <div class="drawer-note">Names are saved per mat on this device and cleared when you reset the mat.</div>
     </div>
 
     <div class="drawer-section">
       <h4>Reset Mat</h4>
       <button id="resetMatBtn" class="small red" style="width:100%;">Reset Entire Mat</button>
       <div class="drawer-note">
-        Resets time, period, scores, names, and timeline. Use this between matches.
+        Resets time, period, scores, names, and the timeline for the selected mat. Use this between matches.
       </div>
     </div>
 
@@ -659,12 +592,7 @@
   </div>
 </div>
 
-<div id="toast">Submitted</div>
-<div id="matchPopup">
-  <div id="matchPopupTitle">Match Submitted ✔</div>
-  <div id="matchPopupBody"></div>
-</div>
-<div id="version-tag">v2.17</div>
+<div id="version-tag">v2.18</div>
 
 <script>
 const socket = io("https://scoreboard-server-er33.onrender.com", {
@@ -675,7 +603,6 @@ let lastState = null;
 const periodLengthByMat = {1:60,2:60,3:60,4:60};
 const timeline = {1:[],2:[],3:[],4:[]};
 const lastZeroSignature = {1:null,2:null,3:null,4:null};
-let _matchPopupTimer = null;
 
 function currentMat(){
   return parseInt(document.getElementById("matSelect").value,10) || 1;
@@ -687,8 +614,7 @@ socket.on("connect", () => {
 socket.on("disconnect", () => {
   document.getElementById("conn").textContent = "disconnected";
 });
-
-socket.on("stateUpdate", (state) => {
+socket.on("stateUpdate", (state)=>{
   lastState = state;
   updateUI(state);
   maybeHandleEndOfPeriod(state);
@@ -717,6 +643,7 @@ function updateUI(state){
   else timeEl.classList.remove("timer-running");
 }
 
+/* OVERTIME & PERIOD PROGRESSION */
 function maybeHandleEndOfPeriod(state){
   const mat = currentMat();
   const m = state.mats?.[mat];
@@ -751,7 +678,7 @@ function maybeHandleEndOfPeriod(state){
     if(period === 3){
       if(diff !== 0){
         pushTimeline(mat,{
-          label:`End of 3rd — Winner by points (use End Match)`,
+          label:`End of 3rd — winner by points (use End Match)`,
           timeStr:fmt(m.time||0),period:3,red,green
         });
         return;
@@ -761,7 +688,7 @@ function maybeHandleEndOfPeriod(state){
           updates:{ period:"OT", time:60, running:false }
         });
         pushTimeline(mat,{
-          label:`End of 3rd — Going to OT (1:00)`,
+          label:`End of 3rd — going to OT (1:00)`,
           timeStr:fmt(m.time||0),period:3,red,green
         });
         return;
@@ -830,21 +757,21 @@ function maybeHandleEndOfPeriod(state){
   }
 }
 
-function pushTimeline(mat, entry){
-  if(!timeline[mat]) timeline[mat] = [];
+function pushTimeline(mat,entry){
+  if(!timeline[mat]) timeline[mat]=[];
   timeline[mat].push(entry);
-  if(timeline[mat].length > 200) timeline[mat].shift();
+  if(timeline[mat].length>200) timeline[mat].shift();
   renderTimeline(mat);
 }
 
 function renderTimeline(mat){
   const list = document.getElementById("timelineList");
   if(!list) return;
-  list.innerHTML = "";
+  list.innerHTML="";
   const events = timeline[mat] || [];
   events.slice().reverse().forEach(ev=>{
     const div = document.createElement("div");
-    div.className = "timeline-item";
+    div.className="timeline-item";
     div.innerHTML = `
       <div class="timeline-main">${ev.label}</div>
       <div class="timeline-meta">
@@ -855,59 +782,7 @@ function renderTimeline(mat){
   });
 }
 
-/* LAST MATCH UI */
-function updateLastMatchUI(result){
-  const card = document.getElementById("lastMatchCard");
-  if(!card) return;
-  const wEl = document.getElementById("lastMatchWinner");
-  const sEl = document.getElementById("lastMatchScore");
-  const mEl = document.getElementById("lastMatchMeta");
-
-  const methodLabel = {
-    decision:"Decision",
-    tech:"Tech Fall",
-    pin:"Pin",
-    forfeit:"Forfeit"
-  }[result.method] || result.method;
-
-  const winnerName = result.winner === "red"
-    ? (result.redName || "Red Wrestler")
-    : (result.greenName || "Green Wrestler");
-
-  wEl.textContent = `Winner: ${winnerName} (${methodLabel})`;
-  sEl.textContent = `Final: ${result.redScore}–${result.greenScore} · Mat ${result.mat}`;
-  const dt = new Date(result.timestamp);
-  mEl.textContent = `Period: ${result.period} · ${dt.toLocaleString()}`;
-
-  card.classList.remove("hidden");
-}
-
-function showMatchPopup(result){
-  const popup = document.getElementById("matchPopup");
-  if(!popup) return;
-  const titleEl = document.getElementById("matchPopupTitle");
-  const bodyEl = document.getElementById("matchPopupBody");
-
-  const methodLabel = {
-    decision:"Decision",
-    tech:"Tech Fall",
-    pin:"Pin",
-    forfeit:"Forfeit"
-  }[result.method] || result.method;
-
-  const winnerName = result.winner === "red"
-    ? (result.redName || "Red Wrestler")
-    : (result.greenName || "Green Wrestler");
-
-  titleEl.textContent = "Match Submitted ✔";
-  bodyEl.textContent = `${winnerName} (${methodLabel}) · ${result.redScore}–${result.greenScore} · Mat ${result.mat}`;
-
-  popup.style.display = "block";
-  if(_matchPopupTimer) clearTimeout(_matchPopupTimer);
-  _matchPopupTimer = setTimeout(()=>{popup.style.display="none";},5000);
-}
-
-/* NAMES */
+/* NAMES (local per mat) */
 const redNameInput = document.getElementById("redNameInput");
 const greenNameInput = document.getElementById("greenNameInput");
 
@@ -917,7 +792,6 @@ function loadNamesForMat(mat){
   redNameInput.value = data.red || "";
   greenNameInput.value = data.green || "";
 }
-
 function saveNamesForMat(mat){
   const store = JSON.parse(localStorage.getItem("matside_names") || "{}");
   store[mat] = {
@@ -926,85 +800,83 @@ function saveNamesForMat(mat){
   };
   localStorage.setItem("matside_names", JSON.stringify(store));
 }
-
 function clearNamesForMat(mat){
   const store = JSON.parse(localStorage.getItem("matside_names") || "{}");
   delete store[mat];
   localStorage.setItem("matside_names", JSON.stringify(store));
-  redNameInput.value = "";
-  greenNameInput.value = "";
+  redNameInput.value="";
+  greenNameInput.value="";
 }
+redNameInput.addEventListener("input",()=>saveNamesForMat(currentMat()));
+greenNameInput.addEventListener("input",()=>saveNamesForMat(currentMat()));
 
-redNameInput.addEventListener("input", () => saveNamesForMat(currentMat()));
-greenNameInput.addEventListener("input", () => saveNamesForMat(currentMat()));
-
-document.getElementById("matSelect").addEventListener("change", () => {
-  const mat = currentMat();
+/* MAT CHANGE */
+document.getElementById("matSelect").addEventListener("change",()=>{
+  const mat=currentMat();
   loadNamesForMat(mat);
   if(lastState) updateUI(lastState);
   renderTimeline(mat);
 });
-
 loadNamesForMat(currentMat());
 
 /* TIMER CONTROLS */
-document.getElementById("startBtn").onclick = () => {
-  const mat = currentMat();
-  socket.emit("updateState", { mat, updates:{ running:true }});
+document.getElementById("startBtn").onclick=()=>{
+  const mat=currentMat();
+  socket.emit("updateState",{mat,updates:{running:true}});
 };
-document.getElementById("stopBtn").onclick = () => {
-  const mat = currentMat();
-  socket.emit("updateState", { mat, updates:{ running:false }});
+document.getElementById("stopBtn").onclick=()=>{
+  const mat=currentMat();
+  socket.emit("updateState",{mat,updates:{running:false}});
 };
-document.getElementById("resetTimerBtn").onclick = () => {
-  const mat = currentMat();
-  const base = periodLengthByMat[mat] || 60;
-  socket.emit("updateState", { mat, updates:{ time:base, running:false }});
+document.getElementById("resetTimerBtn").onclick=()=>{
+  const mat=currentMat();
+  const base=periodLengthByMat[mat]||60;
+  socket.emit("updateState",{mat,updates:{time:base,running:false}});
 };
 
-/* PRESETS + CUSTOM */
+/* PRESETS & CUSTOM TIME */
 document.querySelectorAll(".preset-btn").forEach(btn=>{
-  btn.onclick = () => {
-    const sec = parseInt(btn.dataset.sec,10);
+  btn.onclick=()=>{
+    const sec=parseInt(btn.dataset.sec,10);
     if(!sec) return;
-    const mat = currentMat();
-    periodLengthByMat[mat] = sec;
-    const m = lastState?.mats?.[mat];
+    const mat=currentMat();
+    periodLengthByMat[mat]=sec;
+    const m=lastState?.mats?.[mat];
     if(m && !m.running){
-      socket.emit("updateState", { mat, updates:{ time:sec }});
+      socket.emit("updateState",{mat,updates:{time:sec}});
     }
   };
 });
-document.getElementById("applyCustomTime").onclick = () => {
-  const raw = document.getElementById("customTimeInput").value.trim();
+document.getElementById("applyCustomTime").onclick=()=>{
+  const raw=document.getElementById("customTimeInput").value.trim();
   if(!raw) return;
-  let sec = 0;
+  let sec=0;
   if(raw.includes(":")){
-    const [mm,ss] = raw.split(":");
-    sec = (parseInt(mm,10)||0)*60 + (parseInt(ss,10)||0);
-  } else {
-    sec = parseInt(raw,10) || 0;
+    const [mm,ss]=raw.split(":");
+    sec=(parseInt(mm,10)||0)*60 + (parseInt(ss,10)||0);
+  }else{
+    sec=parseInt(raw,10)||0;
   }
-  if(sec <= 0) return;
-  const mat = currentMat();
-  periodLengthByMat[mat] = sec;
-  const m = lastState?.mats?.[mat];
+  if(sec<=0) return;
+  const mat=currentMat();
+  periodLengthByMat[mat]=sec;
+  const m=lastState?.mats?.[mat];
   if(m && !m.running){
-    socket.emit("updateState", { mat, updates:{ time:sec }});
+    socket.emit("updateState",{mat,updates:{time:sec}});
   }
-  document.getElementById("customTimeInput").value = "";
+  document.getElementById("customTimeInput").value="";
 };
 
 /* SCORING */
 document.querySelectorAll(".score-btn").forEach(btn=>{
-  btn.onclick = () => {
-    const mat = currentMat();
-    const color = btn.dataset.color;
-    const pts = parseInt(btn.dataset.pts,10);
-    const code = btn.dataset.code;
-    const m = lastState?.mats?.[mat] || {red:0,green:0,time:0,period:1};
+  btn.onclick=()=>{
+    const mat=currentMat();
+    const color=btn.dataset.color;
+    const pts=parseInt(btn.dataset.pts,10);
+    const code=btn.dataset.code;
+    const m=lastState?.mats?.[mat] || {red:0,green:0,time:0,period:1};
 
-    socket.emit("addPoints",{ mat, color, pts });
+    socket.emit("addPoints",{mat,color,pts});
 
     const newRed = color==="red" ? (m.red||0)+pts : (m.red||0);
     const newGreen = color==="green" ? (m.green||0)+pts : (m.green||0);
@@ -1019,9 +891,9 @@ document.querySelectorAll(".score-btn").forEach(btn=>{
   };
 });
 
-document.getElementById("subRed").onclick = () => {
-  const mat = currentMat();
-  const m = lastState?.mats?.[mat] || {red:0,green:0,time:0,period:1};
+document.getElementById("subRed").onclick=()=>{
+  const mat=currentMat();
+  const m=lastState?.mats?.[mat] || {red:0,green:0,time:0,period:1};
   socket.emit("subPoint",{mat,color:"red"});
   pushTimeline(mat,{
     label:"RED -1 (correction)",
@@ -1031,9 +903,9 @@ document.getElementById("subRed").onclick = () => {
     green:m.green||0
   });
 };
-document.getElementById("subGreen").onclick = () => {
-  const mat = currentMat();
-  const m = lastState?.mats?.[mat] || {red:0,green:0,time:0,period:1};
+document.getElementById("subGreen").onclick=()=>{
+  const mat=currentMat();
+  const m=lastState?.mats?.[mat] || {red:0,green:0,time:0,period:1};
   socket.emit("subPoint",{mat,color:"green"});
   pushTimeline(mat,{
     label:"GREEN -1 (correction)",
@@ -1043,9 +915,9 @@ document.getElementById("subGreen").onclick = () => {
     green:Math.max(0,(m.green||0)-1)
   });
 };
-document.getElementById("resetScores").onclick = () => {
-  const mat = currentMat();
-  const m = lastState?.mats?.[mat] || {red:0,green:0,time:0,period:1};
+document.getElementById("resetScores").onclick=()=>{
+  const mat=currentMat();
+  const m=lastState?.mats?.[mat] || {red:0,green:0,time:0,period:1};
   socket.emit("updateState",{mat,updates:{red:0,green:0}});
   pushTimeline(mat,{
     label:"Scores reset",
@@ -1056,16 +928,16 @@ document.getElementById("resetScores").onclick = () => {
   });
 };
 
-/* RESET ENTIRE MAT */
-function doFullMatReset(mat, { clearTimeline, clearNames }) {
+/* FULL MAT RESET */
+function doFullMatReset(mat,{clearTimeline,clearNames}){
   if(clearTimeline){
-    timeline[mat] = [];
+    timeline[mat]=[];
     renderTimeline(mat);
   }
   if(clearNames){
     clearNamesForMat(mat);
   }
-  const base = periodLengthByMat[mat] || 60;
+  const base=periodLengthByMat[mat]||60;
   socket.emit("updateState",{
     mat,
     updates:{
@@ -1077,127 +949,125 @@ function doFullMatReset(mat, { clearTimeline, clearNames }) {
     }
   });
 }
-document.getElementById("resetMatBtn").onclick = () => {
-  const mat = currentMat();
-  doFullMatReset(mat,{clearTimeline:true, clearNames:true});
+document.getElementById("resetMatBtn").onclick=()=>{
+  const mat=currentMat();
+  doFullMatReset(mat,{clearTimeline:true,clearNames:true});
 };
 
 /* END MATCH MODAL */
-const endMatchModal = document.getElementById("endMatchModal");
-const endMatchSubtitle = document.getElementById("endMatchSubtitle");
-const step1 = document.getElementById("endMatchStep1");
-const step2 = document.getElementById("endMatchStep2");
-const step3 = document.getElementById("endMatchStep3");
-const winnerRedBtn = document.getElementById("winnerRedBtn");
-const winnerGreenBtn = document.getElementById("winnerGreenBtn");
-const resultButtons = document.querySelectorAll(".result-btn");
-const endMatchSummary = document.getElementById("endMatchSummary");
-const submitMatchBtn = document.getElementById("submitMatchBtn");
-const endMatchClose = document.getElementById("endMatchClose");
+const endMatchModal=document.getElementById("endMatchModal");
+const endMatchSubtitle=document.getElementById("endMatchSubtitle");
+const step1=document.getElementById("endMatchStep1");
+const step2=document.getElementById("endMatchStep2");
+const step3=document.getElementById("endMatchStep3");
+const winnerRedBtn=document.getElementById("winnerRedBtn");
+const winnerGreenBtn=document.getElementById("winnerGreenBtn");
+const resultButtons=document.querySelectorAll(".result-btn");
+const endMatchSummary=document.getElementById("endMatchSummary");
+const submitMatchBtn=document.getElementById("submitMatchBtn");
+const endMatchClose=document.getElementById("endMatchClose");
 
-let chosenWinner = null;
-let chosenMethod = null;
-let modalMat = null;
+let chosenWinner=null;
+let chosenMethod=null;
+let modalMat=null;
 
-function openEndMatchModal() {
-  const mat = currentMat();
-  const m = lastState?.mats?.[mat];
+function openEndMatchModal(){
+  const mat=currentMat();
+  const m=lastState?.mats?.[mat];
   if(!m){
     alert("No mat state yet.");
     return;
   }
-  modalMat = mat;
-  chosenWinner = null;
-  chosenMethod = null;
+  modalMat=mat;
+  chosenWinner=null;
+  chosenMethod=null;
 
-  winnerRedBtn.textContent = (redNameInput.value.trim() || "Red Wrestler");
-  winnerGreenBtn.textContent = (greenNameInput.value.trim() || "Green Wrestler");
+  winnerRedBtn.textContent = redNameInput.value.trim() || "Red Wrestler";
+  winnerGreenBtn.textContent = greenNameInput.value.trim() || "Green Wrestler";
 
   winnerRedBtn.classList.remove("modal-selected");
   winnerGreenBtn.classList.remove("modal-selected");
   resultButtons.forEach(b=>b.classList.remove("modal-selected"));
 
-  const diff = (m.red||0) - (m.green||0);
-  if(diff > 0){
-    winnerRedBtn.classList.add("modal-selected");
-  } else if(diff < 0){
-    winnerGreenBtn.classList.add("modal-selected");
-  }
+  const diff=(m.red||0)-(m.green||0);
+  if(diff>0) winnerRedBtn.classList.add("modal-selected");
+  else if(diff<0) winnerGreenBtn.classList.add("modal-selected");
 
   step1.classList.remove("hidden");
   step2.classList.add("hidden");
   step3.classList.add("hidden");
-  endMatchSubtitle.textContent = "Select the winner.";
+  endMatchSubtitle.textContent="Select the winner.";
   endMatchModal.classList.add("open");
 }
 function closeEndMatchModal(){
   endMatchModal.classList.remove("open");
 }
-
-document.getElementById("endMatchBtn").onclick = openEndMatchModal;
-endMatchClose.onclick = closeEndMatchModal;
-endMatchModal.addEventListener("click", (e)=>{
-  if(e.target === endMatchModal) closeEndMatchModal();
+document.getElementById("endMatchBtn").onclick=openEndMatchModal;
+endMatchClose.onclick=closeEndMatchModal;
+endMatchModal.addEventListener("click",(e)=>{
+  if(e.target===endMatchModal) closeEndMatchModal();
 });
 
-winnerRedBtn.onclick = () => {
-  chosenWinner = "red";
+winnerRedBtn.onclick=()=>{
+  chosenWinner="red";
   winnerRedBtn.classList.add("modal-selected");
   winnerGreenBtn.classList.remove("modal-selected");
   step1.classList.add("hidden");
   step2.classList.remove("hidden");
-  endMatchSubtitle.textContent = "How did they win?";
+  endMatchSubtitle.textContent="How did they win?";
 };
-winnerGreenBtn.onclick = () => {
-  chosenWinner = "green";
+winnerGreenBtn.onclick=()=>{
+  chosenWinner="green";
   winnerGreenBtn.classList.add("modal-selected");
   winnerRedBtn.classList.remove("modal-selected");
   step1.classList.add("hidden");
   step2.classList.remove("hidden");
-  endMatchSubtitle.textContent = "How did they win?";
+  endMatchSubtitle.textContent="How did they win?";
 };
 
 resultButtons.forEach(btn=>{
-  btn.onclick = () => {
+  btn.onclick=()=>{
     if(!chosenWinner) return;
-    chosenMethod = btn.dataset.method;
+    chosenMethod=btn.dataset.method;
     resultButtons.forEach(b=>b.classList.remove("modal-selected"));
     btn.classList.add("modal-selected");
 
-    const mat = modalMat;
-    const m = lastState?.mats?.[mat];
+    const mat=modalMat;
+    const m=lastState?.mats?.[mat];
     if(!m) return;
 
-    const redScore = m.red||0;
-    const greenScore = m.green||0;
+    const redScore=m.red||0;
+    const greenScore=m.green||0;
 
-    const winnerName = chosenWinner === "red"
+    const winnerName = chosenWinner==="red"
       ? (redNameInput.value.trim() || "Red Wrestler")
       : (greenNameInput.value.trim() || "Green Wrestler");
 
-    const methodLabel = {
+    const methodLabel={
       decision:"Decision",
       tech:"Tech Fall",
       pin:"Pin",
       forfeit:"Forfeit"
     }[chosenMethod] || chosenMethod;
 
-    endMatchSummary.textContent = `Winner: ${winnerName} (${methodLabel}) — Final score ${redScore}–${greenScore}.`;
+    endMatchSummary.textContent=
+      `Winner: ${winnerName} (${methodLabel}) — Final score ${redScore}–${greenScore}.`;
+
     step2.classList.add("hidden");
     step3.classList.remove("hidden");
-    endMatchSubtitle.textContent = "Confirm result and submit.";
+    endMatchSubtitle.textContent="Confirm result and submit.";
   };
 });
 
-submitMatchBtn.onclick = () => {
-  const mat = modalMat;
-  const m = lastState?.mats?.[mat];
+submitMatchBtn.onclick=()=>{
+  const mat=modalMat;
+  const m=lastState?.mats?.[mat];
   if(!m || !chosenWinner || !chosenMethod) return;
 
-  const redScore = m.red||0;
-  const greenScore = m.green||0;
+  const redScore=m.red||0;
+  const greenScore=m.green||0;
 
-  const resultPayload = {
+  const resultPayload={
     mat,
     winner:chosenWinner,
     method:chosenMethod,
@@ -1209,7 +1079,7 @@ submitMatchBtn.onclick = () => {
     timestamp:new Date().toISOString()
   };
 
-  socket.emit("matchEnded", resultPayload);
+  socket.emit("matchEnded",resultPayload);
 
   pushTimeline(mat,{
     label:`Match Ended — Winner: ${chosenWinner.toUpperCase()} (${{
@@ -1221,47 +1091,42 @@ submitMatchBtn.onclick = () => {
     green:greenScore
   });
 
-  updateLastMatchUI(resultPayload);
-  showMatchPopup(resultPayload);
-
-  doFullMatReset(mat,{clearTimeline:false, clearNames:false});
+  doFullMatReset(mat,{clearTimeline:false,clearNames:false});
   closeEndMatchModal();
 };
 
 /* DRAWERS */
-const drawerLeft = document.getElementById("drawerLeft");
-const drawerRight = document.getElementById("drawerRight");
-const backdropLeft = document.getElementById("backdropLeft");
-const backdropRight = document.getElementById("backdropRight");
+const drawerLeft=document.getElementById("drawerLeft");
+const drawerRight=document.getElementById("drawerRight");
+const backdropLeft=document.getElementById("backdropLeft");
+const backdropRight=document.getElementById("backdropRight");
 
-document.getElementById("openDrawerLeft").onclick = () => {
+document.getElementById("openDrawerLeft").onclick=()=>{
   drawerLeft.classList.add("open");
   backdropLeft.classList.add("open");
 };
-document.getElementById("closeDrawerLeft").onclick = () => {
-  drawerLeft.classList.remove("open");
-  backdropLeft.classList.remove("open");
-};
-backdropLeft.onclick = () => {
-  drawerLeft.classList.remove("open");
-  backdropLeft.classList.remove("open");
-};
-
-document.getElementById("openDrawerRight").onclick = () => {
+document.getElementById("openDrawerRight").onclick=()=>{
   drawerRight.classList.add("open");
   backdropRight.classList.add("open");
 };
-document.getElementById("closeDrawerRight").onclick = () => {
-  drawerRight.classList.remove("open");
-  backdropRight.classList.remove("open");
+
+document.getElementById("closeDrawerLeft").onclick=()=>{
+  drawerLeft.classList.remove("open");
+  backdropLeft.classList.remove("open");
 };
-backdropRight.onclick = () => {
+document.getElementById("closeDrawerRight").onclick=()=>{
   drawerRight.classList.remove("open");
   backdropRight.classList.remove("open");
 };
 
-
-  
+backdropLeft.onclick=()=>{
+  drawerLeft.classList.remove("open");
+  backdropLeft.classList.remove("open");
+};
+backdropRight.onclick=()=>{
+  drawerRight.classList.remove("open");
+  backdropRight.classList.remove("open");
+};
 </script>
 </body>
 </html>
