@@ -1259,6 +1259,52 @@ backdropRight.onclick = () => {
   drawerRight.classList.remove("open");
   backdropRight.classList.remove("open");
 };
+
+<script>
+// =====================================================
+// RESTORE DRAWER LOGIC
+// =====================================================
+
+// Elements
+const drawerLeft     = document.getElementById("drawerLeft");
+const drawerRight    = document.getElementById("drawerRight");
+const backdropLeft   = document.getElementById("backdropLeft");
+const backdropRight  = document.getElementById("backdropRight");
+
+const openDrawerLeftBtn  = document.getElementById("openDrawerLeft");
+const openDrawerRightBtn = document.getElementById("openDrawerRight");
+
+// ---- OPEN DRAWERS ----
+openDrawerLeftBtn.addEventListener("click", () => {
+  drawerLeft.classList.add("open");
+  backdropLeft.classList.add("open");
+});
+
+openDrawerRightBtn.addEventListener("click", () => {
+  drawerRight.classList.add("open");
+  backdropRight.classList.add("open");
+});
+
+// ---- CLOSE DRAWERS ----
+function closeLeft() {
+  drawerLeft.classList.remove("open");
+  backdropLeft.classList.remove("open");
+}
+
+function closeRight() {
+  drawerRight.classList.remove("open");
+  backdropRight.classList.remove("open");
+}
+
+// Close button inside drawer
+document.getElementById("closeDrawerLeft")?.addEventListener("click", closeLeft);
+document.getElementById("closeDrawerRight")?.addEventListener("click", closeRight);
+
+// Click backdrop to close
+backdropLeft.addEventListener("click", closeLeft);
+backdropRight.addEventListener("click", closeRight);
+</script>
+  
 </script>
 </body>
 </html>
