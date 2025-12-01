@@ -62,7 +62,6 @@ function submitMatch() {
   }
   const m = state.mats[mat];
 
-  // If winner not selected, infer from scores when possible
   if (!selectedWinner) {
     if ((m.red ?? 0) > (m.green ?? 0)) selectedWinner = "red";
     else if ((m.green ?? 0) > (m.red ?? 0)) selectedWinner = "green";
@@ -75,7 +74,7 @@ function submitMatch() {
 
   const entry = {
     mat,
-    period: m.period ?? 1,
+    segmentId: m.segmentId || "REG1",
     timeLeft: m.time ?? 0,
     redScore: m.red ?? 0,
     greenScore: m.green ?? 0,
@@ -91,7 +90,5 @@ function submitMatch() {
   });
   showToast("Match submitted");
   closeOverlay();
-
-  // Reset mat after match submission
   resetMatOnServer();
 }
