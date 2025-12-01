@@ -1,0 +1,219 @@
+<!-- =========================================================
+ FILE: modules/core/ui-kit.css
+ Shared palette + base layout for Matside pages
+========================================================= -->
+:root{
+  --ms-bg:#050608;
+  --ms-panel:#111319;
+  --ms-accent:#1e88e5;
+  --ms-red:#d32f2f;
+  --ms-green:#2e7d32;
+  --ms-muted:#9aa0a6;
+  --ms-border-subtle:rgba(255,255,255,0.08);
+  --ms-radius-lg:16px;
+  --ms-radius-md:12px;
+  --ms-radius-pill:999px;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--ms-bg);
+  color:#fff;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+}
+
+.ms-page{
+  max-width:1200px;
+  margin:0 auto;
+  padding:16px;
+}
+
+.ms-header-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+.ms-brand{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.ms-brand-logo{
+  height:32px;
+  width:32px;
+  border-radius:8px;
+  object-fit:cover;
+}
+
+.ms-brand-title{
+  font-weight:700;
+  font-size:18px;
+}
+
+.ms-header-sub{
+  font-size:13px;
+  color:var(--ms-muted);
+}
+
+.ms-chip{
+  padding:4px 10px;
+  border-radius:var(--ms-radius-pill);
+  background:#0b0d11;
+  border:1px solid var(--ms-border-subtle);
+  font-size:12px;
+}
+
+.ms-top-grid{
+  display:grid;
+  grid-template-columns:1fr 1.4fr 1fr;
+  gap:10px;
+  margin-bottom:10px;
+}
+@media(max-width:700px){
+  .ms-top-grid{grid-template-columns:1fr;row-gap:6px;}
+}
+
+.ms-pill{
+  background:#0d1015;
+  border-radius:var(--ms-radius-md);
+  padding:8px 10px;
+  border:1px solid var(--ms-border-subtle);
+  text-align:center;
+  font-size:13px;
+}
+.ms-pill-label{
+  font-size:11px;
+  text-transform:uppercase;
+  color:var(--ms-muted);
+  margin-bottom:2px;
+}
+.ms-pill-value{
+  font-size:18px;
+  font-weight:700;
+}
+.ms-pill-timer .ms-pill-value{
+  font-size:32px;
+}
+
+.ms-score-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+@media(max-width:700px){
+  .ms-score-row{grid-template-columns:1fr;row-gap:8px;}
+}
+
+.ms-side{
+  padding:12px 10px;
+  border-radius:var(--ms-radius-lg);
+  background:var(--ms-panel);
+  box-shadow:0 14px 40px rgba(0,0,0,0.75);
+}
+.ms-side-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:6px;
+}
+.ms-side-name{
+  font-size:14px;
+  font-weight:700;
+}
+.ms-side-tag{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--ms-muted);
+}
+
+.ms-score-box{
+  font-size:64px;
+  font-weight:700;
+  padding:40px 0;
+  border-radius:16px;
+  text-align:center;
+  background:#0b0d11;
+  border:1px solid var(--ms-border-subtle);
+}
+.ms-side-red .ms-score-box{
+  background:linear-gradient(180deg,rgba(211,47,47,0.25),rgba(0,0,0,0.9));
+  border-color:rgba(211,47,47,0.6);
+}
+.ms-side-green .ms-score-box{
+  background:linear-gradient(180deg,rgba(46,125,50,0.25),rgba(0,0,0,0.9));
+  border-color:rgba(46,125,50,0.6);
+}
+.ms-side-red .ms-side-name{color:var(--ms-red);}
+.ms-side-green .ms-side-name{color:var(--ms-green);}
+
+.ms-status-bar{
+  margin-top:10px;
+  font-size:12px;
+  color:var(--ms-muted);
+  text-align:center;
+}
+
+/* Overview-specific */
+.ms-mat-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+@media(max-width:900px){
+  .ms-mat-grid{grid-template-columns:1fr;}
+}
+
+.ms-mat-card{
+  background:var(--ms-panel);
+  border-radius:var(--ms-radius-lg);
+  padding:10px 10px 12px;
+  box-shadow:0 14px 40px rgba(0,0,0,0.75);
+}
+
+.ms-mat-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:6px;
+  font-size:13px;
+}
+.ms-mat-label{
+  font-weight:700;
+}
+.ms-mat-meta{
+  display:flex;
+  gap:6px;
+  font-size:11px;
+  color:var(--ms-muted);
+}
+.ms-mat-meta span{
+  padding:2px 8px;
+  border-radius:var(--ms-radius-pill);
+  background:#0b0d11;
+  border:1px solid var(--ms-border-subtle);
+}
+
+.ms-mat-main{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:4px;
+}
+.ms-mat-bottom{
+  margin-top:6px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+  color:var(--ms-muted);
+}
+.ms-winner-label{
+  font-weight:700;
+}
+.ms-winner-red{color:var(--ms-red);}
+.ms-winner-green{color:var(--ms-green);}
