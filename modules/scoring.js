@@ -1,5 +1,5 @@
 // modules/scoring.js
-import { addPoints, subPoint } from "./socketHandler.js";
+import { addPoints, subPoint, updateMatState } from "./socketHandler.js";
 import { addTimelineEntry } from "./timeline.js";
 
 let sumRedEl, sumGreenEl;
@@ -36,11 +36,7 @@ export function initScoring() {
     addTimelineEntry({ type:"adjust", color:"green", pts:-1, label:"-1 Green" });
   };
   if (resetScoresBtn) resetScoresBtn.onclick = () => {
-    // Hard reset via updateState
-    // We don't need a specialized socket method for this.
-    import("./socketHandler.js").then(mod => {
-      mod.updateMatState({ red:0, green:0 });
-    });
+    updateMatState({ red:0, green:0 });
     addTimelineEntry({ type:"reset-scores", label:"Scores reset" });
   };
 }
