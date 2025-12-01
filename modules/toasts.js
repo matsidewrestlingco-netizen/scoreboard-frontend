@@ -21,3 +21,4 @@ export function showToast(message, isError = false) {
     toastEl.classList.remove("show");
   }, 2600);
 }
+
