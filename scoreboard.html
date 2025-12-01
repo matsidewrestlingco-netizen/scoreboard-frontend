@@ -17,6 +17,10 @@
 <script type="module">
   import { initScoreboard } from "./modules/scoreboard-data.js";
   import { createScoreboardRenderer } from "./modules/scoreboard-render.js";
+  import { initSkinClient } from "./modules/ui/skins.js";
+
+  // Apply skin + subscribe to theme updates
+  initSkinClient("https://scoreboard-server-er33.onrender.com");
 
   const root = document.getElementById("sb-root");
   const render = createScoreboardRenderer(root);
