@@ -1,5 +1,4 @@
 // modules/socketHandler.js
-
 const SOCKET_URL = "https://scoreboard-server-er33.onrender.com";
 
 let socket = null;
@@ -81,9 +80,20 @@ export function subPoint(color) {
   });
 }
 
-export function resetMatOnServer() {
+// optional: allow extra defaults on reset
+export function resetMatOnServer(extra = {}) {
   if (!socket) return;
-  socket.emit("resetMat", { mat: currentMat });
+  socket.emit("updateState", {
+    mat: currentMat,
+    updates: {
+      segmentId: "REG1",
+      time: 60,
+      running: false,
+      red: 0,
+      green: 0,
+      ...extra
+    }
+  });
 }
 
 export function logMatchResult(entry) {
