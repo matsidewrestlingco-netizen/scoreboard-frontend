@@ -1,120 +1,26 @@
-<!DOCTYPE html>
+<!doctype html>
+<!-- scoreboard.html v4.0 (modular) -->
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside Scoreboard v3.2.1</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Matside — Scoreboard</title>
 
-<!-- Corrected UI Kit CSS path + cache buster -->
-<link rel="stylesheet" href="./modules/core/ui-kit.css?v=3.2.1">
+  <link rel="stylesheet" href="./css/theme.css?v=1.0" />
+  <link rel="stylesheet" href="./css/scoreboard.css?v=1.0" />
 
-<style>
-  body {
-    background: var(--ms-bg, #050608);
-    color: var(--ms-text, #ffffff);
-    margin: 0;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-  }
-
-  .sb-wrap {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-
-  .sb-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-
-  .sb-box {
-    background: var(--ms-surface);
-    padding: 18px;
-    border-radius: 12px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 24px;
-  }
-
-  .sb-timer {
-    font-size: 70px;
-    font-weight: 800;
-    padding: 20px 0;
-  }
-
-  .sb-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-    margin-top: 20px;
-  }
-
-  .sb-score {
-    background: var(--ms-surface-strong);
-    padding: 35px 0;
-    font-size: 120px;
-    font-weight: 800;
-    border-radius: 20px;
-  }
-
-  .sb-red { color: var(--ms-red); }
-  .sb-green { color: var(--ms-green); }
-
-</style>
-
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
+<div id="sb-root" class="sb-root"></div>
 
-<div class="sb-wrap">
+<script type="module">
+  import { initScoreboard } from "./modules/scoreboard-data.js";
+  import { createScoreboardRenderer } from "./modules/scoreboard-render.js";
 
-  <div class="sb-grid">
-    <div class="sb-box" id="sb-mat">Mat 1</div>
-    <div class="sb-box sb-timer" id="sb-time">00:00</div>
-    <div class="sb-box" id="sb-period">Period 1</div>
-  </div>
-
-  <div class="sb-row">
-    <div>
-      <div class="sb-box sb-red" id="sb-redName">RED</div>
-      <div class="sb-score sb-red" id="sb-redScore">0</div>
-    </div>
-
-    <div>
-      <div class="sb-box sb-green" id="sb-greenName">GREEN</div>
-      <div class="sb-score sb-green" id="sb-greenScore">0</div>
-    </div>
-  </div>
-
-</div>
-
-<script>
-// ====== SOCKET.IO ======
-const socket = io("https://scoreboard-server-er33.onrender.com");
-
-let mat = 1; // Derived from URL later if needed
-
-socket.on("stateUpdate", (state) => {
-  const m = state.mats[mat];
-  if (!m) return;
-
-  document.getElementById("sb-mat").textContent = `Mat ${mat}`;
-  document.getElementById("sb-period").textContent = `Period ${m.period}`;
-  document.getElementById("sb-time").textContent = format(m.time);
-  document.getElementById("sb-redScore").textContent = m.red;
-  document.getElementById("sb-greenScore").textContent = m.green;
-});
-
-// Format helper
-function format(s) {
-  const m = Math.floor(s / 60).toString().padStart(2, "0");
-  const sec = (s % 60).toString().padStart(2, "0");
-  return `${m}:${sec}`;
-}
+  const root = document.getElementById("sb-root");
+  const render = createScoreboardRenderer(root);
+  initScoreboard(render);
 </script>
-
 </body>
 </html>
