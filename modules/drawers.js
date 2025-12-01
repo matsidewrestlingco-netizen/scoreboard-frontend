@@ -36,7 +36,12 @@ export function initDrawers() {
       if (redNameInput) redNameInput.value = "";
       if (greenNameInput) greenNameInput.value = "";
       clearTimeline();
-      resetMatOnServer();
+     import { getInitialSegment } from "./periodLogic.js";
+
+      resetMatOnServer({
+        segmentId: getInitialSegment().id,
+        time: getInitialSegment().time
+    });
       showToast("Mat reset");
     };
   }
