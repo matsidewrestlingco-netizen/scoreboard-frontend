@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Matside — Overview v3.1.1</title>
+<title>Matside — Overview v3.2</title>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <style>
   :root {
     --bg: #070809;
-    --panel: rgba(22, 24, 28, 0.8);
-    --border: rgba(255,255,255,0.06);
+    --panel: rgba(22, 24, 28, 0.9);
+    --border: rgba(255,255,255,0.08);
     --muted: #9aa0a6;
 
     --red-back: #1a0000;
@@ -27,91 +27,115 @@
     background: var(--bg);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
     color: #fff;
-    padding: 20px;
+    padding: 18px;
   }
 
-  h1 {
-    text-align: center;
-    font-size: 28px;
+  /* HEADER / CONTROLS */
+  .header-row {
+    max-width: 1400px;
+    margin: 0 auto 16px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 24px;
     font-weight: 800;
-    margin-bottom: 20px;
   }
 
-  /* GRID LAYOUT */
+  .controls {
+    font-size: 14px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  select {
+    background: #0d0f12;
+    color: #fff;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+
+  /* GRID */
   .grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
     max-width: 1400px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
   }
 
   /* MAT CARD */
   .mat-card {
     background: var(--panel);
-    border: 1px solid var(--border);
     border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 26px rgba(0,0,0,0.4);
     padding: 14px;
     backdrop-filter: blur(10px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   }
 
-  /* TOP ROW (MAT / TIME / PERIOD) */
+  /* TOP BAR: MAT | TIME | PERIOD */
   .top-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
   }
 
   .top-box {
     background: rgba(255,255,255,0.05);
     border-radius: var(--radius);
-    padding: 10px 0;
+    border: 1px solid var(--border);
     text-align: center;
-    font-size: 18px;
-    font-weight: 700;
-    flex: 1;
-    margin: 0 3px;
+    font-weight: 800;
+    font-size: 16px;
+    padding: 8px 0;
   }
 
   .time-box {
-    font-size: 32px;
+    font-size: 26px;
     font-weight: 800;
   }
 
-  /* NAME ROW */
+  /* NAMES */
   .name-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 10px;
   }
 
   .red-name {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
     color: var(--red-glow);
-    font-weight: 700;
-    font-size: 18px;
-    text-align: center;
   }
-
   .green-name {
-    color: var(--green-glow);
-    font-weight: 700;
-    font-size: 18px;
     text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--green-glow);
   }
 
   /* SCORES */
   .score-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
   .score-box {
     border-radius: var(--radius);
-    padding: 35px 0;
-    font-size: 54px;
+    padding: 26px 0;
+    font-size: 42px;
     font-weight: 800;
     text-align: center;
   }
@@ -119,66 +143,126 @@
   .red-score {
     background: var(--red-back);
     border: 1px solid var(--red-glow);
-    box-shadow: 0 0 12px var(--red-glow);
+    box-shadow: 0 0 16px var(--red-glow);
   }
-
   .green-score {
     background: var(--green-back);
     border: 1px solid var(--green-glow);
-    box-shadow: 0 0 12px var(--green-glow);
+    box-shadow: 0 0 16px var(--green-glow);
+  }
+
+  @media (max-width: 600px) {
+    .time-box { font-size: 22px; }
+    .score-box { font-size: 32px; padding: 20px 0; }
   }
 </style>
 </head>
 <body>
 
-<h1>Matside — Event Overview</h1>
-
-<div class="grid">
-  <!-- 4 Mat Cards -->
-  <div class="mat-card" id="mat1"></div>
-  <div class="mat-card" id="mat2"></div>
-  <div class="mat-card" id="mat3"></div>
-  <div class="mat-card" id="mat4"></div>
+<div class="header-row">
+  <div class="title">Matside — Overview</div>
+  <div class="controls">
+    Mats shown:
+    <select id="matCountSelect">
+      <option value="1">1 mat</option>
+      <option value="2">2 mats</option>
+      <option value="3">3 mats</option>
+      <option value="4" selected>4 mats</option>
+      <option value="5">5 mats</option>
+      <option value="6">6 mats</option>
+      <option value="7">7 mats</option>
+      <option value="8">8 mats</option>
+    </select>
+  </div>
 </div>
+
+<div id="matGrid" class="grid"></div>
 
 <script>
 const socket = io("https://scoreboard-server-er33.onrender.com");
 
-socket.on("stateUpdate", (state) => {
-  for (let i = 1; i <= 4; i++) {
-    renderMat(i, state.mats[i]);
-  }
+let currentMatCount = 4;
+let lastState = null;
+
+const matCountSelect = document.getElementById("matCountSelect");
+const matGrid = document.getElementById("matGrid");
+
+matCountSelect.addEventListener("change", () => {
+  currentMatCount = parseInt(matCountSelect.value, 10) || 4;
+  rebuildGrid();
+  if (lastState) renderAll(lastState);
 });
 
-function format(sec) {
+function rebuildGrid() {
+  matGrid.innerHTML = "";
+  for (let i = 1; i <= currentMatCount; i++) {
+    const card = document.createElement("div");
+    card.className = "mat-card";
+    card.id = "matCard" + i;
+    card.innerHTML = `
+      <div class="top-row">
+        <div class="top-box">MAT ${i}</div>
+        <div class="top-box time-box">--:--</div>
+        <div class="top-box">PERIOD --</div>
+      </div>
+      <div class="name-row">
+        <div class="red-name">RED</div>
+        <div class="green-name">GREEN</div>
+      </div>
+      <div class="score-row">
+        <div class="score-box red-score">0</div>
+        <div class="score-box green-score">0</div>
+      </div>
+    `;
+    matGrid.appendChild(card);
+  }
+}
+
+function formatTime(sec) {
   if (sec == null) return "--:--";
   const m = Math.floor(sec / 60).toString().padStart(2,"0");
   const s = (sec % 60).toString().padStart(2,"0");
-  return m + ":" + s;
+  return `${m}:${s}`;
+}
+
+function renderAll(state) {
+  for (let i = 1; i <= currentMatCount; i++) {
+    renderMat(i, state.mats && state.mats[i]);
+  }
 }
 
 function renderMat(matNum, mat) {
-  if (!mat) return;
+  const card = document.getElementById("matCard" + matNum);
+  if (!card) return;
 
-  const root = document.getElementById("mat" + matNum);
-  root.innerHTML = `
-    <div class="top-row">
-      <div class="top-box">MAT ${matNum}</div>
-      <div class="top-box time-box">${format(mat.time)}</div>
-      <div class="top-box">PERIOD ${mat.period}</div>
-    </div>
+  if (!mat) {
+    // No data for this mat yet
+    card.querySelector(".time-box").textContent = "--:--";
+    card.querySelector(".top-row .top-box:nth-child(3)").textContent = "PERIOD --";
+    card.querySelector(".red-name").textContent = "RED";
+    card.querySelector(".green-name").textContent = "GREEN";
+    card.querySelector(".red-score").textContent = "0";
+    card.querySelector(".green-score").textContent = "0";
+    return;
+  }
 
-    <div class="name-row">
-      <div class="red-name">${mat.redName || "RED"}</div>
-      <div class="green-name">${mat.greenName || "GREEN"}</div>
-    </div>
+  card.querySelector(".time-box").textContent = formatTime(mat.time);
+  card.querySelector(".top-row .top-box:nth-child(3)").textContent = `PERIOD ${mat.period}`;
 
-    <div class="score-row">
-      <div class="score-box red-score">${mat.red}</div>
-      <div class="score-box green-score">${mat.green}</div>
-    </div>
-  `;
+  card.querySelector(".red-name").textContent = mat.redName || "RED";
+  card.querySelector(".green-name").textContent = mat.greenName || "GREEN";
+
+  card.querySelector(".red-score").textContent = mat.red ?? 0;
+  card.querySelector(".green-score").textContent = mat.green ?? 0;
 }
+
+socket.on("stateUpdate", (state) => {
+  lastState = state;
+  renderAll(state);
+});
+
+// initial
+rebuildGrid();
 </script>
 
 </body>
