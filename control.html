@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel (v2.18)</title>
+<title>Matside — Control Panel (v2.18.1)</title>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
@@ -1164,6 +1164,43 @@ backdropRight.onclick=()=>{
 };
 
 /* MATCH LOG CONFIRMATION */
+socket.on("matchLogged", (data) => {
+  showSubmissionToast(data);
+  updateRecentSubmission(data);
+});
+
+/* Toast function */
+function showSubmissionToast(data){
+  const toast = document.getElementById("submitToast");
+  const text = document.getElementById("submitToastText");
+
+  text.textContent = `Submitted: ${data.winnerName} (${data.methodLabel})`;
+  toast.classList.remove("hidden");
+
+  // Fade-in
+  toast.classList.add("show");
+
+  // Hide after 5 seconds
+  setTimeout(()=>{
+    toast.classList.remove("show");
+    setTimeout(()=>toast.classList.add("hidden"), 250);
+  }, 5000);
+}
+
+/* Recent submission box */
+function updateRecentSubmission(data){
+  const box = document.getElementById("recentSubmissionBox");
+
+  box.innerHTML = `
+    <div><strong>${data.winnerName}</strong> (${data.methodLabel})</div>
+    <div>Final: Red ${data.redScore} — Green ${data.greenScore}</div>
+    <div style="color:#777;margin-top:4px;font-size:11px;">
+      Mat ${data.mat} · ${new Date(data.timestamp).toLocaleTimeString()}
+    </div>
+  `;
+}
+
+  /* MATCH LOG CONFIRMATION */
 socket.on("matchLogged", (data) => {
   showSubmissionToast(data);
   updateRecentSubmission(data);
