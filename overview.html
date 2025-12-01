@@ -17,6 +17,9 @@
 <script type="module">
   import { initOverview } from "./modules/overview-data.js";
   import { createOverviewRenderer } from "./modules/overview-render.js";
+  import { initSkinClient } from "./modules/ui/skins.js";
+
+  initSkinClient("https://scoreboard-server-er33.onrender.com");
 
   const root = document.getElementById("ov-root");
   const render = createOverviewRenderer(root);
