@@ -1,4 +1,5 @@
 // modules/socketHandler.js
+
 const SOCKET_URL = "https://scoreboard-server-er33.onrender.com";
 
 let socket = null;
@@ -80,7 +81,6 @@ export function subPoint(color) {
   });
 }
 
-// optional: allow extra defaults on reset
 export function resetMatOnServer(extra = {}) {
   if (!socket) return;
   socket.emit("updateState", {
