@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel (v2.18.1)</title>
+<title>Matside — Control Panel (v2.19)</title>
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
@@ -397,6 +397,24 @@
     margin-bottom:12px;
   }
 
+  /* SUBMISSION TOAST */
+  .submit-toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#111;
+    padding:12px 18px;
+    border-radius:12px;
+    font-size:14px;
+    border:1px solid #444;
+    box-shadow:0 6px 20px rgba(0,0,0,0.5);
+    z-index:1000000;
+    opacity:0;
+    transition:opacity .25s ease;
+  }
+  .submit-toast.show{opacity:1;}
+
   #version-tag{
     position:fixed;
     bottom:6px;
@@ -407,29 +425,7 @@
     font-weight:600;
   }
 
-  .hidden{display:none !important;}
-
-/* SUBMISSION TOAST */
-.submit-toast {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  padding: 12px 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  border: 1px solid #444;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-  z-index: 1000000;
-  opacity: 0;
-  transition: opacity .25s ease;
-}
-.submit-toast.show {
-  opacity: 1;
-}
-.hidden { display:none!important; }
-  
+  .hidden{display:none!important;}
 </style>
 </head>
 <body>
@@ -572,6 +568,15 @@
     </div>
 
     <div class="drawer-section">
+      <h4>Most Recent Submission</h4>
+      <div id="recentSubmissionBox"
+           style="background:#0c0e12;border:1px solid #181a1f;border-radius:8px;
+                  padding:10px;font-size:12px;min-height:40px;color:#ccc;">
+        No submissions yet.
+      </div>
+    </div>
+
+    <div class="drawer-section">
       <h4>Match Timeline</h4>
       <div id="timelineList" class="timeline-list"></div>
     </div>
@@ -614,7 +619,12 @@
   </div>
 </div>
 
-<div id="version-tag">v2.18</div>
+<!-- SUBMISSION TOAST -->
+<div id="submitToast" class="submit-toast hidden">
+  <div id="submitToastText">Match Submitted</div>
+</div>
+
+<div id="version-tag">v2.19</div>
 
 <script>
 const socket = io("https://scoreboard-server-er33.onrender.com", {
@@ -625,6 +635,7 @@ let lastState = null;
 const periodLengthByMat = {1:60,2:60,3:60,4:60};
 const timeline = {1:[],2:[],3:[],4:[]};
 const lastZeroSignature = {1:null,2:null,3:null,4:null};
+const lastSubmissionByMat = {1:null,2:null,3:null,4:null};
 
 function currentMat(){
   return parseInt(document.getElementById("matSelect").value,10) || 1;
@@ -642,6 +653,7 @@ socket.on("stateUpdate", (state)=>{
   maybeHandleEndOfPeriod(state);
 });
 
+/* FORMAT TIME */
 function fmt(sec){
   sec = Math.max(0, sec || 0);
   const m = String(Math.floor(sec/60)).padStart(2,"0");
@@ -649,6 +661,7 @@ function fmt(sec){
   return `${m}:${s}`;
 }
 
+/* MAIN UI UPDATE */
 function updateUI(state){
   const mat = currentMat();
   const m = state.mats?.[mat];
@@ -832,14 +845,69 @@ function clearNamesForMat(mat){
 redNameInput.addEventListener("input",()=>saveNamesForMat(currentMat()));
 greenNameInput.addEventListener("input",()=>saveNamesForMat(currentMat()));
 
+/* RECENT SUBMISSION BOX */
+function updateRecentSubmissionBox(mat){
+  const box = document.getElementById("recentSubmissionBox");
+  const sub = lastSubmissionByMat[mat];
+  if(!sub){
+    box.textContent = "No submissions yet.";
+    return;
+  }
+  const methodLabel = {
+    decision:"Decision",
+    tech:"Tech Fall",
+    pin:"Pin",
+    forfeit:"Forfeit"
+  }[sub.method] || sub.method;
+
+  const winnerName = sub.winner === "red"
+    ? (sub.redName || "Red Wrestler")
+    : (sub.greenName || "Green Wrestler");
+
+  box.innerHTML = `
+    <div><strong>${winnerName}</strong> (${methodLabel})</div>
+    <div>Final: Red ${sub.redScore} — Green ${sub.greenScore}</div>
+    <div style="color:#777;margin-top:4px;font-size:11px;">
+      Mat ${sub.mat} · ${new Date(sub.timestamp).toLocaleTimeString()}
+    </div>
+  `;
+}
+
+/* TOAST */
+function showSubmissionToast(submission){
+  const toast = document.getElementById("submitToast");
+  const text = document.getElementById("submitToastText");
+  const methodLabel = {
+    decision:"Decision",
+    tech:"Tech Fall",
+    pin:"Pin",
+    forfeit:"Forfeit"
+  }[submission.method] || submission.method;
+
+  const winnerName = submission.winner === "red"
+    ? (submission.redName || "Red Wrestler")
+    : (submission.greenName || "Green Wrestler");
+
+  text.textContent = `Submitted: ${winnerName} (${methodLabel})`;
+  toast.classList.remove("hidden");
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+    setTimeout(()=>toast.classList.add("hidden"),250);
+  },5000);
+}
+
 /* MAT CHANGE */
 document.getElementById("matSelect").addEventListener("change",()=>{
   const mat=currentMat();
   loadNamesForMat(mat);
   if(lastState) updateUI(lastState);
   renderTimeline(mat);
+  updateRecentSubmissionBox(mat);
 });
 loadNamesForMat(currentMat());
+updateRecentSubmissionBox(currentMat());
 
 /* TIMER CONTROLS */
 document.getElementById("startBtn").onclick=()=>{
@@ -957,6 +1025,8 @@ function doFullMatReset(mat,{clearTimeline,clearNames}){
     renderTimeline(mat);
   }
   if(clearNames){
+    lastSubmissionByMat[mat]=null;
+    updateRecentSubmissionBox(mat);
     clearNamesForMat(mat);
   }
   const base=periodLengthByMat[mat]||60;
@@ -1101,20 +1171,7 @@ submitMatchBtn.onclick=()=>{
     timestamp:new Date().toISOString()
   };
 
-  socket.emit("matchEnded", resultPayload, (serverResponse)=>{
-  // server acknowledges the save
-  if(serverResponse && serverResponse.ok){
-    socket.emit("matchLogged", {
-      ...resultPayload,
-      winnerName: resultPayload.winner === "red"
-          ? (redNameInput.value.trim() || "Red Wrestler")
-          : (greenNameInput.value.trim() || "Green Wrestler"),
-      methodLabel:{
-        decision:"Decision",tech:"Tech Fall",pin:"Pin",forfeit:"Forfeit"
-      }[resultPayload.method],
-    });
-  }
-});
+  socket.emit("matchEnded",resultPayload);
 
   pushTimeline(mat,{
     label:`Match Ended — Winner: ${chosenWinner.toUpperCase()} (${{
@@ -1125,6 +1182,10 @@ submitMatchBtn.onclick=()=>{
     red:redScore,
     green:greenScore
   });
+
+  lastSubmissionByMat[mat] = resultPayload;
+  updateRecentSubmissionBox(mat);
+  showSubmissionToast(resultPayload);
 
   doFullMatReset(mat,{clearTimeline:false,clearNames:false});
   closeEndMatchModal();
@@ -1162,87 +1223,6 @@ backdropRight.onclick=()=>{
   drawerRight.classList.remove("open");
   backdropRight.classList.remove("open");
 };
-
-/* MATCH LOG CONFIRMATION */
-socket.on("matchLogged", (data) => {
-  showSubmissionToast(data);
-  updateRecentSubmission(data);
-});
-
-/* Toast function */
-function showSubmissionToast(data){
-  const toast = document.getElementById("submitToast");
-  const text = document.getElementById("submitToastText");
-
-  text.textContent = `Submitted: ${data.winnerName} (${data.methodLabel})`;
-  toast.classList.remove("hidden");
-
-  // Fade-in
-  toast.classList.add("show");
-
-  // Hide after 5 seconds
-  setTimeout(()=>{
-    toast.classList.remove("show");
-    setTimeout(()=>toast.classList.add("hidden"), 250);
-  }, 5000);
-}
-
-/* Recent submission box */
-function updateRecentSubmission(data){
-  const box = document.getElementById("recentSubmissionBox");
-
-  box.innerHTML = `
-    <div><strong>${data.winnerName}</strong> (${data.methodLabel})</div>
-    <div>Final: Red ${data.redScore} — Green ${data.greenScore}</div>
-    <div style="color:#777;margin-top:4px;font-size:11px;">
-      Mat ${data.mat} · ${new Date(data.timestamp).toLocaleTimeString()}
-    </div>
-  `;
-}
-
-  /* MATCH LOG CONFIRMATION */
-socket.on("matchLogged", (data) => {
-  showSubmissionToast(data);
-  updateRecentSubmission(data);
-});
-
-/* Toast function */
-function showSubmissionToast(data){
-  const toast = document.getElementById("submitToast");
-  const text = document.getElementById("submitToastText");
-
-  text.textContent = `Submitted: ${data.winnerName} (${data.methodLabel})`;
-  toast.classList.remove("hidden");
-
-  // Fade-in
-  toast.classList.add("show");
-
-  // Hide after 5 seconds
-  setTimeout(()=>{
-    toast.classList.remove("show");
-    setTimeout(()=>toast.classList.add("hidden"), 250);
-  }, 5000);
-}
-
-/* Recent submission box */
-function updateRecentSubmission(data){
-  const box = document.getElementById("recentSubmissionBox");
-
-  box.innerHTML = `
-    <div><strong>${data.winnerName}</strong> (${data.methodLabel})</div>
-    <div>Final: Red ${data.redScore} — Green ${data.greenScore}</div>
-    <div style="color:#777;margin-top:4px;font-size:11px;">
-      Mat ${data.mat} · ${new Date(data.timestamp).toLocaleTimeString()}
-    </div>
-  `;
-}
-  
 </script>
-
-<!-- SUBMISSION TOAST -->
-<div id="submitToast" class="submit-toast hidden">
-  <div id="submitToastText">Match Submitted</div>
-</div>
-  
 </body>
 </html>
