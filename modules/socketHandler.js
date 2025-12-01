@@ -104,3 +104,4 @@ export function logMatchResult(entry) {
 export function getLastState() {
   return lastState;
 }
+
