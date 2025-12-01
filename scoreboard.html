@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Scoreboard v3.0.1</title>
+<title>Matside — Scoreboard v3.1</title>
 
 <!-- SOCKET.IO -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 <style>
 /* --------------------------------------------------
-   CORE DESIGN SYSTEM (Unified Matside UI Kit)
+   CORE UI KIT
 -------------------------------------------------- */
 :root {
   --bg: #060708;
@@ -40,9 +40,6 @@ body {
   overflow: hidden;
 }
 
-/* --------------------------------------------------
-   SCOREBOARD GRID LAYOUT
--------------------------------------------------- */
 .container {
   display: flex;
   flex-direction: column;
@@ -50,7 +47,9 @@ body {
   padding-top: 30px;
 }
 
-/* TOP PANEL (MAT + PERIOD + TIME) */
+/* --------------------------------------------------
+   TOP PANEL — NEW LAYOUT (Timer Center)
+-------------------------------------------------- */
 .top-panel {
   width: 90%;
   max-width: 900px;
@@ -69,6 +68,13 @@ body {
   text-align: center;
   min-width: 180px;
   box-shadow: var(--shadow);
+}
+
+#timeBox {
+  font-size: 58px;      /* MUCH larger font */
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 22px 0;
 }
 
 /* --------------------------------------------------
@@ -99,7 +105,7 @@ body {
 }
 
 /* --------------------------------------------------
-   SCORE BLOCKS (Unified)
+   SCORE BLOCKS
 -------------------------------------------------- */
 .score-row {
   display: flex;
@@ -131,10 +137,11 @@ body {
 }
 
 /* --------------------------------------------------
-   RESPONSIVE
+   RESPONSIVE ADJUSTMENTS
 -------------------------------------------------- */
 @media (max-width: 700px) {
   .top-box { font-size: 20px; min-width: 110px; }
+  #timeBox { font-size: 44px; }
   .name { font-size: 26px; }
   .score-box { font-size: 60px; padding: 26px 0; }
 }
@@ -144,11 +151,22 @@ body {
 <body>
 <div class="container">
 
-  <!-- TOP INFO BAR -->
+  <!-- TOP ROW -->
   <div class="top-panel">
-    <div class="top-box">MAT <span id="matNum">1</span></div>
-    <div class="top-box">PERIOD <span id="periodNum">1</span></div>
+
+    <!-- LEFT — MAT -->
+    <div class="top-box">
+      MAT <span id="matNum">1</span>
+    </div>
+
+    <!-- CENTER — TIMER (NEW) -->
     <div class="top-box" id="timeBox">00:00</div>
+
+    <!-- RIGHT — PERIOD (MOVED) -->
+    <div class="top-box">
+      PER <span id="periodNum">1</span>
+    </div>
+
   </div>
 
   <!-- MAIN SCORE PANEL -->
@@ -169,7 +187,7 @@ body {
 
 <script>
 /* --------------------------------------------------
-   SOCKET SETUP
+   SOCKET.IO LOGIC
 -------------------------------------------------- */
 const socket = io("https://scoreboard-server-er33.onrender.com");
 
@@ -190,7 +208,6 @@ socket.on("stateUpdate", (state) => {
   document.getElementById("redScore").textContent = m.red;
   document.getElementById("greenScore").textContent = m.green;
 
-  // Names (if ever sent later)
   if (m.redName) document.getElementById("redName").textContent = m.redName;
   if (m.greenName) document.getElementById("greenName").textContent = m.greenName;
 });
