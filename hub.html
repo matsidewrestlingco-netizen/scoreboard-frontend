@@ -161,14 +161,13 @@
     color: var(--muted);
   }
 
-  /* MINI STATUS LINE */
   .mat-status-line {
     font-size: 12px;
     color: var(--muted);
     margin-bottom: 4px;
   }
 
-  /* LIVE STATE BAR: TIME / PERIOD / SCORE */
+  /* LIVE STATE BAR */
   .live-row {
     display: grid;
     grid-template-columns: 1.2fr 1fr 1.3fr;
@@ -202,6 +201,51 @@
     font-size: 12px;
     color: var(--muted);
     margin-bottom: 10px;
+  }
+
+  /* DIAGNOSTIC & ADMIN CARDS INSIDE MAT */
+  .sub-card {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+
+  .sub-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .sub-card-header span {
+    opacity: 0.8;
+  }
+
+  .sub-card-body {
+    margin-top: 6px;
+  }
+
+  .sub-card-body.hidden {
+    display: none;
+  }
+
+  .diag-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+
+  .diag-label {
+    color: var(--muted);
+  }
+
+  .diag-value {
+    font-weight: 700;
   }
 
   /* BUTTONS */
@@ -238,6 +282,12 @@
     border: 1px solid var(--border);
   }
 
+  .btn-danger {
+    background: #3b0000;
+    color: #ff7676;
+    border: 1px solid rgba(255,118,118,0.6);
+  }
+
   .footer-tag {
     max-width: 1200px;
     margin: 18px auto 0 auto;
@@ -256,7 +306,7 @@
     <img src="https://www.matside.org/assets/images/image01.png" alt="Matside">
     <div>
       <div class="brand-title">Matside Control Hub</div>
-      <div class="subtitle">Monitor mats, panels, and scoreboards at a glance</div>
+      <div class="subtitle">Monitor mats, devices, and scoreboards at a glance</div>
     </div>
   </div>
 
@@ -351,6 +401,56 @@ function buildGrid() {
         Last action: —
       </div>
 
+      <!-- Connectivity & Health Card -->
+      <div class="sub-card" id="healthCard${i}">
+        <div class="sub-card-header" data-toggle="health${i}">
+          <span>Device Health & Connectivity</span>
+          <span id="healthToggleIcon${i}">▼</span>
+        </div>
+        <div class="sub-card-body" id="healthBody${i}">
+          <div style="font-weight:700; font-size:11px; margin-bottom:4px;">Connectivity</div>
+          <div class="diag-row">
+            <div class="diag-label">Control Panel</div>
+            <div class="diag-value" id="cpStatus${i}">—</div>
+          </div>
+          <div class="diag-row">
+            <div class="diag-label">Scoreboard</div>
+            <div class="diag-value" id="sbStatus${i}">—</div>
+          </div>
+          <div class="diag-row">
+            <div class="diag-label">Last heartbeat</div>
+            <div class="diag-value" id="hbAgo${i}">—</div>
+          </div>
+
+          <div style="font-weight:700; font-size:11px; margin:6px 0 2px;">Control Panel Metrics</div>
+          <div class="diag-row"><div class="diag-label">FPS</div><div class="diag-value" id="cpFps${i}">—</div></div>
+          <div class="diag-row"><div class="diag-label">Uptime</div><div class="diag-value" id="cpUptime${i}">—</div></div>
+          <div class="diag-row"><div class="diag-label">Reconnects</div><div class="diag-value" id="cpReconnects${i}">—</div></div>
+
+          <div style="font-weight:700; font-size:11px; margin:6px 0 2px;">Scoreboard Metrics</div>
+          <div class="diag-row"><div class="diag-label">FPS</div><div class="diag-value" id="sbFps${i}">—</div></div>
+          <div class="diag-row"><div class="diag-label">Uptime</div><div class="diag-value" id="sbUptime${i}">—</div></div>
+          <div class="diag-row"><div class="diag-label">Reconnects</div><div class="diag-value" id="sbReconnects${i}">—</div></div>
+        </div>
+      </div>
+
+      <!-- Admin Actions Card (visible to all) -->
+      <div class="sub-card">
+        <div class="sub-card-header">
+          <span>Admin Actions</span>
+          <span>Tools</span>
+        </div>
+        <div class="sub-card-body">
+          <div class="btn-row">
+            <button class="btn btn-danger" onclick="forceResetMat(${i})">Reset Mat</button>
+            <button class="btn btn-secondary" onclick="clearTimelineMat(${i})">Clear Timeline</button>
+            <!-- Hooks only; you can wire these later if you add server events -->
+            <button class="btn btn-secondary" onclick="notifyReload('control', ${i})">Notify Control to Reload</button>
+            <button class="btn btn-secondary" onclick="notifyReload('scoreboard', ${i})">Notify Scoreboard to Reload</button>
+          </div>
+        </div>
+      </div>
+
       <div class="btn-row">
         <a class="btn btn-primary" href="control.html?mat=${i}" target="_blank">
           ⚙️ Open Control Panel
@@ -361,6 +461,19 @@ function buildGrid() {
       </div>
     `;
     matGrid.appendChild(card);
+  }
+
+  // Attach collapsible behavior (default OPEN)
+  for (let i = 1; i <= MAT_COUNT; i++) {
+    const header = document.querySelector(`[data-toggle='health${i}']`);
+    const body = document.getElementById(`healthBody${i}`);
+    const icon = document.getElementById(`healthToggleIcon${i}`);
+    if (header && body && icon) {
+      header.addEventListener("click", () => {
+        const hidden = body.classList.toggle("hidden");
+        icon.textContent = hidden ? "▲" : "▼";
+      });
+    }
   }
 }
 
@@ -395,6 +508,10 @@ socket.on("disconnect", () => {
 
 socket.on("stateUpdate", (state) => {
   const now = Date.now();
+  const monitor = state.monitor || {};
+  const heartbeats = monitor.heartbeats || {};
+  const diagnostics = monitor.diagnostics || {};
+
   let activeMats = 0;
   let latestUpdateTime = null;
 
@@ -406,6 +523,7 @@ socket.on("stateUpdate", (state) => {
       latestUpdateTime = latestUpdateTime ? Math.max(latestUpdateTime, now) : now;
       processMatState(i, matState, now);
     }
+    processDiagnostics(i, heartbeats, diagnostics, now);
   }
 
   activeMatsCountEl.textContent = activeMats;
@@ -423,7 +541,6 @@ socket.on("stateUpdate", (state) => {
 function processMatState(matNum, mat, now) {
   const prev = lastStatePerMat[matNum];
 
-  // Basic state display
   const timeEl = document.getElementById("matTime" + matNum);
   const periodEl = document.getElementById("matPeriod" + matNum);
   const scoreEl = document.getElementById("matScore" + matNum);
@@ -435,13 +552,11 @@ function processMatState(matNum, mat, now) {
   periodEl.textContent = mat.period ?? "--";
   scoreEl.textContent = `${mat.red ?? 0} - ${mat.green ?? 0}`;
 
-  // Status text
   const running = mat.running ? "Timer running" : "Timer stopped";
   metaEl.textContent = `Last update: ${timeAgo(now - (lastUpdateTimePerMat[matNum] || now))} · ${running}`;
 
   statusPill.textContent = mat.running ? "LIVE" : "Idle";
 
-  // Compute "last action" heuristically
   let lastAction = lastActionPerMat[matNum] || "—";
 
   if (prev) {
@@ -475,6 +590,73 @@ function processMatState(matNum, mat, now) {
 
   mat._lastActionText = lastAction;
   lastStatePerMat[matNum] = mat;
+}
+
+function processDiagnostics(matNum, heartbeats, diagnostics, now) {
+  const cpStatusEl = document.getElementById("cpStatus" + matNum);
+  const sbStatusEl = document.getElementById("sbStatus" + matNum);
+  const hbAgoEl = document.getElementById("hbAgo" + matNum);
+
+  const cpFpsEl = document.getElementById("cpFps" + matNum);
+  const cpUptimeEl = document.getElementById("cpUptime" + matNum);
+  const cpReconnectsEl = document.getElementById("cpReconnects" + matNum);
+
+  const sbFpsEl = document.getElementById("sbFps" + matNum);
+  const sbUptimeEl = document.getElementById("sbUptime" + matNum);
+  const sbReconnectsEl = document.getElementById("sbReconnects" + matNum);
+
+  const cpHb = heartbeats.control && heartbeats.control[matNum];
+  const sbHb = heartbeats.scoreboard && heartbeats.scoreboard[matNum];
+
+  const cpDiag = diagnostics.control && diagnostics.control[matNum];
+  const sbDiag = diagnostics.scoreboard && diagnostics.scoreboard[matNum];
+
+  const isCpOnline = cpHb && (now - cpHb.ts < 15000);
+  const isSbOnline = sbHb && (now - sbHb.ts < 15000);
+
+  cpStatusEl.textContent = isCpOnline ? "Online" : "Offline";
+  sbStatusEl.textContent = isSbOnline ? "Online" : "Offline";
+
+  const hbTs = Math.max(
+    cpHb ? cpHb.ts : 0,
+    sbHb ? sbHb.ts : 0
+  );
+  hbAgoEl.textContent = hbTs ? timeAgo(now - hbTs) : "—";
+
+  // CP metrics
+  cpFpsEl.textContent = cpDiag && cpDiag.fps != null ? cpDiag.fps : "—";
+  cpUptimeEl.textContent = cpDiag && cpDiag.uptime != null ? formatSeconds(cpDiag.uptime) : "—";
+  cpReconnectsEl.textContent = cpDiag && cpDiag.reconnects != null ? cpDiag.reconnects : "—";
+
+  // SB metrics
+  sbFpsEl.textContent = sbDiag && sbDiag.fps != null ? sbDiag.fps : "—";
+  sbUptimeEl.textContent = sbDiag && sbDiag.uptime != null ? formatSeconds(sbDiag.uptime) : "—";
+  sbReconnectsEl.textContent = sbDiag && sbDiag.reconnects != null ? sbDiag.reconnects : "—";
+}
+
+function formatSeconds(sec) {
+  if (sec == null) return "—";
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+/* ADMIN ACTION HOOKS (server-side handlers optional) */
+function forceResetMat(mat) {
+  // Only works if server listens for "adminResetMat"
+  socket.emit("adminResetMat", { mat });
+}
+
+function clearTimelineMat(mat) {
+  socket.emit("adminClearTimeline", { mat });
+}
+
+function notifyReload(type, mat) {
+  // 'type' is "control" or "scoreboard"
+  socket.emit("adminNotifyReload", { type, mat });
 }
 
 /* init */
