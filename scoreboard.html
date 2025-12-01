@@ -4,12 +4,20 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Matside — Scoreboard v4.0</title>
+  <title>Matside — Scoreboard v4.0.1</title>
 
-  <link rel="stylesheet" href="./css/theme.css?v=1.0" />
-  <link rel="stylesheet" href="./css/scoreboard.css?v=1.0" />
+ <script type="module">
+  import { initScoreboard } from "./modules/scoreboard-data.js";
+  import { createScoreboardRenderer } from "./modules/scoreboard-render.js";
+  import { initSkinClient } from "./modules/ui/skins.js";
 
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  // Apply skin + subscribe to theme updates
+  initSkinClient("https://scoreboard-server-er33.onrender.com");
+
+  const root = document.getElementById("sb-root");
+  const render = createScoreboardRenderer(root);
+  initScoreboard(render);
+</script>
 </head>
 <body>
 <div id="sb-root" class="sb-root"></div>
