@@ -1,68 +1,120 @@
-<!-- =========================================================
- FILE: scoreboard.html
- Modular Scoreboard v3.3 (single-mat)
-========================================================= -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Scoreboard</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matside Scoreboard v3.2.1</title>
 
-<link rel="stylesheet" href="modules/core/ui-kit.css">
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<!-- Corrected UI Kit CSS path + cache buster -->
+<link rel="stylesheet" href="./modules/core/ui-kit.css?v=3.2.1">
 
 <style>
-  /* Any scoreboard-specific tweaks can live here */
+  body {
+    background: var(--ms-bg, #050608);
+    color: var(--ms-text, #ffffff);
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  }
+
+  .sb-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .sb-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .sb-box {
+    background: var(--ms-surface);
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 24px;
+  }
+
+  .sb-timer {
+    font-size: 70px;
+    font-weight: 800;
+    padding: 20px 0;
+  }
+
+  .sb-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 20px;
+  }
+
+  .sb-score {
+    background: var(--ms-surface-strong);
+    padding: 35px 0;
+    font-size: 120px;
+    font-weight: 800;
+    border-radius: 20px;
+  }
+
+  .sb-red { color: var(--ms-red); }
+  .sb-green { color: var(--ms-green); }
+
 </style>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
 </head>
 <body>
-<div class="ms-page">
-  <div class="ms-header-row">
-    <div class="ms-brand">
-      <img src="https://www.matside.org/assets/images/image01.png" alt="Matside" class="ms-brand-logo">
-      <div class="ms-brand-title">Matside Scoreboard</div>
-    </div>
-    <div class="ms-chip">Mat <span id="sb-mat">1</span></div>
+
+<div class="sb-wrap">
+
+  <div class="sb-grid">
+    <div class="sb-box" id="sb-mat">Mat 1</div>
+    <div class="sb-box sb-timer" id="sb-time">00:00</div>
+    <div class="sb-box" id="sb-period">Period 1</div>
   </div>
 
-  <div class="ms-top-grid">
-    <div class="ms-pill">
-      <div class="ms-pill-label">Status</div>
-      <div class="ms-pill-value" id="sb-status">Stopped</div>
+  <div class="sb-row">
+    <div>
+      <div class="sb-box sb-red" id="sb-redName">RED</div>
+      <div class="sb-score sb-red" id="sb-redScore">0</div>
     </div>
-    <div class="ms-pill ms-pill-timer">
-      <div class="ms-pill-label">Time</div>
-      <div class="ms-pill-value" id="sb-time">00:00</div>
-    </div>
-    <div class="ms-pill">
-      <div class="ms-pill-label">Period</div>
-      <div class="ms-pill-value" id="sb-period">1</div>
+
+    <div>
+      <div class="sb-box sb-green" id="sb-greenName">GREEN</div>
+      <div class="sb-score sb-green" id="sb-greenScore">0</div>
     </div>
   </div>
 
-  <div class="ms-score-row">
-    <div class="ms-side ms-side-red">
-      <div class="ms-side-header">
-        <div class="ms-side-name" id="sb-red-name">RED</div>
-        <div class="ms-side-tag">Home</div>
-      </div>
-      <div class="ms-score-box" id="sb-red-score">0</div>
-    </div>
-    <div class="ms-side ms-side-green">
-      <div class="ms-side-header">
-        <div class="ms-side-name" id="sb-green-name">GREEN</div>
-        <div class="ms-side-tag">Visitor</div>
-      </div>
-      <div class="ms-score-box" id="sb-green-score">0</div>
-    </div>
-  </div>
-
-  <div class="ms-status-bar">
-    Connected: <span id="sb-conn">connecting…</span>
-  </div>
 </div>
 
-<script type="module" src="modules/scoreboard/scoreboard-main.js"></script>
+<script>
+// ====== SOCKET.IO ======
+const socket = io("https://scoreboard-server-er33.onrender.com");
+
+let mat = 1; // Derived from URL later if needed
+
+socket.on("stateUpdate", (state) => {
+  const m = state.mats[mat];
+  if (!m) return;
+
+  document.getElementById("sb-mat").textContent = `Mat ${mat}`;
+  document.getElementById("sb-period").textContent = `Period ${m.period}`;
+  document.getElementById("sb-time").textContent = format(m.time);
+  document.getElementById("sb-redScore").textContent = m.red;
+  document.getElementById("sb-greenScore").textContent = m.green;
+});
+
+// Format helper
+function format(s) {
+  const m = Math.floor(s / 60).toString().padStart(2, "0");
+  const sec = (s % 60).toString().padStart(2, "0");
+  return `${m}:${sec}`;
+}
+</script>
+
 </body>
 </html>
