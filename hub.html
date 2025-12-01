@@ -4,7 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Matside — Control Hub v3.3</title>
-
+  
+<link rel="stylesheet" href="./css/theme.css?v=1.0" />
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 <style>
@@ -366,6 +367,16 @@ const lastUpdateTimePerMat = {};
 let globalLastAction = null;
 let globalLastActionTime = null;
 
+<div class="card" id="theme-card">
+  <h3>Theme</h3>
+  <div style="font-size:13px;color:var(--ms-muted);margin-bottom:8px;">
+    Choose a look for all scoreboards & control panels.
+  </div>
+  <select id="skinSelect" style="width:100%;margin-bottom:10px;"></select>
+  <button id="applySkinBtn" class="blue" style="width:100%;">Apply Theme to Event</button>
+  <div id="themeStatus" style="margin-top:6px;font-size:12px;color:var(--ms-muted);"></div>
+</div>
+  
 /* Build static cards for 4 mats */
 function buildGrid() {
   matGrid.innerHTML = "";
@@ -659,6 +670,32 @@ function notifyReload(type, mat) {
   socket.emit("adminNotifyReload", { type, mat });
 }
 
+<script type="module">
+  import { initSkinHub, SKINS } from "./modules/ui/skins.js";
+
+  const { setGlobalSkin, initialSkin } = initSkinHub("https://scoreboard-server-er33.onrender.com");
+
+  const selectEl = document.getElementById("skinSelect");
+  const applyBtn = document.getElementById("applySkinBtn");
+  const statusEl = document.getElementById("themeStatus");
+
+  // Populate dropdown from SKINS map
+  const entries = Object.entries(SKINS);
+  selectEl.innerHTML = entries.map(([key, skin]) => {
+    const selected = key === initialSkin ? "selected" : "";
+    return `<option value="${key}" ${selected}>${skin.name}</option>`;
+  }).join("");
+
+  applyBtn.addEventListener("click", () => {
+    const val = selectEl.value;
+    setGlobalSkin(val);
+    if (statusEl) {
+      statusEl.textContent = `Theme "${SKINS[val].name}" applied to all clients.`;
+      setTimeout(() => { statusEl.textContent = ""; }, 3000);
+    }
+  });
+</script>
+  
 /* init */
 buildGrid();
 </script>
