@@ -143,6 +143,57 @@
 <script>
 const socket = io("https://scoreboard-server-er33.onrender.com");
 
+// ======= Presence & Diagnostics: Scoreboard =======
+const urlParams = new URLSearchParams(window.location.search);
+const sbMat = parseInt(urlParams.get("mat") || "1", 10);
+
+let sbReconnects = 0;
+let sbStart = Date.now();
+let sbFps = 0;
+let sbFrameCount = 0;
+let sbLastFpsSample = performance.now();
+
+if (socket.io) {
+  socket.io.on("reconnect", () => {
+    sbReconnects++;
+  });
+}
+
+function trackScoreboardFps(ts) {
+  sbFrameCount++;
+  if (ts - sbLastFpsSample >= 1000) {
+    sbFps = sbFrameCount;
+    sbFrameCount = 0;
+    sbLastFpsSample = ts;
+  }
+  requestAnimationFrame(trackScoreboardFps);
+}
+requestAnimationFrame(trackScoreboardFps);
+
+// Heartbeat every 8s
+setInterval(() => {
+  socket.emit("heartbeat", {
+    type: "scoreboard",
+    mat: sbMat,
+    ts: Date.now()
+  });
+}, 8000);
+
+// Diagnostics every 15s
+setInterval(() => {
+  const uptime = Math.round((Date.now() - sbStart) / 1000);
+  const mem = performance.memory ? performance.memory.usedJSHeapSize : null;
+
+  socket.emit("clientDiagnostics", {
+    type: "scoreboard",
+    mat: sbMat,
+    fps: sbFps,
+    uptime,
+    reconnects: sbReconnects,
+    usedHeap: mem
+  });
+}, 15000);
+  
 function formatTime(sec) {
   const m = Math.floor(sec / 60).toString().padStart(2,"0");
   const s = (sec % 60).toString().padStart(2,"0");
