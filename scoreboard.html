@@ -16,19 +16,18 @@
 </head>
 
 <body>
-  <div id="scoreboard-root"></div>
+<div id="scoreboard-root"></div>
 
-  <script type="module">
-    import { setServerUrl, getSocket } from "./modules/core/socket.js";
-    import { initSkinClient } from "./modules/ui/skins.js";
-    import "./modules/scoreboard/scoreboard-main.js";
+<script type="module">
+import { setServerUrl, getSocket } from "./modules/core/socket.js";
+import { initSkinClient } from "./modules/ui/skins.js";
 
-    setServerUrl("https://scoreboard-server-er33.onrender.com");
+setServerUrl("https://scoreboard-server-er33.onrender.com");
+import "./modules/scoreboard/scoreboard-main.js";
 
-    // Wait for socket before binding theme
-    setTimeout(() => {
-      initSkinClient(getSocket());
-    }, 150);
-  </script>
+setTimeout(() => {
+  initSkinClient(getSocket());
+}, 50);
+</script>
 </body>
 </html>
