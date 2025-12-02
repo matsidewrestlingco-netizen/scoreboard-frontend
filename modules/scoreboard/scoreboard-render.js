@@ -3,6 +3,9 @@
 // Renders the full-screen Scoreboard 3.2 UI
 // ================================================
 
+// ----------------------
+// TIME FORMATTER
+// ----------------------
 function formatTime(seconds) {
   const s = Math.max(0, Math.floor(seconds ?? 0));
   const m = Math.floor(s / 60);
@@ -10,10 +13,23 @@ function formatTime(seconds) {
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
 }
 
-/**
- * Build the scoreboard DOM and return references
- * used for updates.
- */
+// ----------------------
+// PERIOD FORMATTER
+// ----------------------
+function prettySegment(seg) {
+  if (!seg) return "";
+
+  if (seg.startsWith("REG")) return seg.replace("REG", "");
+  if (seg.startsWith("OT")) return "OT";
+  if (seg.startsWith("TB")) return seg.toUpperCase();
+  if (seg.startsWith("UT")) return "UT";
+
+  return seg;
+}
+
+// =================================================
+// INIT VIEW
+// =================================================
 export function initScoreboardView() {
   const root = document.getElementById("scoreboard-root");
   if (!root) {
@@ -26,7 +42,9 @@ export function initScoreboardView() {
   const wrapper = document.createElement("div");
   wrapper.className = "sb-wrapper";
 
-  // Top row: MAT | TITLE | PERIOD
+  // ----------------------
+  // TOP ROW
+  // ----------------------
   const topRow = document.createElement("div");
   topRow.className = "sb-top-row";
 
@@ -60,7 +78,9 @@ export function initScoreboardView() {
   topRow.appendChild(titleBox);
   topRow.appendChild(periodBox);
 
-  // Middle row: TIME label + timer
+  // ----------------------
+  // MID ROW
+  // ----------------------
   const midRow = document.createElement("div");
   midRow.className = "sb-mid-row";
 
@@ -75,7 +95,9 @@ export function initScoreboardView() {
   midRow.appendChild(timeLabel);
   midRow.appendChild(timeValue);
 
-  // Bottom row: RED & GREEN
+  // ----------------------
+  // BOTTOM ROW
+  // ----------------------
   const bottomRow = document.createElement("div");
   bottomRow.className = "sb-bottom-row";
 
@@ -113,6 +135,7 @@ export function initScoreboardView() {
   wrapper.appendChild(topRow);
   wrapper.appendChild(midRow);
   wrapper.appendChild(bottomRow);
+
   root.appendChild(wrapper);
 
   return {
@@ -127,9 +150,9 @@ export function initScoreboardView() {
   };
 }
 
-/**
- * Update the scoreboard for a single mat.
- */
+// =================================================
+// UPDATE VIEW
+// =================================================
 export function updateScoreboardView(view, matState, meta = {}) {
   if (!view || !matState) return;
 
@@ -144,22 +167,18 @@ export function updateScoreboardView(view, matState, meta = {}) {
   } = view;
 
   const mat = meta.mat ?? 1;
-  const period = matState.segmentLabel || matState.segmentId || matState.period || 1;
-  const time = matState.time ?? 0;
 
-  const redScore = matState.red ?? 0;
-  const greenScore = matState.green ?? 0;
-  const redName = matState.redName || "RED WRESTLER";
-  const greenName = matState.greenName || "GREEN WRESTLER";
+  // 🟢 PERIOD FIX (new)
+  const rawSegment = matState.segmentLabel || matState.segmentId || matState.period;
+  const niceSegment = prettySegment(rawSegment);
 
   if (matEl) matEl.textContent = mat;
-  if (periodEl) periodEl.textContent = period;
-  if (timeEl) timeEl.textContent = formatTime(time);
+  if (periodEl) periodEl.textContent = niceSegment;
+  if (timeEl) timeEl.textContent = formatTime(matState.time ?? 0);
 
-  if (redScoreEl) redScoreEl.textContent = redScore;
-  if (greenScoreEl) greenScoreEl.textContent = greenScore;
+  if (redScoreEl) redScoreEl.textContent = matState.red ?? 0;
+  if (greenScoreEl) greenScoreEl.textContent = matState.green ?? 0;
 
-  if (redNameEl) redNameEl.textContent = redName;
-  if (greenNameEl) greenNameEl.textContent = greenName;
+  if (redNameEl) redNameEl.textContent = matState.redName || "RED WRESTLER";
+  if (greenNameEl) greenNameEl.textContent = matState.greenName || "GREEN WRESTLER";
 }
-
