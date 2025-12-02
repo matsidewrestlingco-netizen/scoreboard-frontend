@@ -1,0 +1,102 @@
+/* ---------------------------------------------------
+   BLACK GLASS — premium glossy dark theme
+   --------------------------------------------------- */
+
+:root {
+  --sb-bg: radial-gradient(circle at center, #000000, #050505 70%);
+  --sb-panel: rgba(255, 255, 255, 0.05);
+  --sb-panel-strong: rgba(255, 255, 255, 0.08);
+
+  --sb-text: #ffffff;
+  --sb-muted: #9ca3af;
+
+  --sb-accent: #4dd3ff; /* Time & highlights */
+  --sb-red-bg: linear-gradient(180deg, #b90000, #5a0000);
+  --sb-green-bg: linear-gradient(180deg, #009c3b, #004d1a);
+
+  --sb-border: rgba(255,255,255,0.12);
+  --sb-glow: 0 0 25px rgba(0,170,255,0.35);
+}
+
+body {
+  background: var(--sb-bg);
+  color: var(--sb-text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  margin: 0;
+}
+
+/* Container Layout */
+.scoreboard-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.scoreboard-top {
+  display: flex;
+  justify-content: space-between;
+  color: var(--sb-muted);
+  font-size: 20px;
+  letter-spacing: 1px;
+  margin-bottom: 18px;
+}
+
+/* Main Grid */
+.scoreboard-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 28px;
+  align-items: center;
+}
+
+/* Panels */
+.score-box {
+  background: var(--sb-panel);
+  border-radius: 22px;
+  padding: 32px;
+  text-align: center;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border: 1px solid var(--sb-border);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.55);
+}
+
+.red-wrestler {
+  background: var(--sb-red-bg);
+  color: #fff;
+  border: 1px solid rgba(255,0,0,0.25);
+}
+
+.green-wrestler {
+  background: var(--sb-green-bg);
+  color: #fff;
+  border: 1px solid rgba(0,255,85,0.25);
+}
+
+/* Score Numbers */
+.score-value {
+  font-size: 130px;
+  font-weight: 900;
+  text-shadow: 0 0 20px rgba(255,255,255,0.25);
+}
+
+/* Timer */
+.time-display {
+  font-size: 175px;
+  font-weight: 900;
+  color: var(--sb-accent);
+  text-shadow: var(--sb-glow);
+}
+
+/* Period */
+.period-display {
+  font-size: 64px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--sb-muted);
+}
