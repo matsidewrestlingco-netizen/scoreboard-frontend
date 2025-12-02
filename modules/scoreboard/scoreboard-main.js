@@ -1,10 +1,8 @@
-// =========================================================
+// ================================================
 // FILE: modules/scoreboard/scoreboard-main.js
-// Wire socket -> state -> render for single-mat scoreboard
-// =========================================================
+// Socket wiring for single-mat scoreboard
+// ================================================
 import { initSocketClient } from "../core/socket.js";
-import { getMatState } from "../core/state-router.js";
-import { computeWinnerForView } from "../core/segment-engine.js";
 import { initScoreboardView, updateScoreboardView } from "./scoreboard-render.js";
 
 function getMatFromQuery() {
@@ -17,25 +15,16 @@ function getMatFromQuery() {
 const mat = getMatFromQuery();
 const view = initScoreboardView();
 
-// initial mat label
-if (view.matEl) view.matEl.textContent = mat;
-
 function handleStateUpdate(state) {
-  const matState = getMatState(state, mat);
+  if (!state || !state.mats || !view) return;
+  const matState = state.mats[mat];
   if (!matState) return;
 
-  const winner = computeWinnerForView(matState);
-
-  const meta = {
-    mat,
-    isConnected: true,
-    winner
-  };
-
+  const meta = { mat };
   updateScoreboardView(view, matState, meta);
 }
 
-// Initialize socket connection for scoreboard role
+// Init socket client for this mat's scoreboard
 initSocketClient({
   role: "scoreboard",
   mat,
