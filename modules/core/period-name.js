@@ -1,24 +1,17 @@
-// =========================================================
-// FILE: modules/core/period-name.js
-// Thin wrapper for converting segmentId → label text
-// =========================================================
-import { PERIODS } from "../logic/periods.js";
+// =======================================================
+// File: /modules/core/period-name.js
+// Consistent label generator for REG/OT/TB/UT segments
+// =======================================================
 
-export function displayPeriodName(segmentId) {
-  const seg = PERIODS[segmentId];
-  if (!seg) return "?";
+export function segmentLabel(segmentId, fallbackPeriod = 1) {
+  if (!segmentId) return String(fallbackPeriod);
 
-  // REG1 → Period 1
-  if (seg.type === "reg") return seg.number.toString();
+  // REG1 → "1"
+  if (segmentId.startsWith("REG")) {
+    const num = parseInt(segmentId.slice(3), 10);
+    return Number.isFinite(num) ? String(num) : String(fallbackPeriod);
+  }
 
-  // OT → OT
-  if (seg.type === "ot") return "OT";
-
-  // TB1, TB2 → TB1, TB2
-  if (seg.type === "tb") return `TB${seg.number}`;
-
-  // UT → Ultimate
-  if (seg.type === "ut") return "UT";
-
-  return "?";
+  // OT, TB1, TB2, UT → Display as-is
+  return segmentId;
 }
