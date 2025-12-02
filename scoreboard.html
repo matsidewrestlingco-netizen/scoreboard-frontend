@@ -1,36 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Scoreboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Matside — Scoreboard</title>
 
-<!-- SKIN + THEME -->
-<link rel="stylesheet" href="./css/theme.css" />
-<link rel="stylesheet" href="./css/scoreboard.css" />
+  <!-- Base styles -->
+  <link rel="stylesheet" href="./css/scoreboard.css" />
+  <link rel="stylesheet" href="./css/theme.css" />
 
-<!-- Socket.IO -->
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <!-- Theme injected dynamically -->
+  <link id="skinStylesheet" rel="stylesheet" />
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
+
 <body>
+  <div id="scoreboard-root"></div>
 
-<div id="scoreboard-root"></div>
+  <script type="module">
+    import { setServerUrl, getSocket } from "./modules/core/socket.js";
+    import { initSkinClient } from "./modules/ui/skins.js";
+    import "./modules/scoreboard/scoreboard-main.js";
 
-<script type="module">
-import { setServerUrl, getSocket } from "./modules/core/socket.js";
-import { initSkinClient } from "./modules/ui/skins.js";
+    setServerUrl("https://scoreboard-server-er33.onrender.com");
 
-// 1️⃣ Set server URL first
-setServerUrl("https://scoreboard-server-er33.onrender.com");
-
-// 2️⃣ Load scoreboard logic — this creates the socket
-import "./modules/scoreboard/scoreboard-main.js";
-
-// 3️⃣ Delay skin system until socket exists
-setTimeout(() => {
-  initSkinClient(getSocket());
-}, 100);
-</script>
-
+    // Wait for socket before binding theme
+    setTimeout(() => {
+      initSkinClient(getSocket());
+    }, 150);
+  </script>
 </body>
 </html>
