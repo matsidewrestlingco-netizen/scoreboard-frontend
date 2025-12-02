@@ -17,6 +17,26 @@
   --ms-radius-pill: 999px;
 }
 
+/* Smooth fade for all major components */
+.fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Glass pop effect */
+.glass-pop {
+  animation: glassPop 0.25s ease-out forwards;
+}
+
+@keyframes glassPop {
+  0% { transform: scale(0.96); filter: blur(4px); }
+  100% { transform: scale(1); filter: blur(0); }
+}
+
 html, body {
   margin: 0;
   padding: 0;
