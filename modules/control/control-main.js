@@ -1,6 +1,6 @@
 // =======================================================
 // File: /modules/control/control-main.js
-// Master orchestrator for the control panel (future use).
+// Master orchestrator for the control panel.
 // NOTE: This does NOT auto-run. Call initControlMain() from control.html.
 // =======================================================
 
@@ -15,8 +15,7 @@ export function initControlMain({
   const matSelect = document.getElementById("matSelect");
   const connEl = document.getElementById("conn");
   const sumMatEl = document.getElementById("sumMat");
-  const sumSegEl = document.getElementById("sumSeg").textContent =
-  displayPeriodName(state.segmentId);
+  const sumSegEl = document.getElementById("sumSeg") || null;
   const sumTimeEl = document.getElementById("sumTime");
   const sumRedEl = document.getElementById("sumRed");
   const sumGreenEl = document.getElementById("sumGreen");
@@ -48,7 +47,26 @@ export function initControlMain({
     if (!m) return;
 
     if (sumMatEl) sumMatEl.textContent = String(currentMat);
-    if (sumSegEl) sumSegEl.textContent = m.segmentId || `P${m.period || 1}`;
+
+    if (sumSegEl) {
+      const segId = m.segmentId || null;
+      let segLabel;
+
+      // If we have a segmentId like "REG1", "REG2", "REG3" → show "1", "2", "3"
+      if (segId && segId.startsWith("REG")) {
+        const num = parseInt(segId.slice(3), 10);
+        segLabel = Number.isFinite(num) ? String(num) : "1";
+      } else if (segId) {
+        // For OT / TB1 / TB2 / UT, keep the label as-is
+        segLabel = segId;
+      } else {
+        // Fallback to numeric period if segmentId is missing
+        segLabel = String(m.period || 1);
+      }
+
+      sumSegEl.textContent = segLabel;
+    }
+
     if (sumTimeEl) sumTimeEl.textContent = formatTime(m.time ?? 0);
     if (sumRedEl) sumRedEl.textContent = String(m.red ?? 0);
     if (sumGreenEl) sumGreenEl.textContent = String(m.green ?? 0);
@@ -134,7 +152,7 @@ export function initControlMain({
     getCurrentMat,
     getMatState,
     updateState,
-    formatTime,
+    formatTime
   };
 
   // Initialize optional modules if provided
@@ -148,5 +166,3 @@ export function initControlMain({
 
   return ctx;
 }
-
-
