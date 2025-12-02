@@ -20,12 +20,16 @@
 <!-- MODULES -->
 <script type="module">
 
+/* 1️⃣ Load skin + socket helpers FIRST */
 import { initSkinClient } from "./modules/ui/skins.js";
 import { setServerUrl } from "./modules/core/socket.js";
-import "./modules/scoreboard/scoreboard-main.js";
 
+/* Must run before scoreboard-main.js */
 initSkinClient();
 setServerUrl("https://scoreboard-server-er33.onrender.com");
+
+/* 2️⃣ Now safely load scoreboard logic */
+import "./modules/scoreboard/scoreboard-main.js";
 
 </script>
 
