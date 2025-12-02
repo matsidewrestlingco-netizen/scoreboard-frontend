@@ -17,23 +17,13 @@
 <div id="scoreboard-root"></div>
 
 <script type="module">
-import { setServerUrl, getSocket } from "./modules/core/socket.js";
-import { initSkinClient } from "./modules/ui/skins.js";
+  import { setServerUrl, getSocket } from "./modules/core/socket.js";
+  import { initSkinClient } from "./modules/ui/skins.js";
 
-// 1️⃣ Set server URL
-setServerUrl("https://scoreboard-server-er33.onrender.com");
-
-// 2️⃣ Apply skin immediately (no socket needed yet)
-initSkinClient(null);
-
-// 3️⃣ NOW load scoreboard logic
-import "./modules/scoreboard/scoreboard-main.js";
-
-// 4️⃣ Once socket is created, re-bind global skin updates
-setTimeout(() => {
-  initSkinClient(getSocket());
-}, 300);
-
+  setServerUrl("https://scoreboard-server-er33.onrender.com");
+  initSkinClient(null);              // apply local skin
+  import "./modules/scoreboard/scoreboard-main.js";
+  setTimeout(() => initSkinClient(getSocket()), 300);
 </script>
 
 </body>
