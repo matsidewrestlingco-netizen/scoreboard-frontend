@@ -1,30 +1,49 @@
-<!DOCTYPE html>
-<html>
+<!-- ===========================
+FILE: /overview.html
+=========================== -->
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8" />
   <title>Matside — Overview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <link rel="stylesheet" href="./css/overview.css" />
-  <link rel="stylesheet" href="./css/theme.css" />
-  <link id="skinStylesheet" rel="stylesheet" />
+  <!-- Base theme + overview layout -->
+  <link rel="stylesheet" href="/scoreboard-frontend/css/theme.css" />
+  <link rel="stylesheet" href="/scoreboard-frontend/css/overview.css" />
 
+  <!-- Socket.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
-
 <body>
-  <div id="overview-root"></div>
+  <div id="overview-page">
+    <header class="ov-header">
+      <div class="ov-header-title">Matside — Event Overview</div>
+      <div class="ov-header-status">
+        Status: <span id="ov-conn">connecting…</span>
+      </div>
+    </header>
+
+    <main id="overview-root"></main>
+  </div>
 
   <script type="module">
     import { setServerUrl, getSocket } from "./modules/core/socket.js";
     import { initSkinClient } from "./modules/ui/skins.js";
-    import "./modules/overview/overview-main.js";
 
+    // 1) Point to your server
     setServerUrl("https://scoreboard-server-er33.onrender.com");
 
+    // 2) Apply local skin immediately (no socket needed yet)
+    initSkinClient(null);
+
+    // 3) Wire overview logic (socket + rendering)
+    import "./modules/overview/overview-main.js";
+
+    // 4) Once socket exists, bind live skin updates
     setTimeout(() => {
       initSkinClient(getSocket());
-    }, 150);
+    }, 300);
   </script>
 </body>
 </html>
