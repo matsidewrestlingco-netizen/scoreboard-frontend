@@ -1,33 +1,46 @@
-// modules/ui/right-drawer.js
-// -------------------------------------------------------
-// Wrestler names + Reset Mat controls
-// -------------------------------------------------------
 
-export function initRightDrawer(stateApi, getMat) {
-  const redName = document.getElementById("redNameInput");
-  const greenName = document.getElementById("greenNameInput");
-  const resetBtn = document.getElementById("resetMatBtn");
+// =======================================================
+// File: /modules/control/right-drawer.js
+// Match Settings drawer: names + timeline visible in drawer.
+// =======================================================
 
-  redName?.addEventListener("input", () => {
-    stateApi.update(getMat(), { redName: redName.value });
-  });
+export function initRightDrawer(ctx) {
+  const { getCurrentMat } = ctx;
 
-  greenName?.addEventListener("input", () => {
-    stateApi.update(getMat(), { greenName: greenName.value });
-  });
+  const openBtn = document.getElementById("openRight");
+  const closeBtn = document.getElementById("closeRight");
+  const drawer = document.getElementById("drawerRight");
+  const backdrop = document.getElementById("drawerRightBackdrop");
 
-  resetBtn?.addEventListener("click", () => {
-    const mat = getMat();
-    stateApi.update(mat, {
-      red: 0,
-      green: 0,
-      time: 60,
-      period: 1,
-      segmentId: "P1",
-      running: false,
-      redName: "",
-      greenName: "",
-      timeline: []
-    });
-  });
+  function open() {
+    drawer?.classList.add("open");
+    backdrop?.classList.add("open");
+  }
+  function close() {
+    drawer?.classList.remove("open");
+    backdrop?.classList.remove("open");
+  }
+
+  openBtn?.addEventListener("click", open);
+  closeBtn?.addEventListener("click", close);
+  backdrop?.addEventListener("click", close);
+
+  // For future: tie timeline to mat if desired.
+  // Currently timelineBox content is not mat-specific; that can be expanded later.
+  const timelineBox = document.getElementById("timelineBox");
+
+  function appendTimeline(label) {
+    if (!timelineBox) return;
+    const div = document.createElement("div");
+    div.className = "tl-item";
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    div.textContent = `[Mat ${getCurrentMat()} @ ${timeStr}] ${label}`;
+    timelineBox.prepend(div);
+  }
+
+  // Expose hook for other modules (e.g. match-end, scoring)
+  ctx.appendTimeline = appendTimeline;
+
+  return { open, close, appendTimeline };
 }
