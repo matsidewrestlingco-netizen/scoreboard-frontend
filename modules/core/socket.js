@@ -6,13 +6,14 @@
 //  - registerDevice handshake for hub monitor
 //  - heartbeat diagnostics
 //  - stateUpdate relays
+//  - skin system integration
 // =========================================================
 
 let SERVER_URL = "https://scoreboard-server-er33.onrender.com";
 let socket = null;
 
 /**
- * Allows scoreboard.html, overview.html, control.html
+ * Allow scoreboard.html, overview.html, control.html
  * to dynamically override the server URL.
  */
 export function setServerUrl(url) {
@@ -20,7 +21,7 @@ export function setServerUrl(url) {
 }
 
 /**
- * Optional helper to retrieve the active socket URL.
+ * Retrieve the active socket URL.
  */
 export function getSocketUrl() {
   return SERVER_URL;
@@ -49,6 +50,9 @@ export function initSocketClient({ role, mat = null, onState }) {
     transports: ["websocket", "polling"],
     query: { role, mat: mat || "" }
   });
+
+  // EXPOSE GLOBALLY for skins.js to attach safely
+  window.__matside_socket = socket;
 
   // ----------------------------
   // 1. Register device for hub
