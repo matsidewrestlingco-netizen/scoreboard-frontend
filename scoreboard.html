@@ -1,33 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Matside — Scoreboard</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matside — Scoreboard</title>
 
-  <!-- Base styles -->
-  <link rel="stylesheet" href="./css/scoreboard.css" />
-  <link rel="stylesheet" href="./css/theme.css" />
+<!-- BASE CSS -->
+<link rel="stylesheet" href="./css/theme.css" />
+<link rel="stylesheet" href="./css/scoreboard.css" />
 
-  <!-- Theme injected dynamically -->
-  <link id="skinStylesheet" rel="stylesheet" />
-
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<!-- Socket.IO -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
-
 <body>
+
 <div id="scoreboard-root"></div>
 
 <script type="module">
 import { setServerUrl, getSocket } from "./modules/core/socket.js";
 import { initSkinClient } from "./modules/ui/skins.js";
 
+// 1️⃣ Set server URL
 setServerUrl("https://scoreboard-server-er33.onrender.com");
+
+// 2️⃣ Apply skin immediately (no socket needed yet)
+initSkinClient(null);
+
+// 3️⃣ NOW load scoreboard logic
 import "./modules/scoreboard/scoreboard-main.js";
 
+// 4️⃣ Once socket is created, re-bind global skin updates
 setTimeout(() => {
   initSkinClient(getSocket());
-}, 50);
+}, 300);
+
 </script>
+
 </body>
 </html>
