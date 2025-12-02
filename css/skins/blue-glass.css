@@ -1,76 +1,25 @@
-/* ------------------------------------------
-   BLUE GLASS — Glossy, polished, ESPN-style
-   ------------------------------------------ */
-
-:root {
-  --sb-bg: radial-gradient(circle at center, #0a1a33, #020611 80%);
-  --sb-panel: rgba(255,255,255,0.08);
-  --sb-text: #e8f4ff;
-  --sb-accent: #4ec3ff;
-  --sb-red-bg: linear-gradient(135deg, #b80000, #5a0000);
-  --sb-green-bg: linear-gradient(135deg, #00a83a, #004d1a);
-  --sb-muted: #9bb5cc;
-}
+/* BLUE GLASS */
 
 body {
-  background: var(--sb-bg);
-  color: var(--sb-text);
-  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(#020024, #090979, #00d4ff);
 }
 
-/* Layout */
-.scoreboard-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
+.sb-score-box {
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.25);
 }
 
-.scoreboard-top {
-  display: flex;
-  justify-content: space-between;
-  font-size: 22px;
-  color: var(--sb-muted);
-  letter-spacing: 1px;
+.sb-name {
+  color: #e0f3ff;
 }
 
-.scoreboard-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 20px;
-  align-items: center;
-  padding-top: 20px;
+.sb-score {
+  color: white;
+  text-shadow: 0 0 35px rgba(0,200,255,0.6);
 }
 
-/* Panels */
-.score-box {
-  background: var(--sb-panel);
-  border-radius: 20px;
-  padding: 34px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.35);
-  text-align: center;
-}
-
-.red-wrestler { background: var(--sb-red-bg); color: #fff; }
-.green-wrestler { background: var(--sb-green-bg); color: #fff; }
-
-.score-value {
-  font-size: 120px;
-  font-weight: 900;
-  text-shadow: 0 0 12px rgba(255,255,255,0.25);
-}
-
-.time-display {
-  font-size: 170px;
-  font-weight: 900;
-  color: var(--sb-accent);
-  text-shadow: 0 0 20px rgba(78,195,255,0.6);
-}
-
-.period-display {
-  font-size: 70px;
-  font-weight: 700;
+.sb-timer {
+  color: #ffffff;
+  text-shadow: 0 0 30px rgba(255,255,255,0.8);
 }
