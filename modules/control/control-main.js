@@ -15,7 +15,8 @@ export function initControlMain({
   const matSelect = document.getElementById("matSelect");
   const connEl = document.getElementById("conn");
   const sumMatEl = document.getElementById("sumMat");
-  const sumSegEl = document.getElementById("sumSeg") || null;
+  const sumSegEl = document.getElementById("sumSeg").textContent =
+  displayPeriodName(state.segmentId);
   const sumTimeEl = document.getElementById("sumTime");
   const sumRedEl = document.getElementById("sumRed");
   const sumGreenEl = document.getElementById("sumGreen");
