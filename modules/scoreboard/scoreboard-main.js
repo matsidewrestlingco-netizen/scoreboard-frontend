@@ -5,6 +5,28 @@
 import { initSocketClient } from "../core/socket.js";
 import { initScoreboardView, updateScoreboardView } from "./scoreboard-render.js";
 
+const serverDot = document.getElementById("serverDot");
+const serverStatusText = document.getElementById("serverStatusText");
+const serverMeta = document.getElementById("serverMeta");
+
+function setServerStatus(ok) {
+  if (!serverDot || !serverStatusText) return;
+
+  if (ok) {
+    serverDot.style.background = "#4caf50";
+    serverStatusText.textContent = "Connected";
+  } else {
+    serverDot.style.background = "#d32f2f";
+    serverStatusText.textContent = "Disconnected";
+  }
+}
+
+function setLastUpdate() {
+  if (!serverMeta) return;
+  const t = new Date().toLocaleTimeString();
+  serverMeta.textContent = `Last update: ${t}`;
+}
+
 function getMatFromQuery() {
   const params = new URLSearchParams(window.location.search);
   const m = parseInt(params.get("mat"), 10);
@@ -28,5 +50,11 @@ function handleStateUpdate(state) {
 initSocketClient({
   role: "scoreboard",
   mat,
-  onState: handleStateUpdate
+  onState: (state) => {
+    setServerStatus(true);
+    setLastUpdate();
+    handleStateUpdate(state);
+  }
+}).on("disconnect", () => {
+  setServerStatus(false);
 });
