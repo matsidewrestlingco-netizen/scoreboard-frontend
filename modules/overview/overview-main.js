@@ -1,8 +1,6 @@
 <!-- ===========================
 FILE: /modules/overview/overview-main.js
 =========================== -->
-<script type="module">
-// NOTE: remove this <script> wrapper when saving the JS file.
 
 import { initSocketClient } from "../core/socket.js";
 import { initOverviewView, updateOverviewView } from "./overview-render.js";
@@ -21,4 +19,3 @@ initSocketClient({
   mat: null,
   onState: handleStateUpdate
 });
-</script>
