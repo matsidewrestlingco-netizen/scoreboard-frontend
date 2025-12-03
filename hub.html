@@ -330,6 +330,13 @@
     <div class="system-card-main"><span id="activeMatsCount">0</span> / 4</div>
   </div>
 
+<div class="card" id="current-theme-card">
+  <h3>Current Theme</h3>
+  <div id="currentThemeDisplay" style="font-size:14px;color:var(--ms-muted);">
+    Loading…
+  </div>
+</div>
+  
 <!-- THEME CONTROL CARD -->
 <div class="system-card" style="max-width:1200px;margin:0 auto 16px auto;">
   <div class="system-card-title">Theme</div>
@@ -715,5 +722,55 @@ buildGrid();
   });
 </script>  
 
+<script type="module">
+  import { initSkinHub, SKINS } from "./modules/ui/skins.js";
+
+  // Initialize skin hub (your existing code)
+  const { setGlobalSkin, initialSkin, socket } = initSkinHub(
+    "https://scoreboard-server-er33.onrender.com"
+  );
+
+  const selectEl = document.getElementById("skinSelect");
+  const applyBtn = document.getElementById("applySkinBtn");
+  const statusEl = document.getElementById("themeStatus");
+  const currentThemeDisplay = document.getElementById("currentThemeDisplay");
+
+  // Populate dropdown
+  selectEl.innerHTML = Object.entries(SKINS)
+    .map(([key, skin]) => {
+      const selected = key === initialSkin ? "selected" : "";
+      return `<option value="${key}" ${selected}>${skin.name}</option>`;
+    })
+    .join("");
+
+  // Set initial display
+  function updateThemeDisplay(key) {
+    const skin = SKINS[key];
+    if (!skin) {
+      currentThemeDisplay.textContent = "Unknown Theme";
+      return;
+    }
+    currentThemeDisplay.textContent = `${skin.name} (${key})`;
+  }
+
+  updateThemeDisplay(initialSkin);
+
+  // Apply button → set theme globally
+  applyBtn.addEventListener("click", () => {
+    const key = selectEl.value;
+    setGlobalSkin(key);
+    updateThemeDisplay(key);
+
+    statusEl.textContent = `Theme "${SKINS[key].name}" applied to all clients.`;
+    setTimeout(() => (statusEl.textContent = ""), 3000);
+  });
+
+  // Listen for live updates from server (if another admin changes theme)
+  socket.on("globalSkin", (key) => {
+    updateThemeDisplay(key);
+    selectEl.value = key;
+  });
+</script>
+  
 </body>
 </html>
