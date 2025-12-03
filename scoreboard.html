@@ -14,7 +14,15 @@
 </head>
 <body>
 
-<div id="scoreboard-root"></div>
+<div id="scoreboard-root">
+  <div id="server-status-wrapper" class="server-status">
+    <span class="status-pill">
+      <span class="dot" id="serverDot"></span>
+      <span id="serverStatusText">Connecting…</span>
+    </span>
+    <div id="serverMeta" class="server-meta">Last update: —</div>
+  </div>
+</div>
 
 <script type="module">
   import { setServerUrl, getSocket } from "./modules/core/socket.js";
