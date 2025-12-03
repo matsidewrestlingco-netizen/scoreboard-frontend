@@ -52,7 +52,7 @@ export function initControlMain({
     if (!m) return;
 
     sumMatEl.textContent = String(currentMat);
-    sumSegEl.textContent = segmentLabel(m.segmentId, m.period);
+    sumSegEl.textContent = prettySegment(m.segmentId);
     sumTimeEl.textContent = formatTime(m.time ?? 0);
     sumRedEl.textContent = String(m.red ?? 0);
     sumGreenEl.textContent = String(m.green ?? 0);
