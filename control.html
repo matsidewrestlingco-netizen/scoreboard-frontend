@@ -517,6 +517,67 @@
     font-weight:600;
     z-index:99999;
   }
+
+/* ============================================================
+   END MATCH MODAL — RESTORE BUTTON COLORS
+   ============================================================ */
+
+.modal-container button {
+  font-weight: 600;
+  border-radius: 14px;
+  padding: 8px 18px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+/* Winner buttons */
+#winnerRedBtn {
+  background: #c62828 !important;
+  color: white !important;
+}
+#winnerGreenBtn {
+  background: #2e7d32 !important;
+  color: white !important;
+}
+
+/* Winner active state (when selected in JS) */
+.pill-btn-fat.active,
+.pill-btn-fat.selected {
+  outline: 2px solid #4c89ff;
+}
+
+/* Method buttons (default) */
+.pill-btn-fat {
+  background: #2f3640 !important;
+  color: #eee !important;
+}
+
+/* Method selected */
+.pill-btn-fat[data-method].active,
+.pill-btn-fat[data-method].selected {
+  background: #4c89ff !important;
+  color: white !important;
+}
+
+/* Submit button */
+button.gold {
+  background: #f4c542 !important;
+  color: black !important;
+}
+button.gold:hover {
+  opacity: 0.9;
+}
+
+/* Cancel button */
+button.gray {
+  background: #555 !important;
+  color: white !important;
+}
+button.gray:hover {
+  opacity: 0.8;
+}
+  
 </style>
 </head>
 <body>
