@@ -497,6 +497,23 @@
     pointer-events:none;
     font-weight:600;z-index:99999;
   }
+
+    /* FORCE drawerRight to attach to the right and slide from the right */
+  #drawerRight {
+    left: auto !important;
+    right: 0 !important;
+    transform: translateX(100%);
+  }
+  
+  #drawerRight.open {
+    transform: translateX(0);
+  }
+  
+  #backdropRight {
+    right: 0;
+    left: 0;
+  }
+  
 </style>
 </head>
 <body>
