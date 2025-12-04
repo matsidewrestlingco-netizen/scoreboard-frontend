@@ -1,77 +1,150 @@
-/* css/theme.css */
-/* Global Matside theme */
+/* ===========================================
+ * FILE: css/theme.css
+ * Global BLACK-GLASS design tokens
+ * =========================================== */
 
 :root {
-  --ms-bg: #050608;
-  --ms-surface: #111218;
-  --ms-surface-strong: #0b0d11;
+  /* Core colors */
+  --ms-bg: #000000;
+  --ms-bg-elevated: #050608;
+  --ms-panel: #111215;
+  --ms-panel-soft: #17181d;
+  --ms-panel-border: #23252d;
 
-  --ms-accent: #1e88e5;
-  --ms-red: #e53935;
-  --ms-green: #43a047;
+  /* Text */
+  --ms-text: #ffffff;
+  --ms-muted: #b0b3c0;
+  --ms-title: #f5f5f5;
 
-  --ms-muted: #9aa0a6;
-  --ms-border-subtle: rgba(255,255,255,0.08);
-  --ms-radius-lg: 20px;
-  --ms-radius-md: 14px;
-  --ms-radius-pill: 999px;
+  /* Accent + status */
+  --ms-accent: #3b82f6;
+  --ms-accent-soft: #1e40af;
+  --ms-accent-glow: rgba(59,130,246,0.45);
+
+  --ms-red: #ef4444;
+  --ms-red-dark: #1f0c0c;
+  --ms-red-soft: rgba(239,68,68,0.18);
+  --ms-red-border: rgba(239,68,68,0.45);
+
+  --ms-green: #22c55e;
+  --ms-green-dark: #06180c;
+  --ms-green-soft: rgba(34,197,94,0.18);
+  --ms-green-border: rgba(34,197,94,0.45);
+
+  /* Misc */
+  --ms-radius-lg: 22px;
+  --ms-radius-md: 16px;
+  --ms-radius-sm: 10px;
+
+  --ms-shadow-soft: 0 18px 40px rgba(0,0,0,0.75);
+
+  --ms-font-main: system-ui, -apple-system, "SF Pro Text",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.server-status {
-  font-size: 12px;
-  color: var(--ms-muted, #aaa);
-  margin-top: 6px;
-  text-align: right;
-}
-
-.status-pill {
-  background: #111;
-  border: 1px solid #333;
-  padding: 3px 8px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.status-pill .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-  background: #777;
-}
-
-.server-meta {
-  margin-top: 4px;
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-/* Smooth fade for all major components */
-.fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
-}
-
-@keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(8px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-/* Glass pop effect */
-.glass-pop {
-  animation: glassPop 0.25s ease-out forwards;
-}
-
-@keyframes glassPop {
-  0% { transform: scale(0.96); filter: blur(4px); }
-  100% { transform: scale(1); filter: blur(0); }
-}
-
+/* Base page styling used by all screens */
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--ms-bg);
-  color: #fff;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+  background: radial-gradient(circle at top, #050608 0%, #000 55%, #000 100%);
+  color: var(--ms-text);
+  font-family: var(--ms-font-main);
+}
+
+/* Utility */
+.ms-shell {
+  min-height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ms-shell-inner {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* Status pill (for server / connection) */
+.ms-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(15,23,42,0.85);
+  font-size: 11px;
+  color: var(--ms-muted);
+  border: 1px solid rgba(148,163,184,0.4);
+}
+
+.ms-status-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #22c55e;
+}
+
+/* Timer glow style for big and small timers */
+.ms-timer-glow {
+  text-shadow:
+    0 0 24px rgba(255,255,255,0.7),
+    0 0 80px rgba(255,255,255,0.85);
+}
+
+/* Shared card styling for overview & control */
+.ms-card {
+  background: radial-gradient(circle at top, #15161b 0%, #050608 60%, #030407 100%);
+  border-radius: var(--ms-radius-lg);
+  border: 1px solid var(--ms-panel-border);
+  box-shadow: var(--ms-shadow-soft);
+  padding: 16px 20px;
+  box-sizing: border-box;
+}
+
+/* Simple button base for control */
+.ms-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+  letter-spacing: 0.03em;
+}
+
+.ms-btn:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+}
+
+/* Button colors */
+.ms-btn-primary {
+  background: radial-gradient(circle at top, #3b82f6 0%, #1d4ed8 70%);
+  color: #ffffff;
+  box-shadow: 0 14px 32px rgba(59,130,246,0.55);
+}
+
+.ms-btn-secondary {
+  background: #1e293b;
+  color: var(--ms-title);
+}
+
+.ms-btn-danger {
+  background: radial-gradient(circle at top, #ef4444 0%, #b91c1c 70%);
+  color: #ffffff;
+}
+
+.ms-btn-gold {
+  background: radial-gradient(circle at top, #facc15 0%, #eab308 65%);
+  color: #111827;
+}
+
+.ms-btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(148,163,184,0.4);
+  color: var(--ms-muted);
 }
