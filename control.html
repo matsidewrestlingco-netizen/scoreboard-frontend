@@ -712,9 +712,18 @@
   <!-- FULL-WIDTH HORIZONTAL TIMELINE (BOTTOM) -->
   <div class="timeline-bar">
     <div class="timeline-header">
-      <div class="timeline-title">Timeline</div>
-      <div class="timeline-hint">Live event stream for this mat.</div>
-    </div>
+  <div class="timeline-title">Timeline</div>
+
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button id="resetTimelineBtn" class="btn-ghost small" style="
+      padding:4px 10px;
+      border-radius:8px;
+      font-size:11px;
+    ">Reset Timeline</button>
+
+    <div class="timeline-hint">Live event stream for this mat.</div>
+  </div>
+</div>
     <div id="timelineStream"></div>
   </div>
 
@@ -1102,6 +1111,23 @@
     });
   });
 
+  // RESET TIMELINE ONLY
+  document.getElementById("resetTimelineBtn").addEventListener("click", () => {
+    const m = getMatState();
+    const now = Date.now();
+
+  socket.emit("updateState", {
+    mat: currentMat,
+    updates: {
+      timeline: [
+        { text: "Timeline manually cleared.", ts: now, kind: "reset" }
+      ]
+    }
+  });
+
+  showToast("Timeline cleared");
+});
+  
   // NAMES
   redNameInput.addEventListener("change",()=>{
     showToast("Red name updated (local only)");
