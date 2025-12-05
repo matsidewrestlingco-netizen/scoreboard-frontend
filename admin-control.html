@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Admin Control Panel (v6)</title>
+<title>Matside — Admin Control Panel (v6.1)</title>
 
 <!-- PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -74,7 +74,7 @@ h1 {
 }
 
 /* ----------------------------------------- */
-/* CSV PREVIEW TABLE                         */
+/* CSV TABLE                                 */
 /* ----------------------------------------- */
 
 .csv-table {
@@ -96,29 +96,46 @@ h1 {
 }
 
 /* ----------------------------------------- */
-/* TOASTS                                     */
+/* TOAST SYSTEM (v6.1 FIX)                   */
 /* ----------------------------------------- */
 
 #toastContainer {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 5000;
+  z-index: 999999 !important;
+  pointer-events: none;
 }
 
 .toast {
-  background: #333;
-  padding: 12px 18px;
-  border-radius: 8px;
+  pointer-events: auto;
+  z-index: 999999 !important;
+  background: rgba(40,40,40,0.95);
+  padding: 14px 20px;
   margin-top: 10px;
-  color: #fff;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  border-left: 4px solid #3cff9d;
   opacity: 0;
-  transform: translateY(-10px);
-  animation: fadeIn 0.3s forwards, fadeOut 0.4s 2.4s forwards;
+  transform: translateY(-12px);
+  animation: toastIn 0.35s forwards, toastOut 0.4s 2.8s forwards;
+  box-shadow: 0 0 12px rgba(0,0,0,0.6);
 }
 
-.toast.success { border-left: 4px solid #3cff9d; }
-.toast.error   { border-left: 4px solid #ff4b4b; }
+.toast.error {
+  border-left-color: #ff4b4b;
+}
+
+@keyframes toastIn {
+  0% { opacity: 0; transform: translateY(-12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-12px); }
+}
 
 /* ----------------------------------------- */
 /* LOADING BAR                               */
@@ -141,13 +158,13 @@ h1 {
 }
 
 @keyframes loadLoop {
-  0%   { width: 0%; }
-  50%  { width: 70%; }
+  0% { width: 0%; }
+  50% { width: 70%; }
   100% { width: 0%; }
 }
 
 /* ----------------------------------------- */
-/* DRAG & DROP — FINAL FIXED VERSION         */
+/* DRAG & DROP — FINAL FIX                   */
 /* ----------------------------------------- */
 
 .drag-container {
@@ -171,11 +188,10 @@ h1 {
 
 .list-column h3 {
   background: #2b2b2b;
-  border-bottom: 1px solid #333;
   margin: 0;
   padding: 12px;
-  font-size: 15px;
   text-align: center;
+  border-bottom: 1px solid #333;
 }
 
 .match-list {
@@ -198,8 +214,8 @@ h1 {
   border: 1px solid #3a3a3a;
   font-size: 13px;
   cursor: grab;
-  touch-action: none;
   transition: 0.15s;
+  touch-action: none;
 }
 
 .match-card:hover {
@@ -209,20 +225,6 @@ h1 {
 .match-card.dragging {
   opacity: 0.5 !important;
 }
-
-#toastContainer {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 99999 !important;
-  pointer-events: none;
-}
-
-.toast {
-  pointer-events: auto;
-  z-index: 999999 !important;
-}  
-
 </style>
 </head>
 
@@ -230,7 +232,7 @@ h1 {
 
 <div style="max-width:1100px;margin:0 auto;">
   <h1>Matside Admin Control</h1>
-  <div class="version-tag">admin-control.html — v6 (Bout-Order Enforced)</div>
+  <div class="version-tag">admin-control.html — v6.1 (Toast Fix)</div>
 </div>
 
 <div id="toastContainer"></div>
@@ -287,7 +289,7 @@ function showToast(msg, type="success") {
 }
 
 /* ---------------------------------------------------- */
-/* FLEXIBLE CSV PARSER (v6)                             */
+/* FLEXIBLE CSV PARSER (Supports optional fields)       */
 /* ---------------------------------------------------- */
 
 let parsedMatches = [];
@@ -307,9 +309,7 @@ document.getElementById("parseCsvBtn").addEventListener("click", () => {
 
       const get = (row, ...keys) => {
         for (let k of keys) {
-          if (row[k] !== undefined && row[k] !== null && row[k] !== "") {
-            return row[k];
-          }
+          if (row[k] !== undefined && row[k] !== null && row[k] !== "") return row[k];
         }
         return "";
       };
@@ -318,7 +318,6 @@ document.getElementById("parseCsvBtn").addEventListener("click", () => {
         id: crypto.randomUUID(),
 
         bout: get(r, "bout", "Bout", "BOUT"),
-
         weight: get(r, "weight", "Weight", "wt", "WT"),
         round: get(r, "round", "Round", "ROUND"),
 
@@ -383,11 +382,11 @@ function saveMatchesToCloud() {
   });
   batch.commit()
     .then(() => showToast("Matches saved!", "success"))
-    .catch(() => showToast("Error saving", "error"));
+    .catch(() => showToast("Error saving matches", "error"));
 }
 
 /* ---------------------------------------------------- */
-/* LOAD MATCHES — OPTION B: STRICT BOUT SORTING         */
+/* LOAD MATCHES — ALWAYS SORT BY BOUT (Option B)        */
 /* ---------------------------------------------------- */
 
 document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
@@ -400,10 +399,10 @@ function loadMatches() {
     .then(snapshot => {
       const matches = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // Always enforce bout order — OPTION B
+      // Sort ALWAYS by bout number
       matches.sort((a, b) => Number(a.bout) - Number(b.bout));
 
-      // Reset queueIndex so UI reflects bout ordering
+      // Reset queueIndex in bout order
       matches.forEach((m, i) => m.queueIndex = i);
 
       renderAssignmentBoard(matches);
@@ -412,7 +411,7 @@ function loadMatches() {
 }
 
 /* ---------------------------------------------------- */
-/* RENDER ASSIGNMENT BOARD                              */
+/* RENDER DRAG & DROP BOARD                             */
 /* ---------------------------------------------------- */
 
 function renderAssignmentBoard(matches) {
@@ -428,23 +427,24 @@ function renderAssignmentBoard(matches) {
     </div>
   `;
 
-  const buckets = { 0:[],1:[],2:[],3:[],4:[] };
+  const mats = { 0: [], 1: [], 2: [], 3: [], 4: [] };
 
   matches.forEach(m => {
     const mat = Number(m.assignedMat) || 0;
-    buckets[mat].push(m);
+    mats[mat].push(m);
   });
 
-  // Sort each mat's list strictly by bout number
-  Object.values(buckets).forEach(list => {
+  // Strict bout ordering per mat
+  Object.values(mats).forEach(list => {
     list.sort((a, b) => Number(a.bout) - Number(b.bout));
   });
 
-  Object.keys(buckets).forEach(mat => {
+  Object.keys(mats).forEach(mat => {
     const container = document.getElementById(`mat-${mat}`);
-    buckets[mat].forEach(m => container.appendChild(makeCard(m)));
+    mats[mat].forEach(m => container.appendChild(makeCard(m)));
   });
 
+  // SortableJS
   [0,1,2,3,4].forEach(mat => {
     Sortable.create(document.getElementById(`mat-${mat}`), {
       group: { name: "mats", pull: true, put: true },
@@ -470,7 +470,7 @@ function makeCard(m) {
 }
 
 /* ---------------------------------------------------- */
-/* SAVE ASSIGNMENTS BACK TO FIRESTORE                   */
+/* SAVE NEW ASSIGNMENTS                                 */
 /* ---------------------------------------------------- */
 
 function saveAssignmentOrder() {
@@ -478,19 +478,20 @@ function saveAssignmentOrder() {
 
   [0,1,2,3,4].forEach(mat => {
     const parent = document.getElementById(`mat-${mat}`);
+    
     [...parent.children].forEach((card, index) => {
       const ref = db.collection("matchLibrary").doc(card.dataset.id);
-
+      
       batch.update(ref, {
         assignedMat: mat === 0 ? null : mat,
-        queueIndex: index // ALWAYS overwritten by bout number next load
+        queueIndex: index
       });
     });
   });
 
   batch.commit()
-    .then(() => showToast("Order updated!", "success"))
-    .catch(() => showToast("Error saving order", "error"));
+    .then(() => showToast("Mat assignments updated!", "success"))
+    .catch(() => showToast("Error saving assignments", "error"));
 }
 
 </script>
