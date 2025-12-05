@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Admin Control Panel (v3)</title>
+<title>Matside — Admin Control Panel (v4)</title>
 
 <!-- PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -164,39 +164,39 @@ h2 {
 }
 
 /* ----------------------------------------- */
-/* DRAG AND DROP ASSIGNMENT UI               */
+/* DRAG-AND-DROP SYSTEM (FINAL FIXED VERSION) */
 /* ----------------------------------------- */
 
 .drag-container {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 18px;
-  margin-top: 20px;
+  align-items: start;
 }
 
 .list-column {
   background: #242424;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.06);
-  padding: 0;
   height: 560px;
   display: flex;
   flex-direction: column;
-}
-
-.list-column h3 {
-  padding: 12px;
-  text-align: center;
-  background: #2b2b2b;
-  border-bottom: 1px solid #333;
-  margin: 0;
-  font-size: 15px;
-  letter-spacing: 0.5px;
+  overflow: visible;
+  position: relative;
+  z-index: 1; /* important for Sortable drop visibility */
 }
 
 .match-list {
+  flex: 1;
   overflow-y: auto;
   padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 150px; /* ensures a valid drop target */
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 /* Match Cards */
@@ -204,12 +204,11 @@ h2 {
   background: #2d2d2d;
   border-radius: 8px;
   padding: 10px 12px;
-  margin-bottom: 10px;
   border: 1px solid #3a3a3a;
   font-size: 13px;
   cursor: grab;
   transition: 0.15s;
-  touch-action: none; /* important for consistent dragging */
+  touch-action: none;
 }
 
 .match-card:hover {
@@ -218,23 +217,7 @@ h2 {
 }
 
 .match-card.dragging {
-  opacity: 0.5;
-}
-
-.match-card-header {
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.match-card-body {
-  opacity: 0.9;
-  line-height: 1.25;
-}
-
-.match-card-meta {
-  margin-top: 4px;
-  font-size: 11px;
-  opacity: 0.7;
+  opacity: 0.5 !important;
 }
 
 /* Scrollbars */
@@ -243,19 +226,6 @@ h2 {
   background: #444;
   border-radius: 6px;
 }
-
-.list-column {
-  position: relative;
-  z-index: 1;
-}
-
-.match-list {
-  min-height: 200px;
-  position: relative;
-  z-index: 2;
-  pointer-events: all;
-}  
-  
 </style>
 </head>
 
@@ -263,7 +233,7 @@ h2 {
 
 <div style="max-width:1100px;margin:0 auto;">
   <h1>Matside Admin Control</h1>
-  <div class="version-tag">admin-control.html — v3 (drag & drop debug)</div>
+  <div class="version-tag">admin-control.html — v4 (drag & drop FIXED)</div>
 </div>
 
 <div id="toastContainer"></div>
@@ -426,21 +396,18 @@ function renderAssignmentBoard(matches) {
     groups[mat].push(m);
   });
 
-  // sort by queueIndex
   Object.values(groups).forEach(list =>
     list.sort((a,b) => (a.queueIndex ?? 9999) - (b.queueIndex ?? 9999))
   );
 
-  // populate cards
   Object.keys(groups).forEach(mat => {
     const div = document.getElementById(`mat-${mat}`);
     groups[mat].forEach(m => div.appendChild(makeCard(m)));
   });
 
-  // initialize Sortable for each column
+  // initialize Sortable (final working configuration)
   [0,1,2,3,4].forEach(m => {
-    const el = document.getElementById(`mat-${m}`);
-    Sortable.create(el, {
+    Sortable.create(document.getElementById(`mat-${m}`), {
       group: { name: "mats", pull: true, put: true },
       animation: 150,
       draggable: ".match-card",
@@ -463,14 +430,13 @@ function makeCard(m) {
   return div;
 }
 
-function saveAssignmentOrder(evt) {
+function saveAssignmentOrder() {
   const batch = db.batch();
   const mats = [0,1,2,3,4];
 
   mats.forEach(mat => {
     const parent = document.getElementById(`mat-${mat}`);
-    const cards = Array.from(parent.children);
-    cards.forEach((card, i) => {
+    [...parent.children].forEach((card, i) => {
       const ref = db.collection("matchLibrary").doc(card.dataset.id);
       batch.update(ref, {
         assignedMat: mat === 0 ? null : mat,
