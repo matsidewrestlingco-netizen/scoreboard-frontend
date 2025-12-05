@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Admin Control Panel (v7.1)</title>
+<title>Matside — Admin Control Panel (v8.0)</title>
 
 <!-- PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -126,7 +126,6 @@ h1 {
 .btn-danger {
   background: #d9534f;
 }
-
 .btn-danger:hover {
   background: #e26864;
 }
@@ -134,7 +133,6 @@ h1 {
 .btn-secondary {
   background: #4a4a4a;
 }
-
 .btn-secondary:hover {
   background: #5a5a5a;
 }
@@ -153,7 +151,6 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-
 .mat-footer-btn:hover {
   background: #555;
 }
@@ -300,6 +297,116 @@ h1 {
 .match-card.dragging {
   opacity: 0.5;
 }
+
+/* ----------------------------------------- */
+/* EVENTS TAB                                */
+/* ----------------------------------------- */
+
+#activeEventBanner {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  background: #272727;
+  border: 1px solid #444;
+}
+
+#activeEventBanner span {
+  font-weight: 600;
+}
+
+.event-form {
+  margin-bottom: 18px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #252525;
+  border: 1px solid #333;
+}
+
+.event-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.event-form-row label {
+  font-size: 12px;
+  opacity: 0.8;
+  display: block;
+}
+
+.event-form-row input,
+.event-form-row textarea {
+  background: #1b1b1b;
+  border: 1px solid #444;
+  color: #eee;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.event-form-row input {
+  min-width: 150px;
+}
+
+.event-form-row textarea {
+  width: 100%;
+  min-height: 60px;
+  resize: vertical;
+}
+
+.events-list-header {
+  margin: 10px 0 6px 0;
+  font-size: 14px;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.event-card {
+  background: #252525;
+  border-radius: 10px;
+  border: 1px solid #333;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.event-card.active {
+  border-color: #3a77ff;
+  box-shadow: 0 0 12px rgba(58,119,255,0.4);
+}
+
+.event-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.event-sub {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.event-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.event-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  background: #444;
+  margin-left: 6px;
+}
+
+.event-badge.archived {
+  background: #664040;
+  color: #ffb0b0;
+}
 </style>
 </head>
 
@@ -307,20 +414,70 @@ h1 {
 
 <div style="max-width:1100px;margin:0 auto;">
   <h1>Matside Admin Control</h1>
-  <div class="version-tag">admin-control v7.1 — Tabs + Bulk Actions + Undo</div>
+  <div class="version-tag">admin-control v8.0 — Events + Per-Event Matches</div>
 
   <div class="tabs">
-    <div class="tab active" data-tab="data">Data Mgmt</div>
+    <div class="tab active" data-tab="events">Events</div>
+    <div class="tab" data-tab="data">Data Mgmt</div>
     <div class="tab" data-tab="assign">Mat Assign</div>
   </div>
 </div>
 
 <div id="toastContainer"></div>
 
+<!-- TAB: EVENTS -->
+<div id="tab-events" class="tab-content active">
+  <div class="section">
+    <h2>Events</h2>
+
+    <div id="activeEventBanner">Loading active event…</div>
+
+    <div class="event-form">
+      <div class="event-form-row">
+        <div>
+          <label for="eventNameInput">Event Name</label>
+          <input id="eventNameInput" placeholder="Allegheny County Championships" />
+        </div>
+        <div>
+          <label for="eventDateInput">Date</label>
+          <input id="eventDateInput" type="date" />
+        </div>
+        <div>
+          <label for="eventMatsInput">Mats</label>
+          <input id="eventMatsInput" type="number" min="1" max="12" value="4" />
+        </div>
+        <div>
+          <label for="eventPeriodInput">Period (min)</label>
+          <input id="eventPeriodInput" type="number" min="1" max="10" value="2" />
+        </div>
+      </div>
+      <div class="event-form-row">
+        <div style="flex:1;">
+          <label for="eventLocationInput">Location</label>
+          <input id="eventLocationInput" placeholder="Shaler Area High School" style="width:100%;" />
+        </div>
+      </div>
+      <div class="event-form-row">
+        <div style="flex:1;">
+          <label for="eventNotesInput">Notes</label>
+          <textarea id="eventNotesInput" placeholder="Any special notes for this event…"></textarea>
+        </div>
+      </div>
+      <button id="createEventBtn" class="pill-btn-fat">Create Event</button>
+    </div>
+
+    <div class="events-list-header">Existing Events</div>
+    <div id="eventsList"></div>
+  </div>
+</div>
+
 <!-- TAB: DATA MGMT -->
-<div id="tab-data" class="tab-content active">
+<div id="tab-data" class="tab-content">
   <div class="section">
     <h2>Upload Matches (CSV)</h2>
+    <div style="font-size:13px;opacity:0.8;margin-bottom:8px;">
+      Active Event: <span id="dataTabActiveEventLabel">None selected</span>
+    </div>
 
     <input type="file" id="matchCsvInput" accept=".csv" />
     <br><br>
@@ -334,6 +491,9 @@ h1 {
 <div id="tab-assign" class="tab-content">
   <div class="section">
     <h2>Assign Matches to Mats</h2>
+    <div style="font-size:13px;opacity:0.8;margin-bottom:8px;">
+      Active Event: <span id="assignTabActiveEventLabel">None selected</span>
+    </div>
 
     <div class="action-bar">
       <button id="loadMatchesBtn" class="pill-btn-fat">Load Matches</button>
@@ -382,7 +542,7 @@ const db = firebase.firestore();
 /* --------------------------------------------- */
 /* TOASTS                                        */
 /* --------------------------------------------- */
-function showToast(msg, type="success") {
+function showToast(msg, type = "success") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
   el.textContent = msg;
@@ -391,38 +551,201 @@ function showToast(msg, type="success") {
 }
 
 /* --------------------------------------------- */
-/* GLOBAL UNDO SNAPSHOT                          */
+/* GLOBAL STATE                                  */
 /* --------------------------------------------- */
 
-let lastState = null; // array of {id, data}
+const settingsDocRef = db.collection("settings").doc("app");
+let currentEventId = null;
+let currentEvent = null;
+let lastState = null; // for undo
 
-/* Helper: snapshot a set of docs BEFORE mutating */
+function getMatchesCollection() {
+  if (!currentEventId) return null;
+  return db.collection("events").doc(currentEventId).collection("matches");
+}
+
+/* Snapshot helper for undo */
 function snapshotDocs(docs) {
   lastState = docs.map(d => ({ id: d.id, data: d.data() }));
 }
 
-/* Undo last bulk action */
-document.getElementById("undoBtn").addEventListener("click", () => {
-  if (!lastState || lastState.length === 0) {
-    showToast("Nothing to undo.", "error");
+/* --------------------------------------------- */
+/* INIT: Load settings + events                  */
+/* --------------------------------------------- */
+
+init();
+
+function init() {
+  settingsDocRef.get().then(doc => {
+    if (doc.exists) {
+      currentEventId = doc.data().currentEventId || null;
+    }
+    updateActiveEventUI();
+    subscribeEvents();
+  }).catch(() => {
+    subscribeEvents();
+  });
+}
+
+/* --------------------------------------------- */
+/* EVENTS TAB LOGIC                              */
+/* --------------------------------------------- */
+
+const activeEventBannerEl = document.getElementById("activeEventBanner");
+const dataTabLabelEl = document.getElementById("dataTabActiveEventLabel");
+const assignTabLabelEl = document.getElementById("assignTabActiveEventLabel");
+
+function updateActiveEventUI() {
+  if (currentEvent) {
+    activeEventBannerEl.innerHTML = `Active Event: <span>${currentEvent.name}</span>`;
+    dataTabLabelEl.textContent = currentEvent.name;
+    assignTabLabelEl.textContent = currentEvent.name;
+  } else if (currentEventId) {
+    activeEventBannerEl.innerHTML = `Active Event ID: <span>${currentEventId}</span> (details not loaded yet)`;
+    dataTabLabelEl.textContent = "Unknown (loading…)";
+    assignTabLabelEl.textContent = "Unknown (loading…)";
+  } else {
+    activeEventBannerEl.textContent = "No active event selected. Select or create an event below.";
+    dataTabLabelEl.textContent = "None selected";
+    assignTabLabelEl.textContent = "None selected";
+  }
+}
+
+function subscribeEvents() {
+  db.collection("events")
+    .orderBy("date", "desc")
+    .onSnapshot(snapshot => {
+      const events = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      currentEvent = events.find(e => e.id === currentEventId) || null;
+      updateActiveEventUI();
+      renderEventsList(events);
+    });
+}
+
+function renderEventsList(events) {
+  const container = document.getElementById("eventsList");
+  if (!events.length) {
+    container.innerHTML = `<div style="opacity:0.7;font-size:13px;">No events created yet.</div>`;
     return;
   }
-  const batch = db.batch();
-  lastState.forEach(({id, data}) => {
-    const ref = db.collection("matchLibrary").doc(id);
-    batch.set(ref, data, { merge: true });
+
+  let html = "";
+  events.forEach(ev => {
+    const dateStr = ev.date || "No date";
+    const mats = ev.mats || 4;
+    const archived = ev.archived === true;
+
+    html += `
+      <div class="event-card ${currentEventId === ev.id ? "active" : ""}" data-id="${ev.id}">
+        <div class="event-title">
+          ${ev.name || "Untitled Event"}
+          ${archived ? '<span class="event-badge archived">Archived</span>' : ""}
+        </div>
+        <div class="event-sub">
+          Date: ${dateStr} • Mats: ${mats} • Period: ${ev.periodMinutes || 2} min
+        </div>
+        <div class="event-sub">
+          Location: ${ev.location || "—"}
+        </div>
+        <div class="event-sub" style="margin-top:4px;">
+          ${ev.notes ? "Notes: " + ev.notes : ""}
+        </div>
+        <div class="event-actions">
+          <button class="pill-btn-fat btn-secondary event-set-active-btn" data-id="${ev.id}" style="padding:6px 10px;">Set Active</button>
+          <button class="pill-btn-fat btn-secondary event-archive-btn" data-id="${ev.id}" data-archived="${archived ? "1" : "0"}" style="padding:6px 10px;">
+            ${archived ? "Unarchive" : "Archive"}
+          </button>
+          <button class="pill-btn-fat btn-danger event-delete-btn" data-id="${ev.id}" style="padding:6px 10px;">Delete</button>
+        </div>
+      </div>
+    `;
   });
-  batch.commit()
+
+  container.innerHTML = html;
+
+  // Wire buttons
+  container.querySelectorAll(".event-set-active-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      settingsDocRef.set({ currentEventId: id }, { merge: true })
+        .then(() => {
+          currentEventId = id;
+          showToast("Active event updated.", "success");
+          updateActiveEventUI();
+        })
+        .catch(() => showToast("Error setting active event.", "error"));
+    });
+  });
+
+  container.querySelectorAll(".event-archive-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const archived = btn.dataset.archived === "1";
+      db.collection("events").doc(id).update({ archived: !archived })
+        .then(() => showToast(!archived ? "Event archived." : "Event unarchived.", "success"))
+        .catch(() => showToast("Error updating archive state.", "error"));
+    });
+  });
+
+  container.querySelectorAll(".event-delete-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      if (!confirm("Delete this event? (Does NOT delete matches subcollection yet)")) return;
+
+      db.collection("events").doc(id).delete()
+        .then(() => {
+          if (currentEventId === id) {
+            currentEventId = null;
+            settingsDocRef.set({ currentEventId: null }, { merge: true });
+            updateActiveEventUI();
+          }
+          showToast("Event deleted.", "success");
+        })
+        .catch(() => showToast("Error deleting event.", "error"));
+    });
+  });
+}
+
+// Event create handler
+document.getElementById("createEventBtn").addEventListener("click", () => {
+  const name = document.getElementById("eventNameInput").value.trim();
+  const date = document.getElementById("eventDateInput").value;
+  const mats = parseInt(document.getElementById("eventMatsInput").value || "4", 10);
+  const period = parseInt(document.getElementById("eventPeriodInput").value || "2", 10);
+  const location = document.getElementById("eventLocationInput").value.trim();
+  const notes = document.getElementById("eventNotesInput").value.trim();
+
+  if (!name) {
+    showToast("Event name is required.", "error");
+    return;
+  }
+
+  const data = {
+    name,
+    date: date || null,
+    mats: mats || 4,
+    periodMinutes: period || 2,
+    location: location || null,
+    notes: notes || null,
+    archived: false,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  db.collection("events").add(data)
     .then(() => {
-      showToast("Last action undone.", "success");
-      lastState = null;
-      loadMatches();
+      showToast("Event created.", "success");
+      // clear form
+      document.getElementById("eventNameInput").value = "";
+      document.getElementById("eventDateInput").value = "";
+      document.getElementById("eventLocationInput").value = "";
+      document.getElementById("eventNotesInput").value = "";
     })
-    .catch(() => showToast("Error undoing last action.", "error"));
+    .catch(() => showToast("Error creating event.", "error"));
 });
 
 /* --------------------------------------------- */
-/* CSV PARSE (Data Mgmt Tab)                     */
+/* DATA MGMT TAB (CSV → matches under event)     */
 /* --------------------------------------------- */
 
 let parsedMatches = [];
@@ -432,6 +755,10 @@ document.getElementById("matchCsvInput").addEventListener("change", e => {
 });
 
 document.getElementById("parseCsvBtn").addEventListener("click", () => {
+  if (!currentEventId) {
+    showToast("Select an active event in the Events tab first.", "error");
+    return;
+  }
   const file = document.getElementById("matchCsvInput").files[0];
   if (!file) return;
 
@@ -494,7 +821,7 @@ function renderCsvPreview() {
   });
 
   html += `</table><br>
-    <button id="saveToCloudBtn" class="pill-btn-fat">Save to Cloud</button>
+    <button id="saveToCloudBtn" class="pill-btn-fat">Save to Event</button>
   `;
 
   document.getElementById("csvPreview").innerHTML = html;
@@ -502,42 +829,46 @@ function renderCsvPreview() {
 }
 
 function saveMatchesToCloud() {
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("No active event selected.", "error");
+    return;
+  }
   const batch = db.batch();
   parsedMatches.forEach(m => {
-    batch.set(db.collection("matchLibrary").doc(m.id), m);
+    batch.set(col.doc(m.id), m);
   });
   batch.commit()
-    .then(() => showToast("Matches saved to cloud.", "success"))
+    .then(() => showToast("Matches saved to active event.", "success"))
     .catch(() => showToast("Error saving matches.", "error"));
 }
 
 /* --------------------------------------------- */
-/* LOAD MATCHES (Mat Assign Tab)                 */
+/* MAT ASSIGN TAB                                */
 /* --------------------------------------------- */
 
 document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
 
 function loadMatches() {
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
   document.getElementById("loadingBar").style.display = "block";
 
-  db.collection("matchLibrary")
-    .get()
+  col.get()
     .then(snapshot => {
       const matches = snapshot.docs
         .map(d => ({ id: d.id, ...d.data() }))
-        .filter(m => m.completed !== true); // ignore completed
+        .filter(m => m.completed !== true);
 
-      // Always strict bout order
       matches.sort((a, b) => Number(a.bout) - Number(b.bout));
 
       renderAssignmentBoard(matches);
       document.getElementById("loadingBar").style.display = "none";
     });
 }
-
-/* --------------------------------------------- */
-/* RENDER BOARD + DRAG/DROP                      */
-/* --------------------------------------------- */
 
 function renderAssignmentBoard(matches) {
   document.getElementById("assignmentBoard").innerHTML = `
@@ -570,7 +901,6 @@ function renderAssignmentBoard(matches) {
     mats[mat].forEach(m => container.appendChild(makeCard(m)));
   });
 
-  // Per-mat unassign buttons
   document.querySelectorAll(".mat-footer-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const matNum = Number(btn.dataset.mat);
@@ -579,7 +909,6 @@ function renderAssignmentBoard(matches) {
     });
   });
 
-  // Enable drag/drop
   [0,1,2,3,4].forEach(mat => {
     Sortable.create(document.getElementById(`mat-${mat}`), {
       group: { name: "mats", pull: true, put: true },
@@ -604,23 +933,24 @@ function makeCard(m) {
   return el;
 }
 
-/* --------------------------------------------- */
-/* SAVE ASSIGNMENT ORDER (drag/drop)             */
-/* --------------------------------------------- */
-
+/* Save assignments on drag/drop */
 function saveAssignmentOrder() {
-  // Snapshot entire collection BEFORE we write
-  db.collection("matchLibrary").get().then(snapshot => {
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+
+  col.get().then(snapshot => {
     snapshotDocs(snapshot.docs);
 
     const batch = db.batch();
-
     [0,1,2,3,4].forEach(mat => {
       const parent = document.getElementById(`mat-${mat}`);
       if (!parent) return;
 
       [...parent.children].forEach((card, index) => {
-        const ref = db.collection("matchLibrary").doc(card.dataset.id);
+        const ref = col.doc(card.dataset.id);
         batch.update(ref, {
           assignedMat: mat === 0 ? null : mat,
           queueIndex: index
@@ -634,28 +964,50 @@ function saveAssignmentOrder() {
   });
 }
 
-/* --------------------------------------------- */
-/* UNASSIGN THIS MAT                             */
-/* --------------------------------------------- */
+/* UNDO last bulk action */
+document.getElementById("undoBtn").addEventListener("click", () => {
+  if (!lastState || lastState.length === 0) {
+    showToast("Nothing to undo.", "error");
+    return;
+  }
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+  const batch = db.batch();
+  lastState.forEach(({ id, data }) => {
+    batch.set(col.doc(id), data, { merge: true });
+  });
+  batch.commit()
+    .then(() => {
+      showToast("Last action undone.", "success");
+      lastState = null;
+      loadMatches();
+    })
+    .catch(() => showToast("Error undoing last action.", "error"));
+});
 
+/* UNASSIGN ONE MAT */
 function unassignMat(matNum) {
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
   if (!confirm(`Unassign all matches from Mat ${matNum}?`)) return;
 
-  db.collection("matchLibrary")
-    .where("assignedMat", "==", matNum)
-    .get()
+  col.where("assignedMat", "==", matNum).get()
     .then(snapshot => {
       if (snapshot.empty) {
         showToast(`No matches on Mat ${matNum}.`, "error");
         return;
       }
-
       snapshotDocs(snapshot.docs);
 
       const batch = db.batch();
       snapshot.docs.forEach(doc => {
-        const ref = db.collection("matchLibrary").doc(doc.id);
-        batch.update(ref, { assignedMat: null });
+        batch.update(col.doc(doc.id), { assignedMat: null });
       });
 
       return batch.commit();
@@ -667,27 +1019,26 @@ function unassignMat(matNum) {
     .catch(() => showToast("Error unassigning mat.", "error"));
 }
 
-/* --------------------------------------------- */
-/* UNASSIGN ALL MATCHES                          */
-/* --------------------------------------------- */
-
+/* UNASSIGN ALL MATS */
 document.getElementById("unassignAllBtn").addEventListener("click", () => {
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
   if (!confirm("Unassign ALL matches from ALL mats?")) return;
 
-  db.collection("matchLibrary")
-    .get()
+  col.get()
     .then(snapshot => {
       if (snapshot.empty) {
         showToast("No matches found.", "error");
         return;
       }
-
       snapshotDocs(snapshot.docs);
 
       const batch = db.batch();
       snapshot.docs.forEach(doc => {
-        const ref = db.collection("matchLibrary").doc(doc.id);
-        batch.update(ref, { assignedMat: null });
+        batch.update(col.doc(doc.id), { assignedMat: null });
       });
 
       return batch.commit();
@@ -699,15 +1050,16 @@ document.getElementById("unassignAllBtn").addEventListener("click", () => {
     .catch(() => showToast("Error unassigning all.", "error"));
 });
 
-/* --------------------------------------------- */
-/* AUTO-DISTRIBUTE BY BOUT ORDER                 */
-/* --------------------------------------------- */
-
+/* AUTO-DISTRIBUTE BY BOUT ORDER (Mats 1–4) */
 document.getElementById("autoDistributeBtn").addEventListener("click", () => {
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
   if (!confirm("Auto-distribute all active matches across Mats 1–4 by bout order?")) return;
 
-  db.collection("matchLibrary")
-    .get()
+  col.get()
     .then(snapshot => {
       const docs = snapshot.docs.filter(d => d.data().completed !== true);
       if (docs.length === 0) {
@@ -722,19 +1074,15 @@ document.getElementById("autoDistributeBtn").addEventListener("click", () => {
 
       const mats = [1,2,3,4];
       let idx = 0;
-
-      const batch = db.batch();
-
-      // Track per-mat order if needed
       const counters = {1:0,2:0,3:0,4:0};
 
+      const batch = db.batch();
       matches.forEach(m => {
         const mat = mats[idx % mats.length];
         idx++;
-
-        const ref = db.collection("matchLibrary").doc(m.id);
         counters[mat] = (counters[mat] || 0) + 1;
-        batch.update(ref, {
+
+        batch.update(col.doc(m.id), {
           assignedMat: mat,
           queueIndex: counters[mat]
         });
@@ -749,29 +1097,25 @@ document.getElementById("autoDistributeBtn").addEventListener("click", () => {
     .catch(() => showToast("Error auto-distributing.", "error"));
 });
 
-/* --------------------------------------------- */
-/* CLEAR COMPLETED MATCHES (completed: true)     */
-/* --------------------------------------------- */
-
+/* CLEAR COMPLETED MATCHES */
 document.getElementById("clearCompletedBtn").addEventListener("click", () => {
-  if (!confirm("This will permanently DELETE all matches marked completed=true. Continue?")) return;
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+  if (!confirm("Permanently delete all matches with completed = true?")) return;
 
-  db.collection("matchLibrary")
-    .where("completed", "==", true)
-    .get()
+  col.where("completed", "==", true).get()
     .then(snapshot => {
       if (snapshot.empty) {
         showToast("No completed matches to clear.", "error");
         return;
       }
-
       snapshotDocs(snapshot.docs);
 
       const batch = db.batch();
-      snapshot.docs.forEach(doc => {
-        const ref = db.collection("matchLibrary").doc(doc.id);
-        batch.delete(ref);
-      });
+      snapshot.docs.forEach(doc => batch.delete(col.doc(doc.id)));
 
       return batch.commit();
     })
@@ -781,7 +1125,7 @@ document.getElementById("clearCompletedBtn").addEventListener("click", () => {
     })
     .catch(() => showToast("Error clearing completed.", "error"));
 });
-
 </script>
+
 </body>
 </html>
