@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Admin Control Panel (v10.1 — Hub Enabled)</title>
+<title>Matside — Admin Control Panel (v10.0)</title>
 
 <!-- PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -328,7 +328,7 @@ h1 { margin: 0 0 6px; font-weight: 700; }
 
 <div style="max-width:1100px;margin:0 auto;">
   <h1>Matside Admin Control</h1>
-  <div class="version-tag">admin-control v10.1 — Hub Tab Added</div>
+  <div class="version-tag">admin-control v10.0 — Auth, Per-Event, Permissions, Manage Users</div>
   <div id="userInfoBar">
     <div>Logged in as: <span id="userEmailLabel">—</span></div>
     <button id="logoutBtn">Logout</button>
@@ -339,10 +339,6 @@ h1 { margin: 0 0 6px; font-weight: 700; }
     <div class="tab" data-tab="data">Data Mgmt</div>
     <div class="tab" data-tab="assign">Mat Assign</div>
     <div class="tab" data-tab="users">Manage Users</div>
-
-    <!-- /// ADDED FOR HUB -->
-    <div class="tab" data-tab="hub" id="hubTabBtn">Hub</div>
-    <!-- /// END ADDED -->
   </div>
 </div>
 
@@ -350,38 +346,102 @@ h1 { margin: 0 0 6px; font-weight: 700; }
 
 <!-- TAB: EVENTS -->
 <div id="tab-events" class="tab-content active">
-  <!-- unchanged -->
+  <div class="section">
+    <h2>Events</h2>
+    <div id="activeEventBanner">Loading active event…</div>
+
+    <div class="event-form">
+      <div class="event-form-row">
+        <div>
+          <label for="eventNameInput">Event Name</label>
+          <input id="eventNameInput" placeholder="Allegheny County Championships" />
+        </div>
+        <div>
+          <label for="eventDateInput">Date</label>
+          <input id="eventDateInput" type="date" />
+        </div>
+        <div>
+          <label for="eventMatsInput">Mats</label>
+          <input id="eventMatsInput" type="number" min="1" max="12" value="4" />
+        </div>
+        <div>
+          <label for="eventPeriodInput">Period (min)</label>
+          <input id="eventPeriodInput" type="number" min="1" max="10" value="2" />
+        </div>
+      </div>
+      <div class="event-form-row">
+        <div style="flex:1;">
+          <label for="eventLocationInput">Location</label>
+          <input id="eventLocationInput" placeholder="Shaler Area High School" style="width:100%;" />
+        </div>
+      </div>
+      <div class="event-form-row">
+        <div style="flex:1;">
+          <label for="eventNotesInput">Notes</label>
+          <textarea id="eventNotesInput" placeholder="Any special notes for this event…"></textarea>
+        </div>
+      </div>
+      <button id="createEventBtn" class="pill-btn-fat">Create Event</button>
+    </div>
+
+    <div class="events-list-header">Existing Events</div>
+    <div id="eventsList"></div>
+  </div>
 </div>
 
 <!-- TAB: DATA MGMT -->
 <div id="tab-data" class="tab-content">
-  <!-- unchanged -->
+  <div class="section">
+    <h2>Upload Matches (CSV)</h2>
+    <div style="font-size:13px;opacity:0.8;margin-bottom:8px;">
+      Active Event: <span id="dataTabActiveEventLabel">None selected</span>
+    </div>
+
+    <input type="file" id="matchCsvInput" accept=".csv" />
+    <br><br>
+
+    <button id="parseCsvBtn" class="pill-btn-fat" disabled>Parse CSV</button>
+    <div id="csvPreview"></div>
+  </div>
 </div>
 
 <!-- TAB: MAT ASSIGN -->
 <div id="tab-assign" class="tab-content">
-  <!-- unchanged -->
+  <div class="section">
+    <h2>Assign Matches to Mats</h2>
+    <div style="font-size:13px;opacity:0.8;margin-bottom:8px;">
+      Active Event: <span id="assignTabActiveEventLabel">None selected</span>
+    </div>
+
+    <div class="action-bar">
+      <button id="loadMatchesBtn" class="pill-btn-fat">Load Matches</button>
+      <button id="autoDistributeBtn" class="pill-btn-fat btn-secondary">Auto-Distribute (Bout Order)</button>
+      <button id="undoBtn" class="pill-btn-fat btn-secondary">Undo Last Action</button>
+      <button id="unassignAllBtn" class="pill-btn-fat btn-danger">Unassign ALL</button>
+      <button id="clearCompletedBtn" class="pill-btn-fat btn-danger">Clear Completed Matches</button>
+    </div>
+
+    <div id="loadingBar" class="loading-bar">
+      <div class="loading-bar-inner"></div>
+    </div>
+
+    <div id="assignmentBoard"></div>
+  </div>
 </div>
 
 <!-- TAB: MANAGE USERS -->
 <div id="tab-users" class="tab-content">
-  <!-- unchanged -->
-</div>
-
-<!-- /// ADDED FOR HUB -->
-<div id="tab-hub" class="tab-content">
   <div class="section">
-    <h2>Event Hub</h2>
+    <h2>Manage Users</h2>
     <p style="font-size:13px;opacity:0.8;margin-top:0;">
-      Live event monitoring for all mats, operators, and match flow.
+      Toggle permissions for admins, staff, mat operators. Changes apply immediately.
     </p>
-    <iframe src="hub.html" style="width:100%;height:80vh;border:none;border-radius:10px;background:#111;"></iframe>
+    <div id="usersList"></div>
   </div>
 </div>
-<!-- /// END HUB TAB -->
 
 <script>
-/* TABS — unchanged logic */
+/* TABS */
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -391,7 +451,7 @@ document.querySelectorAll(".tab").forEach(tab => {
   });
 });
 
-/* Firebase init — unchanged */
+/* Firebase init */
 const firebaseConfig = {
   apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
   authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
@@ -404,7 +464,106 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-/* ALL EXISTING JS — unchanged EXCEPT one small part below */
+/* Global state */
+let currentUser = null;
+let userSettingsDocRef = null;
+let currentEventId = null;
+let currentEvent = null;
+let lastState = null;
+let permissions = {
+  canManageEvents: false,
+  canUploadMatches: false,
+  canAssignMats: false,
+  canUseBulkActions: false,
+  canScoreMatches: false,
+  canViewDashboard: true,
+  canManageUsers: false
+};
+
+const activeEventBannerEl = document.getElementById("activeEventBanner");
+const dataTabLabelEl = document.getElementById("dataTabActiveEventLabel");
+const assignTabLabelEl = document.getElementById("assignTabActiveEventLabel");
+
+/* Toast */
+function showToast(msg, type = "success") {
+  const el = document.createElement("div");
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById("toastContainer").appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* Helper: get matches col */
+function getMatchesCollection() {
+  if (!currentEventId) return null;
+  return db.collection("events").doc(currentEventId).collection("matches");
+}
+function snapshotDocs(docs) {
+  lastState = docs.map(d => ({ id: d.id, data: d.data() }));
+}
+
+/* Auth guard */
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = "auth.html";
+  } else {
+    currentUser = user;
+    document.getElementById("userEmailLabel").textContent = user.email || user.uid;
+    userSettingsDocRef = db.collection("settings").doc(user.uid);
+    loadUserProfile();
+  }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  auth.signOut().then(() => {
+    window.location.href = "auth.html";
+  });
+});
+
+/* Load user profile/permissions */
+function loadUserProfile() {
+  const userDocRef = db.collection("users").doc(currentUser.uid);
+  userDocRef.get()
+    .then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        permissions = {
+          canManageEvents: !!data.canManageEvents,
+          canUploadMatches: !!data.canUploadMatches,
+          canAssignMats: !!data.canAssignMats,
+          canUseBulkActions: !!data.canUseBulkActions,
+          canScoreMatches: !!data.canScoreMatches,
+          canViewDashboard: data.canViewDashboard !== undefined ? !!data.canViewDashboard : true,
+          canManageUsers: !!data.canManageUsers
+        };
+      } else {
+        // If somehow no profile, create a safe default
+        permissions = {
+          canManageEvents: false,
+          canUploadMatches: false,
+          canAssignMats: false,
+          canUseBulkActions: false,
+          canScoreMatches: false,
+          canViewDashboard: true,
+          canManageUsers: false
+        };
+        userDocRef.set({
+          email: currentUser.email || null,
+          ...permissions
+        }, { merge: true });
+      }
+
+      applyPermissionsToUI();
+      initForUser();
+    })
+    .catch(err => {
+      console.error(err);
+      showToast("Error loading user profile.", "error");
+      // fall back with minimal access
+      permissions.canViewDashboard = false;
+      applyPermissionsToUI();
+    });
+}
 
 /* Apply permissions: hide/show tabs */
 function applyPermissionsToUI() {
@@ -412,20 +571,632 @@ function applyPermissionsToUI() {
   const tabData   = document.querySelector('[data-tab="data"]');
   const tabAssign = document.querySelector('[data-tab="assign"]');
   const tabUsers  = document.querySelector('[data-tab="users"]');
-  const tabHub    = document.querySelector('[data-tab="hub"]'); // ADDED
 
   if (!permissions.canManageEvents && tabEvents) tabEvents.style.display = "none";
   if (!permissions.canUploadMatches && tabData) tabData.style.display = "none";
   if (!permissions.canAssignMats && tabAssign) tabAssign.style.display = "none";
   if (!permissions.canManageUsers && tabUsers) tabUsers.style.display = "none";
 
-  // NEW: Hub visibility rule (Option C)
-  if (!permissions.canViewDashboard && tabHub) {
-    tabHub.style.display = "none";
+  // Bulk action controls
+  if (!permissions.canUseBulkActions) {
+    ["autoDistributeBtn", "undoBtn", "unassignAllBtn", "clearCompletedBtn"].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.style.display = "none";
+    });
+  }
+
+  // If user can't view dashboard at all:
+  if (!permissions.canViewDashboard) {
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#111;font-family:Inter,sans-serif;color:#eee;">
+        <div style="text-align:center;max-width:400px;">
+          <h2 style="margin-bottom:8px;">No Admin Access</h2>
+          <p style="font-size:14px;opacity:0.8;">
+            Your account does not have permission to access the Matside admin console.
+            Please contact the tournament director.
+          </p>
+        </div>
+      </div>
+    `;
   }
 }
 
-/* All other logic remains EXACTLY unchanged */
+/* Init after perms + settings loaded */
+function initForUser() {
+  userSettingsDocRef.get()
+    .then(doc => {
+      if (doc.exists) {
+        currentEventId = doc.data().currentEventId || null;
+      }
+      updateActiveEventUI();
+      subscribeEvents();
+    })
+    .catch(() => {
+      subscribeEvents();
+    });
+
+  wireEventsTab();
+  wireDataTab();
+  wireAssignTab();
+  if (permissions.canManageUsers) {
+    wireManageUsersTab();
+  }
+}
+
+function updateActiveEventUI() {
+  if (currentEvent) {
+    activeEventBannerEl.innerHTML = `Active Event: <span>${currentEvent.name}</span>`;
+    dataTabLabelEl.textContent = currentEvent.name;
+    assignTabLabelEl.textContent = currentEvent.name;
+  } else if (currentEventId) {
+    activeEventBannerEl.innerHTML = `Active Event ID: <span>${currentEventId}</span> (details not loaded yet)`;
+    dataTabLabelEl.textContent = "Unknown (loading…)";
+    assignTabLabelEl.textContent = "Unknown (loading…)";
+  } else {
+    activeEventBannerEl.textContent = "No active event selected. Select or create an event below.";
+    dataTabLabelEl.textContent = "None selected";
+    assignTabLabelEl.textContent = "None selected";
+  }
+}
+
+/* EVENTS TAB (requires canManageEvents to be actually useful) */
+function subscribeEvents() {
+  db.collection("events")
+    .orderBy("date", "desc")
+    .onSnapshot(snapshot => {
+      const events = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      currentEvent = events.find(e => e.id === currentEventId) || null;
+      updateActiveEventUI();
+      renderEventsList(events);
+    });
+}
+
+function renderEventsList(events) {
+  const container = document.getElementById("eventsList");
+  if (!events.length) {
+    container.innerHTML = `<div style="opacity:0.7;font-size:13px;">No events created yet.</div>`;
+    return;
+  }
+  let html = "";
+  events.forEach(ev => {
+    const dateStr = ev.date || "No date";
+    const mats = ev.mats || 4;
+    const archived = ev.archived === true;
+    html += `
+      <div class="event-card ${currentEventId === ev.id ? "active" : ""}" data-id="${ev.id}">
+        <div class="event-title">
+          ${ev.name || "Untitled Event"}
+          ${archived ? '<span class="event-badge archived">Archived</span>' : ""}
+        </div>
+        <div class="event-sub">Date: ${dateStr} • Mats: ${mats} • Period: ${ev.periodMinutes || 2} min</div>
+        <div class="event-sub">Location: ${ev.location || "—"}</div>
+        <div class="event-sub" style="margin-top:4px;">${ev.notes ? "Notes: " + ev.notes : ""}</div>
+        <div class="event-actions">
+          <button class="pill-btn-fat btn-secondary event-set-active-btn" data-id="${ev.id}" style="padding:6px 10px;">Set Active</button>
+          ${permissions.canManageEvents ? `
+          <button class="pill-btn-fat btn-secondary event-archive-btn" data-id="${ev.id}" data-archived="${archived ? "1" : "0"}" style="padding:6px 10px;">
+            ${archived ? "Unarchive" : "Archive"}
+          </button>
+          <button class="pill-btn-fat btn-danger event-delete-btn" data-id="${ev.id}" style="padding:6px 10px;">Delete</button>
+          ` : ""}
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+
+  container.querySelectorAll(".event-set-active-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      userSettingsDocRef.set({ currentEventId: id }, { merge: true })
+        .then(() => {
+          currentEventId = id;
+          showToast("Active event updated for your user.", "success");
+          updateActiveEventUI();
+        })
+        .catch(() => showToast("Error setting active event.", "error"));
+    });
+  });
+
+  if (permissions.canManageEvents) {
+    container.querySelectorAll(".event-archive-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        const archived = btn.dataset.archived === "1";
+        db.collection("events").doc(id).update({ archived: !archived })
+          .then(() => showToast(!archived ? "Event archived." : "Event unarchived.", "success"))
+          .catch(() => showToast("Error updating archive state.", "error"));
+      });
+    });
+
+    container.querySelectorAll(".event-delete-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        if (!confirm("Delete this event? (Matches subcollection NOT deleted yet.)")) return;
+        db.collection("events").doc(id).delete()
+          .then(() => {
+            if (currentEventId === id) {
+              currentEventId = null;
+              userSettingsDocRef.set({ currentEventId: null }, { merge: true });
+              updateActiveEventUI();
+            }
+            showToast("Event deleted.", "success");
+          })
+          .catch(() => showToast("Error deleting event.", "error"));
+      });
+    });
+  }
+}
+
+function wireEventsTab() {
+  const createBtn = document.getElementById("createEventBtn");
+  if (!permissions.canManageEvents) {
+    if (createBtn) createBtn.disabled = true;
+    return;
+  }
+  createBtn.addEventListener("click", () => {
+    const name = document.getElementById("eventNameInput").value.trim();
+    const date = document.getElementById("eventDateInput").value;
+    const mats = parseInt(document.getElementById("eventMatsInput").value || "4", 10);
+    const period = parseInt(document.getElementById("eventPeriodInput").value || "2", 10);
+    const location = document.getElementById("eventLocationInput").value.trim();
+    const notes = document.getElementById("eventNotesInput").value.trim();
+
+    if (!name) {
+      showToast("Event name is required.", "error");
+      return;
+    }
+
+    const data = {
+      name,
+      date: date || null,
+      mats: mats || 4,
+      periodMinutes: period || 2,
+      location: location || null,
+      notes: notes || null,
+      archived: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    db.collection("events").add(data)
+      .then(() => {
+        showToast("Event created.", "success");
+        document.getElementById("eventNameInput").value = "";
+        document.getElementById("eventDateInput").value = "";
+        document.getElementById("eventLocationInput").value = "";
+        document.getElementById("eventNotesInput").value = "";
+      })
+      .catch(() => showToast("Error creating event.", "error"));
+  });
+}
+
+/* DATA TAB */
+let parsedMatches = [];
+
+function wireDataTab() {
+  document.getElementById("matchCsvInput").addEventListener("change", e => {
+    document.getElementById("parseCsvBtn").disabled = !e.target.files[0];
+  });
+
+  document.getElementById("parseCsvBtn").addEventListener("click", () => {
+    if (!permissions.canUploadMatches) {
+      showToast("You do not have permission to upload matches.", "error");
+      return;
+    }
+    if (!currentEventId) {
+      showToast("Select an active event in the Events tab first.", "error");
+      return;
+    }
+    const file = document.getElementById("matchCsvInput").files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: results => {
+        const get = (row, ...keys) => {
+          for (let k of keys) {
+            if (row[k] !== undefined && row[k] !== "") return row[k];
+          }
+          return "";
+        };
+        parsedMatches = results.data.map(r => ({
+          id: crypto.randomUUID(),
+          bout: get(r, "bout", "Bout", "BOUT"),
+          weight: get(r, "weight", "Weight", "wt"),
+          round: get(r, "round", "Round", "ROUND"),
+          red: {
+            name: get(r, "redName", "red", "Red", "RED"),
+            team: get(r, "redTeam", "red_team", "RedTeam")
+          },
+          green: {
+            name: get(r, "greenName", "green", "Green", "GREEN"),
+            team: get(r, "greenTeam", "green_team", "GreenTeam")
+          },
+          assignedMat: get(r, "assignedMat", "mat", "Mat", "MAT")
+            ? Number(get(r, "assignedMat", "mat", "Mat", "MAT"))
+            : null,
+          completed: false,
+          queueIndex: null
+        }));
+        renderCsvPreview();
+      }
+    });
+  });
+}
+
+function renderCsvPreview() {
+  let html = `
+    <table class="csv-table">
+      <tr>
+        <th>Bout</th><th>Weight</th><th>Round</th>
+        <th>Red</th><th>Green</th><th>Mat</th>
+      </tr>`;
+  parsedMatches.forEach(m => {
+    html += `
+      <tr>
+        <td>${m.bout}</td>
+        <td>${m.weight}</td>
+        <td>${m.round}</td>
+        <td>${m.red.name}</td>
+        <td>${m.green.name}</td>
+        <td>${m.assignedMat ?? ""}</td>
+      </tr>`;
+  });
+  html += `</table><br>
+    <button id="saveToCloudBtn" class="pill-btn-fat">Save to Event</button>`;
+  document.getElementById("csvPreview").innerHTML = html;
+  document.getElementById("saveToCloudBtn").onclick = saveMatchesToCloud;
+}
+
+function saveMatchesToCloud() {
+  if (!permissions.canUploadMatches) {
+    showToast("You do not have permission to upload matches.", "error");
+    return;
+  }
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("No active event selected.", "error");
+    return;
+  }
+  const batch = db.batch();
+  parsedMatches.forEach(m => {
+    batch.set(col.doc(m.id), m);
+  });
+  batch.commit()
+    .then(() => showToast("Matches saved to active event.", "success"))
+    .catch(() => showToast("Error saving matches.", "error"));
+}
+
+/* MAT ASSIGN TAB */
+function wireAssignTab() {
+  document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
+  document.getElementById("undoBtn").addEventListener("click", undoLastAction);
+  document.getElementById("unassignAllBtn").addEventListener("click", unassignAllMatches);
+  document.getElementById("autoDistributeBtn").addEventListener("click", autoDistributeMatches);
+  document.getElementById("clearCompletedBtn").addEventListener("click", clearCompletedMatches);
+}
+
+function loadMatches() {
+  if (!permissions.canAssignMats) {
+    showToast("You do not have permission to assign mats.", "error");
+    return;
+  }
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+  document.getElementById("loadingBar").style.display = "block";
+  col.get()
+    .then(snapshot => {
+      const matches = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(m => m.completed !== true);
+      matches.sort((a, b) => Number(a.bout) - Number(b.bout));
+      renderAssignmentBoard(matches);
+      document.getElementById("loadingBar").style.display = "none";
+    });
+}
+
+function renderAssignmentBoard(matches) {
+  document.getElementById("assignmentBoard").innerHTML = `
+    <div class="drag-container">
+      ${[0,1,2,3,4].map(m => `
+        <div class="list-column">
+          <h3>${m === 0 ? "Unassigned" : "Mat " + m}</h3>
+          <div id="mat-${m}" class="match-list"></div>
+          <button class="mat-footer-btn" data-mat="${m}" ${m === 0 ? "disabled" : ""}>
+            Unassign This Mat
+          </button>
+        </div>`).join("")}
+    </div>`;
+  const mats = { 0: [], 1: [], 2: [], 3: [], 4: [] };
+  matches.forEach(m => {
+    const mat = Number(m.assignedMat) || 0;
+    mats[mat].push(m);
+  });
+  Object.values(mats).forEach(list => {
+    list.sort((a, b) => Number(a.bout) - Number(b.bout));
+  });
+  Object.keys(mats).forEach(mat => {
+    const container = document.getElementById(`mat-${mat}`);
+    mats[mat].forEach(m => container.appendChild(makeCard(m)));
+  });
+
+  document.querySelectorAll(".mat-footer-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const matNum = Number(btn.dataset.mat);
+      if (matNum === 0) return;
+      unassignMat(matNum);
+    });
+  });
+
+  [0,1,2,3,4].forEach(mat => {
+    Sortable.create(document.getElementById(`mat-${mat}`), {
+      group: { name: "mats", pull: true, put: true },
+      animation: 150,
+      draggable: ".match-card",
+      ghostClass: "dragging",
+      onEnd: saveAssignmentOrder
+    });
+  });
+}
+
+function makeCard(m) {
+  const el = document.createElement("div");
+  el.className = "match-card";
+  el.dataset.id = m.id;
+  el.innerHTML = `
+    <div><strong>Bout ${m.bout}</strong> ${m.weight ? `— ${m.weight}` : ""}</div>
+    <div>${m.red?.name || ""} vs ${m.green?.name || ""}</div>
+    <div style="font-size:11px;opacity:0.7;">Mat: ${m.assignedMat ?? "Unassigned"}</div>`;
+  return el;
+}
+
+function saveAssignmentOrder() {
+  if (!permissions.canAssignMats) {
+    showToast("You do not have permission to assign mats.", "error");
+    return;
+  }
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+  col.get().then(snapshot => {
+    snapshotDocs(snapshot.docs);
+    const batch = db.batch();
+    [0,1,2,3,4].forEach(mat => {
+      const parent = document.getElementById(`mat-${mat}`);
+      if (!parent) return;
+      [...parent.children].forEach((card, index) => {
+        const ref = col.doc(card.dataset.id);
+        batch.update(ref, {
+          assignedMat: mat === 0 ? null : mat,
+          queueIndex: index
+        });
+      });
+    });
+    batch.commit()
+      .then(() => showToast("Assignments saved.", "success"))
+      .catch(() => showToast("Error saving assignments.", "error"));
+  });
+}
+
+function undoLastAction() {
+  if (!permissions.canUseBulkActions) {
+    showToast("You do not have permission to use bulk actions.", "error");
+    return;
+  }
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+  if (!lastState || lastState.length === 0) {
+    showToast("Nothing to undo.", "error");
+    return;
+  }
+  const batch = db.batch();
+  lastState.forEach(({ id, data }) => {
+    batch.set(col.doc(id), data, { merge: true });
+  });
+  batch.commit()
+    .then(() => {
+      showToast("Last action undone.", "success");
+      lastState = null;
+      loadMatches();
+    })
+    .catch(() => showToast("Error undoing last action.", "error"));
+}
+
+function unassignMat(matNum) {
+  if (!permissions.canAssignMats) {
+    showToast("You do not have permission to assign mats.", "error");
+    return;
+  }
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+  if (!confirm(`Unassign all matches from Mat ${matNum}?`)) return;
+  col.where("assignedMat", "==", matNum).get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        showToast(`No matches on Mat ${matNum}.`, "error");
+        return;
+      }
+      snapshotDocs(snapshot.docs);
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => {
+        batch.update(col.doc(doc.id), { assignedMat: null });
+      });
+      return batch.commit();
+    })
+    .then(() => {
+      showToast(`Mat ${matNum} unassigned.`, "success");
+      loadMatches();
+    })
+    .catch(() => showToast("Error unassigning mat.", "error"));
+}
+
+function unassignAllMatches() {
+  if (!permissions.canUseBulkActions) {
+    showToast("You do not have permission for this bulk action.", "error");
+    return;
+  }
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+  if (!confirm("Unassign ALL matches from ALL mats?")) return;
+  col.get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        showToast("No matches found.", "error");
+        return;
+      }
+      snapshotDocs(snapshot.docs);
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => {
+        batch.update(col.doc(doc.id), { assignedMat: null });
+      });
+      return batch.commit();
+    })
+    .then(() => {
+      showToast("All matches unassigned.", "success");
+      loadMatches();
+    })
+    .catch(() => showToast("Error unassigning all.", "error"));
+}
+
+function autoDistributeMatches() {
+  if (!permissions.canUseBulkActions) {
+    showToast("You do not have permission for this bulk action.", "error");
+    return;
+  }
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+  if (!confirm("Auto-distribute all active matches across Mats 1–4 by bout order?")) return;
+  col.get()
+    .then(snapshot => {
+      const docs = snapshot.docs.filter(d => d.data().completed !== true);
+      if (docs.length === 0) {
+        showToast("No active matches to distribute.", "error");
+        return;
+      }
+      snapshotDocs(docs);
+      const matches = docs.map(d => ({ id: d.id, ...d.data() }));
+      matches.sort((a, b) => Number(a.bout) - Number(b.bout));
+      const mats = [1,2,3,4];
+      let idx = 0;
+      const counters = {1:0,2:0,3:0,4:0};
+      const batch = db.batch();
+      matches.forEach(m => {
+        const mat = mats[idx % mats.length];
+        idx++;
+        counters[mat] = (counters[mat] || 0) + 1;
+        batch.update(col.doc(m.id), {
+          assignedMat: mat,
+          queueIndex: counters[mat]
+        });
+      });
+      return batch.commit();
+    })
+    .then(() => {
+      showToast("Auto-distributed by bout order.", "success");
+      loadMatches();
+    })
+    .catch(() => showToast("Error auto-distributing.", "error"));
+}
+
+function clearCompletedMatches() {
+  if (!permissions.canUseBulkActions) {
+    showToast("You do not have permission for this bulk action.", "error");
+    return;
+  }
+  const col = getMatchesCollection();
+  if (!col) {
+    showToast("Select an active event first.", "error");
+    return;
+  }
+  if (!confirm("Permanently delete all matches with completed = true?")) return;
+  col.where("completed", "==", true).get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        showToast("No completed matches to clear.", "error");
+        return;
+      }
+      snapshotDocs(snapshot.docs);
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => {
+        batch.delete(col.doc(doc.id));
+      });
+      return batch.commit();
+    })
+    .then(() => {
+      showToast("Completed matches cleared.", "success");
+      loadMatches();
+    })
+    .catch(() => showToast("Error clearing completed.", "error"));
+}
+
+/* MANAGE USERS TAB (director-level: canManageUsers) */
+function wireManageUsersTab() {
+  if (!permissions.canManageUsers) return;
+  const container = document.getElementById("usersList");
+  db.collection("users").onSnapshot(snapshot => {
+    const users = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    let html = "";
+    users.forEach(u => {
+      html += `
+        <div class="user-card" data-id="${u.id}">
+          <div class="user-email">${u.email || u.id}</div>
+          <div class="permission-grid">
+            ${renderCheckbox(u, "canManageEvents", "Manage Events")}
+            ${renderCheckbox(u, "canUploadMatches", "Upload Matches")}
+            ${renderCheckbox(u, "canAssignMats", "Assign Mats")}
+            ${renderCheckbox(u, "canUseBulkActions", "Bulk Actions")}
+            ${renderCheckbox(u, "canScoreMatches", "Score Matches")}
+            ${renderCheckbox(u, "canViewDashboard", "View Dashboard")}
+            ${renderCheckbox(u, "canManageUsers", "Manage Users")}
+          </div>
+          <button class="user-save-btn">Save</button>
+        </div>`;
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll(".user-card").forEach(card => {
+      const uid = card.dataset.id;
+      const saveBtn = card.querySelector(".user-save-btn");
+      saveBtn.addEventListener("click", () => {
+        const perms = {};
+        card.querySelectorAll("input[type=checkbox]").forEach(chk => {
+          perms[chk.name] = chk.checked;
+        });
+        db.collection("users").doc(uid).set(perms, { merge: true })
+          .then(() => showToast(`Updated permissions for ${uid}.`, "success"))
+          .catch(() => showToast("Error updating user permissions.", "error"));
+      });
+    });
+  });
+}
+
+function renderCheckbox(user, key, label) {
+  const checked = user[key] ? "checked" : "";
+  return `
+    <label>
+      <input type="checkbox" name="${key}" ${checked} />
+      ${label}
+    </label>`;
+}
 </script>
 
 </body>
