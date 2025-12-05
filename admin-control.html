@@ -12,6 +12,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
+  <!-- SortableJS for drag-and-drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -20,16 +23,14 @@
       padding: 20px;
     }
 
-    h2, h3 {
-      margin-top: 0;
-    }
+    h2, h3 { margin-top: 0; }
 
     .section {
       background: #fff;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      max-width: 800px;
+      max-width: 1100px;
       margin: 30px auto;
     }
 
@@ -73,10 +74,140 @@
       background: #e7e7e7;
       font-weight: bold;
     }
+
+    /* Toast System */
+    #toastContainer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+
+    .toast {
+      display: flex;
+      align-items: center;
+      background-color: #333;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(-10px);
+      animation: fadeInUp 0.3s forwards, fadeOut 0.4s 2.4s forwards;
+    }
+
+    .toast.success {
+      background-color: #28a745;
+    }
+
+    .toast.error {
+      background-color: #dc3545;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
+
+    /* Loading Bar */
+    .loading-bar {
+      width: 100%;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .loading-bar-inner {
+      width: 0%;
+      height: 100%;
+      background: #0077ff;
+      animation: loadingAnim 1.2s infinite;
+    }
+
+    @keyframes loadingAnim {
+      0% { width: 0%; }
+      50% { width: 80%; }
+      100% { width: 0%; }
+    }
+
+    /* Drag & Drop Layout */
+    .drag-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .list-column {
+      background: #fafafa;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      max-height: 500px;
+    }
+
+    .list-column h3 {
+      margin: 0;
+      padding: 10px;
+      font-size: 14px;
+      text-align: center;
+      background: #f0f0f0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .match-list {
+      flex: 1;
+      padding: 8px;
+      overflow-y: auto;
+      min-height: 50px;
+    }
+
+    .match-card {
+      background: #fff;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      cursor: grab;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .match-card.dragging {
+      opacity: 0.6;
+    }
+
+    .match-card-header {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .match-card-body {
+      line-height: 1.3;
+    }
+
+    .match-card-meta {
+      margin-top: 4px;
+      font-size: 11px;
+      color: #555;
+    }
   </style>
 
 </head>
 <body>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer"></div>
 
   <!-- SECTION 1: CSV UPLOAD -->
   <div class="section">
@@ -90,13 +221,17 @@
     <div id="csvPreview" class="csv-preview"></div>
   </div>
 
-  <!-- SECTION 2: MATCH ASSIGNMENT -->
+  <!-- SECTION 2: MATCH ASSIGNMENT (DRAG & DROP) -->
   <div class="section">
-    <h2>Assign Matches to Mats</h2>
+    <h2>Assign Matches to Mats (Drag & Drop)</h2>
 
     <button id="loadMatchesBtn" class="pill-btn-fat">Load Matches from Cloud</button>
 
-    <div id="assignmentTable" class="csv-preview"></div>
+    <div id="loadingBar" class="loading-bar">
+      <div class="loading-bar-inner"></div>
+    </div>
+
+    <div id="assignmentBoard" class="csv-preview"></div>
   </div>
 
   <script>
@@ -114,6 +249,20 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+
+    /////////////////////////////////////////////////////////////////////////////
+    // TOAST SYSTEM
+    /////////////////////////////////////////////////////////////////////////////
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = "toast " + type;
+      toast.textContent = message;
+
+      container.appendChild(toast);
+
+      setTimeout(() => toast.remove(), 3000);
+    }
 
     /////////////////////////////////////////////////////////////////////////////
     // STEP 1 — CSV UPLOAD + PARSE
@@ -151,6 +300,7 @@
               },
 
               assignedMat: null,
+              queueIndex: null,
               status: "upcoming"
             };
           });
@@ -184,7 +334,7 @@
           </tr>
       `;
 
-      matches.slice(0, 30).forEach(m => {
+      matches.slice(0, 50).forEach(m => {
         html += `
           <tr>
             <td>${m.bout}</td>
@@ -214,7 +364,7 @@
     /////////////////////////////////////////////////////////////////////////////
     function saveMatchesToCloud() {
       if (!parsedMatches.length) {
-        alert("No matches to save.");
+        showToast("No matches to save.", "error");
         return;
       }
 
@@ -227,96 +377,188 @@
       });
 
       batch.commit()
-        .then(() => alert("Matches successfully saved to Firebase!"))
+        .then(() => showToast("Matches saved to cloud!", "success"))
         .catch(err => {
           console.error(err);
-          alert("Error saving matches.");
+          showToast("Error saving matches.", "error");
         });
     }
 
     /////////////////////////////////////////////////////////////////////////////
-    // STEP 3 — LOAD MATCHES FOR ASSIGNMENT
+    // STEP 3 — LOAD MATCHES FOR DRAG & DROP ASSIGNMENT
     /////////////////////////////////////////////////////////////////////////////
     document.getElementById("loadMatchesBtn").addEventListener("click", loadMatchesFromCloud);
 
     function loadMatchesFromCloud() {
+      const loadingBar = document.getElementById("loadingBar");
+      loadingBar.style.display = "block";
+
       db.collection("matchLibrary")
-        .orderBy("bout")
         .get()
         .then(snapshot => {
           const matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          showAssignmentTable(matches);
+          showAssignmentBoard(matches);
+          showToast("Matches loaded!", "success");
+        })
+        .catch(err => {
+          console.error(err);
+          showToast("Error loading matches.", "error");
+        })
+        .finally(() => {
+          loadingBar.style.display = "none";
         });
     }
 
     /////////////////////////////////////////////////////////////////////////////
-    // MATCH ASSIGNMENT TABLE
+    // DRAG & DROP ASSIGNMENT BOARD
     /////////////////////////////////////////////////////////////////////////////
-    function showAssignmentTable(matches) {
-      const container = document.getElementById("assignmentTable");
+    let dragInitialized = false;
+
+    function showAssignmentBoard(matches) {
+      const container = document.getElementById("assignmentBoard");
 
       if (!matches.length) {
         container.innerHTML = "<p>No matches found in cloud.</p>";
         return;
       }
 
+      // Build column layout: Unassigned + Mats 1–4
       let html = `
-        <h3>Assign Mats</h3>
-        <table class="csv-table">
-          <tr>
-            <th>Bout</th>
-            <th>Wrestlers</th>
-            <th>Weight</th>
-            <th>Assigned Mat</th>
-            <th>Change Mat</th>
-          </tr>
+        <div class="drag-container">
+          <div class="list-column">
+            <h3>Unassigned</h3>
+            <div id="mat-0" class="match-list"></div>
+          </div>
+          <div class="list-column">
+            <h3>Mat 1</h3>
+            <div id="mat-1" class="match-list"></div>
+          </div>
+          <div class="list-column">
+            <h3>Mat 2</h3>
+            <div id="mat-2" class="match-list"></div>
+          </div>
+          <div class="list-column">
+            <h3>Mat 3</h3>
+            <div id="mat-3" class="match-list"></div>
+          </div>
+          <div class="list-column">
+            <h3>Mat 4</h3>
+            <div id="mat-4" class="match-list"></div>
+          </div>
+        </div>
       `;
-
-      matches.forEach(m => {
-        html += `
-          <tr>
-            <td>${m.bout}</td>
-            <td>
-              ${m.red.name} (${m.red.team})
-              <br>vs<br>
-              ${m.green.name} (${m.green.team})
-            </td>
-            <td>${m.weight}</td>
-            <td>${m.assignedMat ? "Mat " + m.assignedMat : "-"}</td>
-            <td>
-              <select data-id="${m.id}" class="matSelect">
-                <option value="">--</option>
-                <option value="1" ${m.assignedMat == 1 ? "selected" : ""}>Mat 1</option>
-                <option value="2" ${m.assignedMat == 2 ? "selected" : ""}>Mat 2</option>
-                <option value="3" ${m.assignedMat == 3 ? "selected" : ""}>Mat 3</option>
-              </select>
-            </td>
-          </tr>
-        `;
-      });
-
-      html += "</table>";
 
       container.innerHTML = html;
 
-      // Attach listeners
-      document.querySelectorAll(".matSelect").forEach(select => {
-        select.addEventListener("change", updateMatchAssignment);
+      // Group matches by assignedMat
+      const columns = {
+        0: [],
+        1: [],
+        2: [],
+        3: [],
+        4: []
+      };
+
+      matches.forEach(m => {
+        const mat = m.assignedMat || 0;
+        columns[mat].push(m);
       });
+
+      // Sort each column by queueIndex, then bout
+      Object.keys(columns).forEach(matKey => {
+        columns[matKey].sort((a, b) => {
+          const qa = (a.queueIndex !== null && a.queueIndex !== undefined) ? a.queueIndex : 9999;
+          const qb = (b.queueIndex !== null && b.queueIndex !== undefined) ? b.queueIndex : 9999;
+          if (qa !== qb) return qa - qb;
+          const ba = Number(a.bout) || 0;
+          const bb = Number(b.bout) || 0;
+          return ba - bb;
+        });
+      });
+
+      // Render match cards into each list
+      Object.keys(columns).forEach(matKey => {
+        const listEl = document.getElementById(`mat-${matKey}`);
+        const listMatches = columns[matKey];
+
+        listMatches.forEach(m => {
+          const card = document.createElement("div");
+          card.className = "match-card";
+          card.setAttribute("data-id", m.id);
+
+          card.innerHTML = `
+            <div class="match-card-header">
+              Bout ${m.bout || "-"} – ${m.weight || "?"} lbs
+            </div>
+            <div class="match-card-body">
+              <div>${m.red.name || "Red"} (${m.red.team || ""})</div>
+              <div>vs</div>
+              <div>${m.green.name || "Green"} (${m.green.team || ""})</div>
+            </div>
+            <div class="match-card-meta">
+              Round: ${m.round || "-"}
+            </div>
+          `;
+
+          listEl.appendChild(card);
+        });
+      });
+
+      // Initialize SortableJS once
+      if (!dragInitialized) {
+        const matIds = [0, 1, 2, 3, 4];
+
+        matIds.forEach(matNum => {
+          const listEl = document.getElementById(`mat-${matNum}`);
+
+          Sortable.create(listEl, {
+            group: "mats",
+            animation: 150,
+            ghostClass: "dragging",
+            onEnd: handleDragEnd
+          });
+        });
+
+        dragInitialized = true;
+      }
     }
 
     /////////////////////////////////////////////////////////////////////////////
-    // UPDATE FIRESTORE WITH NEW MAT ASSIGNMENT
+    // HANDLE DRAG END — UPDATE FIRESTORE (assignedMat + queueIndex)
     /////////////////////////////////////////////////////////////////////////////
-    function updateMatchAssignment(e) {
-      const matchId = e.target.getAttribute("data-id");
-      const matValue = e.target.value === "" ? null : Number(e.target.value);
+    function handleDragEnd(evt) {
+      const toListId = evt.to.id;       // e.g., 'mat-2'
+      const toMatNum = Number(toListId.split("-")[1]); // 0–4
 
-      db.collection("matchLibrary")
-        .doc(matchId)
-        .update({ assignedMat: matValue })
-        .then(() => console.log("Updated mat:", matchId, "→", matValue))
-        .catch(err => console.error(err));
+      const matchCollection = db.collection("matchLibrary");
+      const batch = db.batch();
+      const matIds = [0, 1, 2, 3, 4];
+
+      matIds.forEach(matNum => {
+        const listEl = document.getElementById(`mat-${matNum}`);
+        if (!listEl) return;
+
+        const children = Array.from(listEl.children);
+        children.forEach((cardEl, index) => {
+          const id = cardEl.getAttribute("data-id");
+          if (!id) return;
+
+          const docRef = matchCollection.doc(id);
+          const assignedMat = matNum === 0 ? null : matNum;
+          const queueIndex = index;
+
+          batch.update(docRef, { assignedMat, queueIndex });
+        });
+      });
+
+      batch.commit()
+        .then(() => {
+          showToast("Mat assignments updated!", "success");
+        })
+        .catch(err => {
+          console.error(err);
+          showToast("Error updating assignments.", "error");
+        });
     }
 
   </script>
