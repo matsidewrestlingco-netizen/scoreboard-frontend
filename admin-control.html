@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Admin Control Panel</title>
+<title>Matside — Admin Control Panel (v3)</title>
 
 <!-- PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -12,12 +12,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
-<!-- Sortable -->
+<!-- SortableJS -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <style>
 /* ----------------------------------------- */
-/* GLOBAL DARK DASHBOARD THEME (Option A)    */
+/* GLOBAL DARK DASHBOARD THEME               */
 /* ----------------------------------------- */
 
 body {
@@ -26,6 +26,18 @@ body {
   background: #1a1a1a;
   font-family: "Inter", sans-serif;
   color: #e6e6e6;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.version-tag {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-bottom: 8px;
 }
 
 h2 {
@@ -231,15 +243,16 @@ h2 {
   background: #444;
   border-radius: 6px;
 }
-
-/* ----------------------------------------- */
-
 </style>
 </head>
 
 <body>
 
-<!-- Toasts -->
+<div style="max-width:1100px;margin:0 auto;">
+  <h1>Matside Admin Control</h1>
+  <div class="version-tag">admin-control.html — v3 (drag & drop debug)</div>
+</div>
+
 <div id="toastContainer"></div>
 
 <!-- ---------------- SECTION: CSV UPLOAD ---------------- -->
@@ -400,7 +413,7 @@ function renderAssignmentBoard(matches) {
     groups[mat].push(m);
   });
 
-  // sort by queue
+  // sort by queueIndex
   Object.values(groups).forEach(list =>
     list.sort((a,b) => (a.queueIndex ?? 9999) - (b.queueIndex ?? 9999))
   );
@@ -411,9 +424,10 @@ function renderAssignmentBoard(matches) {
     groups[mat].forEach(m => div.appendChild(makeCard(m)));
   });
 
-  // initialize sortable (FIXED: explicit group + draggable)
+  // initialize Sortable for each column
   [0,1,2,3,4].forEach(m => {
-    Sortable.create(document.getElementById(`mat-${m}`), {
+    const el = document.getElementById(`mat-${m}`);
+    Sortable.create(el, {
       group: { name: "mats", pull: true, put: true },
       animation: 150,
       draggable: ".match-card",
@@ -436,13 +450,14 @@ function makeCard(m) {
   return div;
 }
 
-function saveAssignmentOrder() {
+function saveAssignmentOrder(evt) {
   const batch = db.batch();
   const mats = [0,1,2,3,4];
 
   mats.forEach(mat => {
     const parent = document.getElementById(`mat-${mat}`);
-    [...parent.children].forEach((card, i) => {
+    const cards = Array.from(parent.children);
+    cards.forEach((card, i) => {
       const ref = db.collection("matchLibrary").doc(card.dataset.id);
       batch.update(ref, {
         assignedMat: mat === 0 ? null : mat,
