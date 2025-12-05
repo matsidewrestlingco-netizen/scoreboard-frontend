@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Admin Control Panel (v8.0)</title>
+<title>Matside — Admin Control Panel (v9.0)</title>
 
 <!-- PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -11,6 +11,7 @@
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
 
 <!-- SortableJS -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -36,7 +37,29 @@ h1 {
 .version-tag {
   font-size: 12px;
   opacity: 0.6;
-  margin-bottom: 18px;
+  margin-bottom: 6px;
+}
+
+#userInfoBar {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#userInfoBar button {
+  padding: 5px 10px;
+  border-radius: 12px;
+  border: none;
+  background: #4a4a4a;
+  color: #eee;
+  cursor: pointer;
+  font-size: 11px;
+}
+#userInfoBar button:hover {
+  background: #5a5a5a;
 }
 
 .section {
@@ -55,7 +78,7 @@ h1 {
 .tabs {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .tab {
@@ -414,7 +437,11 @@ h1 {
 
 <div style="max-width:1100px;margin:0 auto;">
   <h1>Matside Admin Control</h1>
-  <div class="version-tag">admin-control v8.0 — Events + Per-Event Matches</div>
+  <div class="version-tag">admin-control v9.0 — Auth + Per-User Active Event</div>
+  <div id="userInfoBar">
+    <div>Logged in as: <span id="userEmailLabel">—</span></div>
+    <button id="logoutBtn">Logout</button>
+  </div>
 
   <div class="tabs">
     <div class="tab active" data-tab="events">Events</div>
@@ -526,7 +553,7 @@ document.querySelectorAll(".tab").forEach(tab => {
 });
 
 /* --------------------------------------------- */
-/* FIREBASE INIT                                 */
+/* FIREBASE INIT + AUTH GUARD                    */
 /* --------------------------------------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
@@ -538,6 +565,32 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
+
+let currentUser = null;
+let userSettingsDocRef = null;
+let currentEventId = null;
+let currentEvent = null;
+let lastState = null; // for undo
+
+// Guard: redirect to login if no user
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = "auth.html";
+  } else {
+    currentUser = user;
+    document.getElementById("userEmailLabel").textContent = user.email || user.uid;
+    userSettingsDocRef = db.collection("settings").doc(user.uid);
+    initForUser();
+  }
+});
+
+// Logout button
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  auth.signOut().then(() => {
+    window.location.href = "auth.html";
+  });
+});
 
 /* --------------------------------------------- */
 /* TOASTS                                        */
@@ -551,49 +604,20 @@ function showToast(msg, type = "success") {
 }
 
 /* --------------------------------------------- */
-/* GLOBAL STATE                                  */
+/* GLOBAL HELPERS                                */
 /* --------------------------------------------- */
-
-const settingsDocRef = db.collection("settings").doc("app");
-let currentEventId = null;
-let currentEvent = null;
-let lastState = null; // for undo
+const activeEventBannerEl = document.getElementById("activeEventBanner");
+const dataTabLabelEl = document.getElementById("dataTabActiveEventLabel");
+const assignTabLabelEl = document.getElementById("assignTabActiveEventLabel");
 
 function getMatchesCollection() {
   if (!currentEventId) return null;
   return db.collection("events").doc(currentEventId).collection("matches");
 }
 
-/* Snapshot helper for undo */
 function snapshotDocs(docs) {
   lastState = docs.map(d => ({ id: d.id, data: d.data() }));
 }
-
-/* --------------------------------------------- */
-/* INIT: Load settings + events                  */
-/* --------------------------------------------- */
-
-init();
-
-function init() {
-  settingsDocRef.get().then(doc => {
-    if (doc.exists) {
-      currentEventId = doc.data().currentEventId || null;
-    }
-    updateActiveEventUI();
-    subscribeEvents();
-  }).catch(() => {
-    subscribeEvents();
-  });
-}
-
-/* --------------------------------------------- */
-/* EVENTS TAB LOGIC                              */
-/* --------------------------------------------- */
-
-const activeEventBannerEl = document.getElementById("activeEventBanner");
-const dataTabLabelEl = document.getElementById("dataTabActiveEventLabel");
-const assignTabLabelEl = document.getElementById("assignTabActiveEventLabel");
 
 function updateActiveEventUI() {
   if (currentEvent) {
@@ -610,6 +634,32 @@ function updateActiveEventUI() {
     assignTabLabelEl.textContent = "None selected";
   }
 }
+
+/* --------------------------------------------- */
+/* INIT PER USER                                 */
+/* --------------------------------------------- */
+function initForUser() {
+  // Load user settings
+  userSettingsDocRef.get()
+    .then(doc => {
+      if (doc.exists) {
+        currentEventId = doc.data().currentEventId || null;
+      }
+      updateActiveEventUI();
+      subscribeEvents();
+    })
+    .catch(() => {
+      subscribeEvents();
+    });
+
+  wireEventsTab();
+  wireDataTab();
+  wireAssignTab();
+}
+
+/* --------------------------------------------- */
+/* EVENTS TAB                                    */
+/* --------------------------------------------- */
 
 function subscribeEvents() {
   db.collection("events")
@@ -663,14 +713,13 @@ function renderEventsList(events) {
 
   container.innerHTML = html;
 
-  // Wire buttons
   container.querySelectorAll(".event-set-active-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.id;
-      settingsDocRef.set({ currentEventId: id }, { merge: true })
+      userSettingsDocRef.set({ currentEventId: id }, { merge: true })
         .then(() => {
           currentEventId = id;
-          showToast("Active event updated.", "success");
+          showToast("Active event updated for your user.", "success");
           updateActiveEventUI();
         })
         .catch(() => showToast("Error setting active event.", "error"));
@@ -690,13 +739,13 @@ function renderEventsList(events) {
   container.querySelectorAll(".event-delete-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.id;
-      if (!confirm("Delete this event? (Does NOT delete matches subcollection yet)")) return;
+      if (!confirm("Delete this event? (Matches subcollection NOT deleted yet.)")) return;
 
       db.collection("events").doc(id).delete()
         .then(() => {
           if (currentEventId === id) {
             currentEventId = null;
-            settingsDocRef.set({ currentEventId: null }, { merge: true });
+            userSettingsDocRef.set({ currentEventId: null }, { merge: true });
             updateActiveEventUI();
           }
           showToast("Event deleted.", "success");
@@ -706,43 +755,43 @@ function renderEventsList(events) {
   });
 }
 
-// Event create handler
-document.getElementById("createEventBtn").addEventListener("click", () => {
-  const name = document.getElementById("eventNameInput").value.trim();
-  const date = document.getElementById("eventDateInput").value;
-  const mats = parseInt(document.getElementById("eventMatsInput").value || "4", 10);
-  const period = parseInt(document.getElementById("eventPeriodInput").value || "2", 10);
-  const location = document.getElementById("eventLocationInput").value.trim();
-  const notes = document.getElementById("eventNotesInput").value.trim();
+function wireEventsTab() {
+  document.getElementById("createEventBtn").addEventListener("click", () => {
+    const name = document.getElementById("eventNameInput").value.trim();
+    const date = document.getElementById("eventDateInput").value;
+    const mats = parseInt(document.getElementById("eventMatsInput").value || "4", 10);
+    const period = parseInt(document.getElementById("eventPeriodInput").value || "2", 10);
+    const location = document.getElementById("eventLocationInput").value.trim();
+    const notes = document.getElementById("eventNotesInput").value.trim();
 
-  if (!name) {
-    showToast("Event name is required.", "error");
-    return;
-  }
+    if (!name) {
+      showToast("Event name is required.", "error");
+      return;
+    }
 
-  const data = {
-    name,
-    date: date || null,
-    mats: mats || 4,
-    periodMinutes: period || 2,
-    location: location || null,
-    notes: notes || null,
-    archived: false,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
+    const data = {
+      name,
+      date: date || null,
+      mats: mats || 4,
+      periodMinutes: period || 2,
+      location: location || null,
+      notes: notes || null,
+      archived: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
 
-  db.collection("events").add(data)
-    .then(() => {
-      showToast("Event created.", "success");
-      // clear form
-      document.getElementById("eventNameInput").value = "";
-      document.getElementById("eventDateInput").value = "";
-      document.getElementById("eventLocationInput").value = "";
-      document.getElementById("eventNotesInput").value = "";
-    })
-    .catch(() => showToast("Error creating event.", "error"));
-});
+    db.collection("events").add(data)
+      .then(() => {
+        showToast("Event created.", "success");
+        document.getElementById("eventNameInput").value = "";
+        document.getElementById("eventDateInput").value = "";
+        document.getElementById("eventLocationInput").value = "";
+        document.getElementById("eventNotesInput").value = "";
+      })
+      .catch(() => showToast("Error creating event.", "error"));
+  });
+}
 
 /* --------------------------------------------- */
 /* DATA MGMT TAB (CSV → matches under event)     */
@@ -750,53 +799,55 @@ document.getElementById("createEventBtn").addEventListener("click", () => {
 
 let parsedMatches = [];
 
-document.getElementById("matchCsvInput").addEventListener("change", e => {
-  document.getElementById("parseCsvBtn").disabled = !e.target.files[0];
-});
-
-document.getElementById("parseCsvBtn").addEventListener("click", () => {
-  if (!currentEventId) {
-    showToast("Select an active event in the Events tab first.", "error");
-    return;
-  }
-  const file = document.getElementById("matchCsvInput").files[0];
-  if (!file) return;
-
-  Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    complete: results => {
-      const get = (row, ...keys) => {
-        for (let k of keys) {
-          if (row[k] !== undefined && row[k] !== "") return row[k];
-        }
-        return "";
-      };
-
-      parsedMatches = results.data.map(r => ({
-        id: crypto.randomUUID(),
-        bout: get(r, "bout", "Bout", "BOUT"),
-        weight: get(r, "weight", "Weight", "wt"),
-        round: get(r, "round", "Round", "ROUND"),
-        red: {
-          name: get(r, "redName", "red", "Red", "RED"),
-          team: get(r, "redTeam", "red_team", "RedTeam")
-        },
-        green: {
-          name: get(r, "greenName", "green", "Green", "GREEN"),
-          team: get(r, "greenTeam", "green_team", "GreenTeam")
-        },
-        assignedMat: get(r, "assignedMat", "mat", "Mat", "MAT")
-          ? Number(get(r, "assignedMat", "mat", "Mat", "MAT"))
-          : null,
-        completed: false,
-        queueIndex: null
-      }));
-
-      renderCsvPreview();
-    }
+function wireDataTab() {
+  document.getElementById("matchCsvInput").addEventListener("change", e => {
+    document.getElementById("parseCsvBtn").disabled = !e.target.files[0];
   });
-});
+
+  document.getElementById("parseCsvBtn").addEventListener("click", () => {
+    if (!currentEventId) {
+      showToast("Select an active event in the Events tab first.", "error");
+      return;
+    }
+    const file = document.getElementById("matchCsvInput").files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: results => {
+        const get = (row, ...keys) => {
+          for (let k of keys) {
+            if (row[k] !== undefined && row[k] !== "") return row[k];
+          }
+          return "";
+        };
+
+        parsedMatches = results.data.map(r => ({
+          id: crypto.randomUUID(),
+          bout: get(r, "bout", "Bout", "BOUT"),
+          weight: get(r, "weight", "Weight", "wt"),
+          round: get(r, "round", "Round", "ROUND"),
+          red: {
+            name: get(r, "redName", "red", "Red", "RED"),
+            team: get(r, "redTeam", "red_team", "RedTeam")
+          },
+          green: {
+            name: get(r, "greenName", "green", "Green", "GREEN"),
+            team: get(r, "greenTeam", "green_team", "GreenTeam")
+          },
+          assignedMat: get(r, "assignedMat", "mat", "Mat", "MAT")
+            ? Number(get(r, "assignedMat", "mat", "Mat", "MAT"))
+            : null,
+          completed: false,
+          queueIndex: null
+        }));
+
+        renderCsvPreview();
+      }
+    });
+  });
+}
 
 function renderCsvPreview() {
   let html = `
@@ -847,7 +898,13 @@ function saveMatchesToCloud() {
 /* MAT ASSIGN TAB                                */
 /* --------------------------------------------- */
 
-document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
+function wireAssignTab() {
+  document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
+  document.getElementById("undoBtn").addEventListener("click", undoLastAction);
+  document.getElementById("unassignAllBtn").addEventListener("click", unassignAllMatches);
+  document.getElementById("autoDistributeBtn").addEventListener("click", autoDistributeMatches);
+  document.getElementById("clearCompletedBtn").addEventListener("click", clearCompletedMatches);
+}
 
 function loadMatches() {
   const col = getMatchesCollection();
@@ -864,7 +921,6 @@ function loadMatches() {
         .filter(m => m.completed !== true);
 
       matches.sort((a, b) => Number(a.bout) - Number(b.bout));
-
       renderAssignmentBoard(matches);
       document.getElementById("loadingBar").style.display = "none";
     });
@@ -933,7 +989,6 @@ function makeCard(m) {
   return el;
 }
 
-/* Save assignments on drag/drop */
 function saveAssignmentOrder() {
   const col = getMatchesCollection();
   if (!col) {
@@ -964,17 +1019,18 @@ function saveAssignmentOrder() {
   });
 }
 
-/* UNDO last bulk action */
-document.getElementById("undoBtn").addEventListener("click", () => {
-  if (!lastState || lastState.length === 0) {
-    showToast("Nothing to undo.", "error");
-    return;
-  }
+/* UNDO */
+function undoLastAction() {
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
     return;
   }
+  if (!lastState || lastState.length === 0) {
+    showToast("Nothing to undo.", "error");
+    return;
+  }
+
   const batch = db.batch();
   lastState.forEach(({ id, data }) => {
     batch.set(col.doc(id), data, { merge: true });
@@ -986,7 +1042,7 @@ document.getElementById("undoBtn").addEventListener("click", () => {
       loadMatches();
     })
     .catch(() => showToast("Error undoing last action.", "error"));
-});
+}
 
 /* UNASSIGN ONE MAT */
 function unassignMat(matNum) {
@@ -1019,8 +1075,8 @@ function unassignMat(matNum) {
     .catch(() => showToast("Error unassigning mat.", "error"));
 }
 
-/* UNASSIGN ALL MATS */
-document.getElementById("unassignAllBtn").addEventListener("click", () => {
+/* UNASSIGN ALL */
+function unassignAllMatches() {
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
@@ -1048,10 +1104,10 @@ document.getElementById("unassignAllBtn").addEventListener("click", () => {
       loadMatches();
     })
     .catch(() => showToast("Error unassigning all.", "error"));
-});
+}
 
-/* AUTO-DISTRIBUTE BY BOUT ORDER (Mats 1–4) */
-document.getElementById("autoDistributeBtn").addEventListener("click", () => {
+/* AUTO-DISTRIBUTE */
+function autoDistributeMatches() {
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
@@ -1095,10 +1151,10 @@ document.getElementById("autoDistributeBtn").addEventListener("click", () => {
       loadMatches();
     })
     .catch(() => showToast("Error auto-distributing.", "error"));
-});
+}
 
-/* CLEAR COMPLETED MATCHES */
-document.getElementById("clearCompletedBtn").addEventListener("click", () => {
+/* CLEAR COMPLETED */
+function clearCompletedMatches() {
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
@@ -1115,7 +1171,9 @@ document.getElementById("clearCompletedBtn").addEventListener("click", () => {
       snapshotDocs(snapshot.docs);
 
       const batch = db.batch();
-      snapshot.docs.forEach(doc => batch.delete(col.doc(doc.id)));
+      snapshot.docs.forEach(doc => {
+        batch.delete(col.doc(doc.id));
+      });
 
       return batch.commit();
     })
@@ -1124,7 +1182,7 @@ document.getElementById("clearCompletedBtn").addEventListener("click", () => {
       loadMatches();
     })
     .catch(() => showToast("Error clearing completed.", "error"));
-});
+}
 </script>
 
 </body>
