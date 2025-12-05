@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Matside — Upcoming Matches By Mat</title>
 
-<!-- THEMES (same as overview.html) -->
+<!-- THEMES -->
 <link rel="stylesheet" href="./css/theme.css" />
 <link rel="stylesheet" href="./css/overview.css" />
 
@@ -14,66 +14,107 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
 <style>
-  body {
-    background: #f5f5f5;
-    font-family: Arial, sans-serif;
-  }
+/* FORCE DARK TEXT (override theme.css / overview.css) */
+body, h1, h2, h3, div, span, p {
+  color: #222 !important;
+}
 
-  #upcoming-root {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-  }
+body {
+  background: #f5f5f5;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
 
-  h1 {
-    margin-bottom: 20px;
-  }
+#upcoming-root {
+  max-width: 1600px;
+  margin: 0 auto;
+}
 
-  .mat-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-  }
+h1 {
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+}
 
-  .mat-card {
-    background: white;
-    border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-    min-height: 300px;
-  }
+/* Grid for mats */
+.mat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
 
-  .mat-card h2 {
-    font-size: 20px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 8px;
-  }
+/* Card */
+.mat-card {
+  background: white;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
 
-  .match-item {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    font-size: 14px;
-    line-height: 1.3;
-  }
+/* Section headers */
+.mat-card h2 {
+  font-size: 22px;
+  margin-bottom: 16px;
+  text-align: center;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 10px;
+}
 
-  .match-item:last-child {
-    border-bottom: none;
-  }
+/* Tier titles */
+.tier-title {
+  font-weight: bold;
+  font-size: 16px;
+  margin-top: 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ccc;
+}
 
-  .match-meta {
-    font-size: 12px;
-    color: #666;
-    margin-top: 4px;
-  }
+/* Match item */
+.match-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+  line-height: 1.3;
+}
 
-  .empty-text {
-    color: #888;
-    margin-top: 20px;
-    font-size: 14px;
-  }
+.match-item:last-child {
+  border-bottom: none;
+}
+
+.match-meta {
+  font-size: 12px;
+  color: #555;
+  margin-top: 4px;
+}
+
+/* Empty state */
+.empty-text {
+  color: #888;
+  margin: 10px 0 20px;
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* Highlight tiers */
+.now-wrestling {
+  background: #ffe0e0;
+  border-left: 4px solid #d40000;
+  border-radius: 4px;
+}
+
+.on-deck {
+  background: #e8f3ff;
+  border-left: 4px solid #0066c8;
+  border-radius: 4px;
+}
+
+.in-hole {
+  background: #fff7e0;
+  border-left: 4px solid #cc9200;
+  border-radius: 4px;
+}
+
 </style>
-
 </head>
 
 <body>
@@ -82,31 +123,16 @@
   <h1>Matside — Upcoming Matches by Mat</h1>
 
   <div class="mat-grid">
-    <div class="mat-card">
-      <h2>Mat 1</h2>
-      <div id="mat-1-list" class="mat-list"></div>
-    </div>
-
-    <div class="mat-card">
-      <h2>Mat 2</h2>
-      <div id="mat-2-list" class="mat-list"></div>
-    </div>
-
-    <div class="mat-card">
-      <h2>Mat 3</h2>
-      <div id="mat-3-list" class="mat-list"></div>
-    </div>
-
-    <div class="mat-card">
-      <h2>Mat 4</h2>
-      <div id="mat-4-list" class="mat-list"></div>
-    </div>
+    <div class="mat-card"><h2>Mat 1</h2><div id="mat-1"></div></div>
+    <div class="mat-card"><h2>Mat 2</h2><div id="mat-2"></div></div>
+    <div class="mat-card"><h2>Mat 3</h2><div id="mat-3"></div></div>
+    <div class="mat-card"><h2>Mat 4</h2><div id="mat-4"></div></div>
   </div>
 </div>
 
 <script>
 //////////////////////////////////////////////////////////////////////////////
-// FIREBASE INIT (same as admin-control.html)
+// FIREBASE INIT
 //////////////////////////////////////////////////////////////////////////////
 
 const firebaseConfig = {
@@ -122,30 +148,22 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 //////////////////////////////////////////////////////////////////////////////
-// LIVE LISTENER — Update UI when match assignments change
+// LISTENER — ALL MATS, LIVE UPDATES
 //////////////////////////////////////////////////////////////////////////////
 
 db.collection("matchLibrary").onSnapshot(snapshot => {
-
-  // Gather matches
   const matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-  // Buckets for mats
-  const mats = {
-    1: [],
-    2: [],
-    3: [],
-    4: []
-  };
+  const mats = { 1: [], 2: [], 3: [], 4: [] };
 
-  // Fill buckets
   matches.forEach(m => {
-    if (m.assignedMat && mats[m.assignedMat]) {
-      mats[m.assignedMat].push(m);
+    const matNum = Number(m.assignedMat);
+    if (matNum >= 1 && matNum <= 4) {
+      mats[matNum].push(m);
     }
   });
 
-  // Sort within each mat by queueIndex
+  // Sort by queue order
   for (let m = 1; m <= 4; m++) {
     mats[m].sort((a, b) => {
       const qa = a.queueIndex ?? 9999;
@@ -154,40 +172,71 @@ db.collection("matchLibrary").onSnapshot(snapshot => {
     });
   }
 
-  // Render UI
-  renderMatList(1, mats[1]);
-  renderMatList(2, mats[2]);
-  renderMatList(3, mats[3]);
-  renderMatList(4, mats[4]);
+  // Render each mat
+  for (let m = 1; m <= 4; m++) {
+    renderMat(m, mats[m]);
+  }
 });
 
 //////////////////////////////////////////////////////////////////////////////
-// RENDER FUNCTION
+// RENDER FUNCTION WITH TIERS
 //////////////////////////////////////////////////////////////////////////////
 
-function renderMatList(matNum, list) {
-  const root = document.getElementById(`mat-${matNum}-list`);
-  root.innerHTML = "";
+function renderMat(matNum, list) {
+  const container = document.getElementById(`mat-${matNum}`);
+  container.innerHTML = "";
 
   if (!list.length) {
-    root.innerHTML = `<div class="empty-text">No upcoming matches</div>`;
+    container.innerHTML = `<div class="empty-text">No upcoming matches</div>`;
     return;
   }
 
-  list.forEach(match => {
-    const div = document.createElement("div");
-    div.className = "match-item";
+  // Tiers
+  const now = list[0] || null;
+  const onDeck = list[1] || null;
+  const inHole = list[2] || null;
+  const upcoming = list.slice(3);
 
-    div.innerHTML = `
-      <div><strong>Bout ${match.bout}</strong> — ${match.weight} lbs</div>
-      <div>${match.red.name} (${match.red.team}) vs ${match.green.name} (${match.green.team})</div>
-      <div class="match-meta">Round: ${match.round}</div>
-    `;
+  // NOW WRESTLING
+  container.innerHTML += `<div class="tier-title">Now Wrestling</div>`;
+  if (now) container.appendChild(makeMatchItem(now, "now-wrestling"));
+  else container.innerHTML += `<div class="empty-text">— No match —</div>`;
 
-    root.appendChild(div);
-  });
+  // ON DECK
+  container.innerHTML += `<div class="tier-title">On Deck</div>`;
+  if (onDeck) container.appendChild(makeMatchItem(onDeck, "on-deck"));
+  else container.innerHTML += `<div class="empty-text">— No match —</div>`;
+
+  // IN THE HOLE
+  container.innerHTML += `<div class="tier-title">In The Hole</div>`;
+  if (inHole) container.appendChild(makeMatchItem(inHole, "in-hole"));
+  else container.innerHTML += `<div class="empty-text">— No match —</div>`;
+
+  // UPCOMING LIST
+  container.innerHTML += `<div class="tier-title">Upcoming</div>`;
+  if (!upcoming.length) {
+    container.innerHTML += `<div class="empty-text">— None —</div>`;
+  } else {
+    upcoming.forEach(m => container.appendChild(makeMatchItem(m)));
+  }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// MATCH CARD UI
+//////////////////////////////////////////////////////////////////////////////
+
+function makeMatchItem(match, extraClass = "") {
+  const div = document.createElement("div");
+  div.className = `match-item ${extraClass}`;
+
+  div.innerHTML = `
+    <div><strong>Bout ${match.bout}</strong> — ${match.weight || "?"} lbs</div>
+    <div>${match.red.name || "Red"} (${match.red.team || ""}) vs ${match.green.name || "Green"} (${match.green.team || ""})</div>
+    <div class="match-meta">Round: ${match.round || "-"}</div>
+  `;
+
+  return div;
+}
 </script>
 
 </body>
