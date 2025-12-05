@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Matside — Control Panel v4.1</title>
+<title>Matside — Control Panel v4.3</title>
 
 <!-- Firebase for match feed -->
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
@@ -204,49 +204,10 @@
     padding: 3px 9px;
   }
 
-  /* SUMMARY BAR */
+  /* UPCOMING MATCH CARD */
 
-  .summary-card {
-    margin: 0 0 10px;
-    padding: 9px 12px;
-    border-radius: 14px;
-    background: radial-gradient(circle at top left,
-      rgba(30,136,229,0.16),
-      rgba(10,12,20,0.95));
-    border: 1px solid rgba(255,255,255,0.04);
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 13px;
-  }
-
-  .summary-item {
-    display: flex;
-    gap: 4px;
-    align-items: baseline;
-  }
-
-  .summary-item span {
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .summary-item strong {
-    font-weight: 600;
-  }
-
-  .redText {
-    color: var(--red);
-  }
-
-  .greenText {
-    color: var(--green);
-  }
-
-  /* Upcoming match card */
   .upcoming-card {
-    margin: 10px auto 18px;
+    margin: 10px auto 14px;
     max-width: 1100px;
     padding: 10px 14px;
     border-radius: 14px;
@@ -307,19 +268,7 @@
     }
   }
 
-  /* GRID */
-
-  .grid {
-    display: grid;
-    grid-template-columns: minmax(0,1.3fr) minmax(0,1.1fr);
-    gap: 14px;
-  }
-
-  @media (max-width: 880px) {
-    .grid {
-      grid-template-columns: minmax(0,1fr);
-    }
-  }
+  /* FULL-WIDTH SCORING CARD */
 
   .card {
     background: #10121d;
@@ -339,6 +288,103 @@
     font-size: 12px;
     color: var(--muted);
     margin-bottom: 10px;
+  }
+
+  .score-card-full {
+    max-width: 1100px;
+    margin: 0 auto 14px;
+  }
+
+  .score-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  @media (max-width: 720px) {
+    .score-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .score-box {
+    border-radius: 16px;
+    padding: 12px 12px 10px;
+    border: 1px solid var(--outline);
+    background: radial-gradient(circle at top, rgba(211,47,47,0.18), #11131b);
+  }
+
+  .score-box.green-side {
+    background: radial-gradient(circle at top, rgba(67,160,71,0.18), #11131b);
+  }
+
+  .score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .score-header span {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .score-header strong {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .big-score {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 2px 0 8px;
+  }
+
+  .score-name-input {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #050711;
+    color: #fff;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .score-name-input::placeholder {
+    color: rgba(255,255,255,0.35);
+  }
+
+  .score-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  @media (max-width: 720px) {
+    .score-buttons {
+      grid-template-columns: repeat(2,minmax(0,1fr));
+    }
+  }
+
+  /* GRID */
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0,1.3fr) minmax(0,1.1fr);
+    gap: 14px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 880px) {
+    .grid {
+      grid-template-columns: minmax(0,1fr);
+    }
   }
 
   .section-label {
@@ -449,80 +495,6 @@
     accent-color: var(--accent);
   }
 
-  /* SCORE PANEL */
-
-  .score-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .score-box {
-    border-radius: 16px;
-    padding: 12px 12px 10px;
-    border: 1px solid var(--outline);
-    background: radial-gradient(circle at top, rgba(211,47,47,0.18), #11131b);
-  }
-
-  .score-box.green-side {
-    background: radial-gradient(circle at top, rgba(67,160,71,0.18), #11131b);
-  }
-
-  .score-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-  }
-
-  .score-header span {
-    font-size: 11px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .score-header strong {
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .big-score {
-    font-size: 30px;
-    font-weight: 700;
-  }
-
-  .score-buttons {
-    margin-top: 6px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .score-buttons button {
-    flex: 1 0 60px;
-  }
-
-  .name-input-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  .name-input-row input {
-    flex: 1;
-    padding: 6px 8px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: #050711;
-    color: #fff;
-    font-size: 12px;
-  }
-
-  .name-input-row input::placeholder {
-    color: rgba(255,255,255,0.35);
-  }
-
   /* TIMELINE */
 
   .timeline-card {
@@ -562,24 +534,14 @@
     font-size: 12px;
   }
 
-  .tl-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 6px;
-    border-radius: 999px;
-    font-size: 10px;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.8);
-  }
-
-  /* FOOTER BOTTOM ROW */
+  /* LAST MATCH */
 
   .bottom-row {
+    max-width: 1100px;
+    margin: 10px auto 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 10px;
     font-size: 11px;
     color: var(--muted);
   }
@@ -617,6 +579,7 @@
     min-width: 118px;
     justify-content: center;
   }
+
   .small {
     padding: 6px 10px;
     font-size: 12px;
@@ -626,14 +589,17 @@
     background: linear-gradient(135deg,#2196f3,#1976d2);
     color: #fff;
   }
+
   .gray {
     background: linear-gradient(135deg,#424242,#212121);
     color: #e0e0e0;
   }
+
   .red {
     background: linear-gradient(135deg,#ef5350,#c62828);
     color: #fff;
   }
+
   .outline {
     background: transparent;
   }
@@ -642,8 +608,6 @@
     opacity: 0.35;
     cursor: default;
   }
-
-  /* TOGGLE CHIP */
 
   .chip {
     border-radius: 999px;
@@ -749,12 +713,10 @@
   #toastIcon {
     font-size: 13px;
   }
-
 </style>
 </head>
 
 <body>
-
 <div class="header-bar">
   <div class="header-inner">
     <img src="https://www.matside.org/assets/images/image01.png" class="brand-logo" alt="Matside logo"/>
@@ -796,14 +758,7 @@
     </div>
   </div>
 
-  <div class="summary-card">
-    <div class="summary-item">Mat: <strong id="sumMat">1</strong></div>
-    <div class="summary-item">Period: <strong id="sumSeg">1</strong></div>
-    <div class="summary-item">Time: <strong id="sumTime">01:00</strong></div>
-    <div class="summary-item">Red: <strong id="sumRed" class="redText">0</strong></div>
-    <div class="summary-item">Green: <strong id="sumGreen" class="greenText">0</strong></div>
-  </div>
-
+  <!-- UPCOMING MATCHES -->
   <div class="upcoming-card">
     <div class="upcoming-title">Upcoming on this Mat</div>
     <div class="up-line"><span class="up-label">Now:</span><span id="upNow" class="up-value">—</span></div>
@@ -812,12 +767,60 @@
     <div class="up-line up-queue"><span class="up-label">Queue:</span><span id="upQueue" class="up-value">—</span></div>
   </div>
 
+  <!-- FULL-WIDTH SCORING CARD -->
+  <div class="card score-card-full">
+    <h3>Scoring</h3>
+    <div class="card-sub">
+      Apply points for takedowns, escapes, reversals, and nearfalls.
+    </div>
+    <div class="score-row">
+      <!-- RED SIDE -->
+      <div class="score-box">
+        <input id="redNameInput" class="score-name-input" placeholder="Red wrestler name"/>
+        <div class="score-header">
+          <span>Red wrestler</span>
+          <strong id="redNameLabel">Red</strong>
+        </div>
+        <div class="big-score" id="redScoreDisplay">0</div>
+        <div class="score-buttons">
+          <button class="btn small" data-score="red" data-pts="3">Takedown +3</button>
+          <button class="btn small" data-score="red" data-pts="1">Escape +1</button>
+          <button class="btn small" data-score="red" data-pts="2">Reversal +2</button>
+          <button class="btn small" data-score="red" data-pts="2">Near Fall +2</button>
+          <button class="btn small" data-score="red" data-pts="3">Near Fall +3</button>
+          <button class="btn small" data-score="red" data-pts="4">Near Fall +4</button>
+          <button class="btn small" data-score="red" data-pts="1">+1</button>
+          <button class="btn small" data-score="red" data-pts="-1">-1</button>
+        </div>
+      </div>
+
+      <!-- GREEN SIDE -->
+      <div class="score-box green-side">
+        <input id="greenNameInput" class="score-name-input" placeholder="Green wrestler name"/>
+        <div class="score-header">
+          <span>Green wrestler</span>
+          <strong id="greenNameLabel">Green</strong>
+        </div>
+        <div class="big-score" id="greenScoreDisplay">0</div>
+        <div class="score-buttons">
+          <button class="btn small" data-score="green" data-pts="3">Takedown +3</button>
+          <button class="btn small" data-score="green" data-pts="1">Escape +1</button>
+          <button class="btn small" data-score="green" data-pts="2">Reversal +2</button>
+          <button class="btn small" data-score="green" data-pts="2">Near Fall +2</button>
+          <button class="btn small" data-score="green" data-pts="3">Near Fall +3</button>
+          <button class="btn small" data-score="green" data-pts="4">Near Fall +4</button>
+          <button class="btn small" data-score="green" data-pts="1">+1</button>
+          <button class="btn small" data-score="green" data-pts="-1">-1</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MAIN GRID -->
   <div class="grid">
 
     <!-- LEFT COLUMN -->
     <div>
-
       <!-- TIMER CARD -->
       <div class="card">
         <h3>Timer</h3>
@@ -872,51 +875,6 @@
             </div>
           </div>
 
-        </div>
-      </div>
-
-      <!-- SCORE CARD -->
-      <div class="card">
-        <h3>Scoring</h3>
-        <div class="card-sub">
-          Apply points for takedowns, escapes, nearfalls, and more.
-        </div>
-
-        <div class="score-row">
-          <!-- RED SIDE -->
-          <div class="score-box">
-            <div class="score-header">
-              <span>Red wrestler</span>
-              <strong id="redNameLabel">Red</strong>
-            </div>
-            <div class="big-score" id="redScoreDisplay">0</div>
-            <div class="score-buttons">
-              <button class="btn small" data-score="red" data-pts="1">+1</button>
-              <button class="btn small" data-score="red" data-pts="2">+2</button>
-              <button class="btn small" data-score="red" data-pts="3">+3</button>
-              <button class="btn small" data-score="red" data-pts="-1">-1</button>
-            </div>
-          </div>
-
-          <!-- GREEN SIDE -->
-          <div class="score-box green-side">
-            <div class="score-header">
-              <span>Green wrestler</span>
-              <strong id="greenNameLabel">Green</strong>
-            </div>
-            <div class="big-score" id="greenScoreDisplay">0</div>
-            <div class="score-buttons">
-              <button class="btn small" data-score="green" data-pts="1">+1</button>
-              <button class="btn small" data-score="green" data-pts="2">+2</button>
-              <button class="btn small" data-score="green" data-pts="3">+3</button>
-              <button class="btn small" data-score="green" data-pts="-1">-1</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="name-input-row">
-          <input id="redNameInput"   placeholder="Red wrestler name"/>
-          <input id="greenNameInput" placeholder="Green wrestler name"/>
         </div>
       </div>
     </div>
@@ -993,7 +951,7 @@
   <span id="toastText">Saved</span>
 </div>
 
-<div id="version-tag">v4.2 (Firebase Upcoming)</div>
+<div id="version-tag">v4.3 (Full-width scoring, classic buttons)</div>
 
 <!-- Socket.IO -->
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -1008,11 +966,6 @@
   const matSelect   = document.getElementById("matSelect");
   const connEl      = document.getElementById("conn");
   const connPill    = document.getElementById("connPill");
-  const sumMatEl    = document.getElementById("sumMat");
-  const sumSegEl    = document.getElementById("sumSeg");
-  const sumTimeEl   = document.getElementById("sumTime");
-  const sumRedEl    = document.getElementById("sumRed");
-  const sumGreenEl  = document.getElementById("sumGreen");
 
   const timelineStream   = document.getElementById("timelineStream");
   const toastEl          = document.getElementById("toast");
@@ -1077,7 +1030,6 @@
         if (matSelect) {
           matSelect.value = String(matNum);
         }
-        if (sumMatEl) sumMatEl.textContent = matNum;
       }
     }
   }
@@ -1116,7 +1068,7 @@
       }
     }
 
-    // for match completion
+    // store current "Now" doc for completion
     window._currentMatchDocForMat = now || null;
   }
 
@@ -1165,7 +1117,6 @@
       currentMat = 1;
       matSelect.value = "1";
     }
-    if (sumMatEl) sumMatEl.textContent = currentMat;
   }
 
   function resolveEventAndSubscribe() {
@@ -1253,14 +1204,22 @@
 
   function renderSummary() {
     const s = getMatState();
-    sumMatEl.textContent = currentMat;
-    sumSegEl.textContent = s.period || 1;
-    sumTimeEl.textContent = formatTime(s.timeRemaining ?? 60);
-    sumRedEl.textContent = s.red ?? 0;
-    sumGreenEl.textContent = s.green ?? 0;
+    // These were used by the old summary card. We guard them now in case
+    // elements don't exist.
+    const sumMatEl   = document.getElementById("sumMat");
+    const sumSegEl   = document.getElementById("sumSeg");
+    const sumTimeEl  = document.getElementById("sumTime");
+    const sumRedEl   = document.getElementById("sumRed");
+    const sumGreenEl = document.getElementById("sumGreen");
 
-    clockDisplay.textContent = formatTime(s.timeRemaining ?? 60);
-    segDisplay.textContent   = s.segmentId || "REG1";
+    if (sumMatEl)   sumMatEl.textContent   = currentMat;
+    if (sumSegEl)   sumSegEl.textContent   = s.period || 1;
+    if (sumTimeEl)  sumTimeEl.textContent  = formatTime(s.timeRemaining ?? 60);
+    if (sumRedEl)   sumRedEl.textContent   = s.red ?? 0;
+    if (sumGreenEl) sumGreenEl.textContent = s.green ?? 0;
+
+    clockDisplay.textContent   = formatTime(s.timeRemaining ?? 60);
+    segDisplay.textContent     = s.segmentId || "REG1";
 
     redScoreDisplay.textContent   = s.red ?? 0;
     greenScoreDisplay.textContent = s.green ?? 0;
@@ -1402,12 +1361,15 @@
     });
   });
 
-  // SCORE BUTTONS
+  // SCORE BUTTONS (now your wrestling actions)
   document.querySelectorAll("[data-score]").forEach(btn=>{
     btn.addEventListener("click",()=>{
       const who = btn.dataset.score;
       const pts = parseInt(btn.dataset.pts || "0",10);
-      if(!who || !pts) return;
+      if(!who || !pts) {
+        // allow -1 as valid
+        if (!who) return;
+      }
       const s = getMatState();
       const cur = (s[who] || 0) + pts;
       const clamped = Math.max(0, cur);
@@ -1577,16 +1539,11 @@
     showToast("Match submitted & mat reset");
   });
 
-// ======================================================
-// KEYBOARD SHORTCUT ENGINE
-
-  // Initialize mat from URL and match feed
+  // PARAMS / INIT
   setMatFromParamsIfPresent();
   resolveEventAndSubscribe();
 
-  // KEYBOARD SHORTCUT ENGINE
-// ================================
-
+  // KEYBOARD SHORTCUTS
   document.addEventListener("keydown",(ev)=>{
     const key = ev.key;
     const tag = (ev.target && ev.target.tagName) || "";
@@ -1594,7 +1551,7 @@
 
     const mat = currentMat;
 
-    // --- TIMER ---
+    // TIMER
     if (key === " ") {
       ev.preventDefault();
       const state = getMatState() || {};
@@ -1616,21 +1573,20 @@
       return;
     }
 
-    // --- RED SCORING ---
+    // RED SCORING
     if (key === "1") socket.emit("addPoints", { mat, color: "red", pts: 1 });
     if (key === "2") socket.emit("addPoints", { mat, color: "red", pts: 2 });
     if (key === "3") socket.emit("addPoints", { mat, color: "red", pts: 3 });
     if (key === "4") socket.emit("addPoints", { mat, color: "red", pts: 2 }); // NF2
     if (key === "5") socket.emit("addPoints", { mat, color: "red", pts: 3 }); // NF3
 
-    // --- GREEN SCORING ---
+    // GREEN SCORING
     if (key === "7") socket.emit("addPoints", { mat, color: "green", pts: 1 });
     if (key === "8") socket.emit("addPoints", { mat, color: "green", pts: 2 });
     if (key === "9") socket.emit("addPoints", { mat, color: "green", pts: 3 });
     if (key === "0") socket.emit("addPoints", { mat, color: "green", pts: 2 }); // NF2
     if (key === "-") socket.emit("addPoints", { mat, color: "green", pts: 3 }); // NF3
   });
-  
 </script>
 
 </body>
