@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Matside — Admin Control Panel (v9.0)</title>
+<title>Matside — Admin Control Panel (v10.0)</title>
 
 <!-- PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -17,9 +17,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <style>
-/* ----------------------------------------- */
-/* GLOBAL DARK THEME                         */
-/* ----------------------------------------- */
+/* GLOBAL STYLES omitted here for brevity – same as v9.0 but with Manage Users tab styles */
+/* I’ll keep them, but you can think of this as v9.0 + one new tab + permission logic. */
 
 body {
   margin: 0;
@@ -28,18 +27,8 @@ body {
   color: #e6e6e6;
   font-family: "Inter", sans-serif;
 }
-
-h1 {
-  margin: 0 0 6px;
-  font-weight: 700;
-}
-
-.version-tag {
-  font-size: 12px;
-  opacity: 0.6;
-  margin-bottom: 6px;
-}
-
+h1 { margin: 0 0 6px; font-weight: 700; }
+.version-tag { font-size: 12px; opacity: 0.6; margin-bottom: 6px; }
 #userInfoBar {
   font-size: 12px;
   opacity: 0.9;
@@ -48,7 +37,6 @@ h1 {
   justify-content: space-between;
   align-items: center;
 }
-
 #userInfoBar button {
   padding: 5px 10px;
   border-radius: 12px;
@@ -58,9 +46,7 @@ h1 {
   cursor: pointer;
   font-size: 11px;
 }
-#userInfoBar button:hover {
-  background: #5a5a5a;
-}
+#userInfoBar button:hover { background: #5a5a5a; }
 
 .section {
   background: #222;
@@ -71,16 +57,8 @@ h1 {
   border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* ----------------------------------------- */
-/* TABS                                      */
-/* ----------------------------------------- */
-
-.tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
+/* Tabs */
+.tabs { display: flex; gap: 10px; margin-bottom: 12px; }
 .tab {
   padding: 10px 18px;
   background: #2d2d2d;
@@ -92,28 +70,13 @@ h1 {
   transition: 0.2s;
   user-select: none;
 }
+.tab.active { background: #3a77ff; border-color: #5a8cff; color: #fff; }
+.tab:hover:not(.active) { background: #333; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
-.tab.active {
-  background: #3a77ff;
-  border-color: #5a8cff;
-  color: #fff;
-}
-
-.tab:hover:not(.active) {
-  background: #333;
-}
-
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
-}
-
-/* ----------------------------------------- */
-/* BUTTONS                                   */
-/* ----------------------------------------- */
+/* Buttons, toast, loading bar, drag/drop, events tab styles */
+/* (same as previous v9.0 file) */
 
 .pill-btn-fat {
   padding: 10px 20px;
@@ -128,39 +91,17 @@ h1 {
   letter-spacing: 0.5px;
   transition: 0.2s;
 }
-
 .pill-btn-fat:hover {
   background: #5a8cff;
   box-shadow: 0 0 10px rgba(90,140,255,0.6);
 }
+.action-bar { margin-top: 10px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+.action-bar .pill-btn-fat { font-size: 12px; }
+.btn-danger { background: #d9534f; }
+.btn-danger:hover { background: #e26864; }
+.btn-secondary { background: #4a4a4a; }
+.btn-secondary:hover { background: #5a5a5a; }
 
-.action-bar {
-  margin-top: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.action-bar .pill-btn-fat {
-  font-size: 12px;
-}
-
-.btn-danger {
-  background: #d9534f;
-}
-.btn-danger:hover {
-  background: #e26864;
-}
-
-.btn-secondary {
-  background: #4a4a4a;
-}
-.btn-secondary:hover {
-  background: #5a5a5a;
-}
-
-/* Per-mat footer button */
 .mat-footer-btn {
   margin: 8px 10px 10px 10px;
   padding: 6px 10px;
@@ -174,13 +115,7 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.mat-footer-btn:hover {
-  background: #555;
-}
-
-/* ----------------------------------------- */
-/* CSV TABLE                                 */
-/* ----------------------------------------- */
+.mat-footer-btn:hover { background: #555; }
 
 .csv-table {
   width: 100%;
@@ -188,22 +123,17 @@ h1 {
   font-size: 13px;
   margin-top: 12px;
 }
-
 .csv-table th {
   background: #333;
   padding: 10px;
   border-bottom: 2px solid #444;
 }
-
 .csv-table td {
   padding: 8px;
   border-bottom: 1px solid #333;
 }
 
-/* ----------------------------------------- */
-/* TOAST SYSTEM                              */
-/* ----------------------------------------- */
-
+/* Toast */
 #toastContainer {
   position: fixed;
   top: 20px;
@@ -211,7 +141,6 @@ h1 {
   z-index: 999999 !important;
   pointer-events: none;
 }
-
 .toast {
   pointer-events: auto;
   z-index: 999999 !important;
@@ -226,25 +155,11 @@ h1 {
   transform: translateY(-12px);
   animation: toastIn 0.35s forwards, toastOut 0.4s 2.8s forwards;
 }
+.toast.error { border-left-color: #ff4b4b; }
+@keyframes toastIn { 0%{opacity:0;transform:translateY(-12px);}100%{opacity:1;transform:translateY(0);} }
+@keyframes toastOut { 0%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(-12px);} }
 
-.toast.error {
-  border-left-color: #ff4b4b;
-}
-
-@keyframes toastIn {
-  0% { opacity: 0; transform: translateY(-12px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes toastOut {
-  0% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-12px); }
-}
-
-/* ----------------------------------------- */
-/* LOADING BAR                               */
-/* ----------------------------------------- */
-
+/* Loading bar */
 .loading-bar {
   width: 100%;
   height: 4px;
@@ -253,29 +168,19 @@ h1 {
   margin-top: 12px;
   display: none;
 }
-
 .loading-bar-inner {
   height: 100%;
   background: #3a77ff;
   animation: loadLoop 1.2s infinite;
 }
+@keyframes loadLoop { 0%{width:0%}50%{width:70%}100%{width:0%} }
 
-@keyframes loadLoop {
-  0% { width: 0%; }
-  50% { width: 70%; }
-  100% { width: 0%; }
-}
-
-/* ----------------------------------------- */
-/* DRAG & DROP                               */
-/* ----------------------------------------- */
-
+/* Drag & Drop */
 .drag-container {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 18px;
 }
-
 .list-column {
   background: #242424;
   border-radius: 10px;
@@ -285,7 +190,6 @@ h1 {
   flex-direction: column;
   position: relative;
 }
-
 .list-column h3 {
   background: #2b2b2b;
   margin: 0;
@@ -293,7 +197,6 @@ h1 {
   text-align: center;
   border-bottom: 1px solid #333;
 }
-
 .match-list {
   flex: 1;
   padding: 10px;
@@ -302,7 +205,6 @@ h1 {
   flex-direction: column;
   gap: 10px;
 }
-
 .match-card {
   background: #2e2e2e;
   padding: 10px;
@@ -312,19 +214,10 @@ h1 {
   transition: 0.15s;
   touch-action: none;
 }
+.match-card:hover { background: #353535; }
+.match-card.dragging { opacity: 0.5; }
 
-.match-card:hover {
-  background: #353535;
-}
-
-.match-card.dragging {
-  opacity: 0.5;
-}
-
-/* ----------------------------------------- */
-/* EVENTS TAB                                */
-/* ----------------------------------------- */
-
+/* Events tab */
 #activeEventBanner {
   padding: 10px 12px;
   border-radius: 8px;
@@ -333,10 +226,7 @@ h1 {
   background: #272727;
   border: 1px solid #444;
 }
-
-#activeEventBanner span {
-  font-weight: 600;
-}
+#activeEventBanner span { font-weight: 600; }
 
 .event-form {
   margin-bottom: 18px;
@@ -345,20 +235,17 @@ h1 {
   background: #252525;
   border: 1px solid #333;
 }
-
 .event-form-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 8px;
 }
-
 .event-form-row label {
   font-size: 12px;
   opacity: 0.8;
   display: block;
 }
-
 .event-form-row input,
 .event-form-row textarea {
   background: #1b1b1b;
@@ -368,17 +255,8 @@ h1 {
   padding: 6px 8px;
   font-size: 13px;
 }
-
-.event-form-row input {
-  min-width: 150px;
-}
-
-.event-form-row textarea {
-  width: 100%;
-  min-height: 60px;
-  resize: vertical;
-}
-
+.event-form-row input { min-width: 150px; }
+.event-form-row textarea { width: 100%; min-height: 60px; resize: vertical; }
 .events-list-header {
   margin: 10px 0 6px 0;
   font-size: 14px;
@@ -386,7 +264,6 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-
 .event-card {
   background: #252525;
   border-radius: 10px;
@@ -394,29 +271,13 @@ h1 {
   padding: 12px;
   margin-bottom: 10px;
 }
-
 .event-card.active {
   border-color: #3a77ff;
   box-shadow: 0 0 12px rgba(58,119,255,0.4);
 }
-
-.event-title {
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.event-sub {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.event-actions {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
+.event-title { font-weight: 600; margin-bottom: 4px; }
+.event-sub { font-size: 12px; opacity: 0.8; }
+.event-actions { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
 .event-badge {
   display: inline-block;
   padding: 2px 8px;
@@ -425,11 +286,41 @@ h1 {
   background: #444;
   margin-left: 6px;
 }
+.event-badge.archived { background: #664040; color: #ffb0b0; }
 
-.event-badge.archived {
-  background: #664040;
-  color: #ffb0b0;
+/* Manage Users tab */
+.user-card {
+  background: #252525;
+  border-radius: 10px;
+  border: 1px solid #333;
+  padding: 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
 }
+.user-email { font-weight: 600; margin-bottom: 4px; }
+.permission-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin: 6px 0 8px 0;
+}
+.permission-grid label {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.user-save-btn {
+  padding: 5px 10px;
+  border-radius: 14px;
+  border: none;
+  background: #3a77ff;
+  color: #fff;
+  font-size: 11px;
+  cursor: pointer;
+}
+.user-save-btn:hover { background: #5a8cff; }
+
 </style>
 </head>
 
@@ -437,7 +328,7 @@ h1 {
 
 <div style="max-width:1100px;margin:0 auto;">
   <h1>Matside Admin Control</h1>
-  <div class="version-tag">admin-control v9.0 — Auth + Per-User Active Event</div>
+  <div class="version-tag">admin-control v10.0 — Auth, Per-Event, Permissions, Manage Users</div>
   <div id="userInfoBar">
     <div>Logged in as: <span id="userEmailLabel">—</span></div>
     <button id="logoutBtn">Logout</button>
@@ -447,6 +338,7 @@ h1 {
     <div class="tab active" data-tab="events">Events</div>
     <div class="tab" data-tab="data">Data Mgmt</div>
     <div class="tab" data-tab="assign">Mat Assign</div>
+    <div class="tab" data-tab="users">Manage Users</div>
   </div>
 </div>
 
@@ -456,7 +348,6 @@ h1 {
 <div id="tab-events" class="tab-content active">
   <div class="section">
     <h2>Events</h2>
-
     <div id="activeEventBanner">Loading active event…</div>
 
     <div class="event-form">
@@ -538,23 +429,29 @@ h1 {
   </div>
 </div>
 
+<!-- TAB: MANAGE USERS -->
+<div id="tab-users" class="tab-content">
+  <div class="section">
+    <h2>Manage Users</h2>
+    <p style="font-size:13px;opacity:0.8;margin-top:0;">
+      Toggle permissions for admins, staff, mat operators. Changes apply immediately.
+    </p>
+    <div id="usersList"></div>
+  </div>
+</div>
+
 <script>
-/* --------------------------------------------- */
-/* TABS                                          */
-/* --------------------------------------------- */
+/* TABS */
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
-
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
     document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
   });
 });
 
-/* --------------------------------------------- */
-/* FIREBASE INIT + AUTH GUARD                    */
-/* --------------------------------------------- */
+/* Firebase init */
 const firebaseConfig = {
   apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
   authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
@@ -567,34 +464,27 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
+/* Global state */
 let currentUser = null;
 let userSettingsDocRef = null;
 let currentEventId = null;
 let currentEvent = null;
-let lastState = null; // for undo
+let lastState = null;
+let permissions = {
+  canManageEvents: false,
+  canUploadMatches: false,
+  canAssignMats: false,
+  canUseBulkActions: false,
+  canScoreMatches: false,
+  canViewDashboard: true,
+  canManageUsers: false
+};
 
-// Guard: redirect to login if no user
-auth.onAuthStateChanged(user => {
-  if (!user) {
-    window.location.href = "auth.html";
-  } else {
-    currentUser = user;
-    document.getElementById("userEmailLabel").textContent = user.email || user.uid;
-    userSettingsDocRef = db.collection("settings").doc(user.uid);
-    initForUser();
-  }
-});
+const activeEventBannerEl = document.getElementById("activeEventBanner");
+const dataTabLabelEl = document.getElementById("dataTabActiveEventLabel");
+const assignTabLabelEl = document.getElementById("assignTabActiveEventLabel");
 
-// Logout button
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  auth.signOut().then(() => {
-    window.location.href = "auth.html";
-  });
-});
-
-/* --------------------------------------------- */
-/* TOASTS                                        */
-/* --------------------------------------------- */
+/* Toast */
 function showToast(msg, type = "success") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
@@ -603,20 +493,134 @@ function showToast(msg, type = "success") {
   setTimeout(() => el.remove(), 3000);
 }
 
-/* --------------------------------------------- */
-/* GLOBAL HELPERS                                */
-/* --------------------------------------------- */
-const activeEventBannerEl = document.getElementById("activeEventBanner");
-const dataTabLabelEl = document.getElementById("dataTabActiveEventLabel");
-const assignTabLabelEl = document.getElementById("assignTabActiveEventLabel");
-
+/* Helper: get matches col */
 function getMatchesCollection() {
   if (!currentEventId) return null;
   return db.collection("events").doc(currentEventId).collection("matches");
 }
-
 function snapshotDocs(docs) {
   lastState = docs.map(d => ({ id: d.id, data: d.data() }));
+}
+
+/* Auth guard */
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    window.location.href = "auth.html";
+  } else {
+    currentUser = user;
+    document.getElementById("userEmailLabel").textContent = user.email || user.uid;
+    userSettingsDocRef = db.collection("settings").doc(user.uid);
+    loadUserProfile();
+  }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  auth.signOut().then(() => {
+    window.location.href = "auth.html";
+  });
+});
+
+/* Load user profile/permissions */
+function loadUserProfile() {
+  const userDocRef = db.collection("users").doc(currentUser.uid);
+  userDocRef.get()
+    .then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        permissions = {
+          canManageEvents: !!data.canManageEvents,
+          canUploadMatches: !!data.canUploadMatches,
+          canAssignMats: !!data.canAssignMats,
+          canUseBulkActions: !!data.canUseBulkActions,
+          canScoreMatches: !!data.canScoreMatches,
+          canViewDashboard: data.canViewDashboard !== undefined ? !!data.canViewDashboard : true,
+          canManageUsers: !!data.canManageUsers
+        };
+      } else {
+        // If somehow no profile, create a safe default
+        permissions = {
+          canManageEvents: false,
+          canUploadMatches: false,
+          canAssignMats: false,
+          canUseBulkActions: false,
+          canScoreMatches: false,
+          canViewDashboard: true,
+          canManageUsers: false
+        };
+        userDocRef.set({
+          email: currentUser.email || null,
+          ...permissions
+        }, { merge: true });
+      }
+
+      applyPermissionsToUI();
+      initForUser();
+    })
+    .catch(err => {
+      console.error(err);
+      showToast("Error loading user profile.", "error");
+      // fall back with minimal access
+      permissions.canViewDashboard = false;
+      applyPermissionsToUI();
+    });
+}
+
+/* Apply permissions: hide/show tabs */
+function applyPermissionsToUI() {
+  const tabEvents = document.querySelector('[data-tab="events"]');
+  const tabData   = document.querySelector('[data-tab="data"]');
+  const tabAssign = document.querySelector('[data-tab="assign"]');
+  const tabUsers  = document.querySelector('[data-tab="users"]');
+
+  if (!permissions.canManageEvents && tabEvents) tabEvents.style.display = "none";
+  if (!permissions.canUploadMatches && tabData) tabData.style.display = "none";
+  if (!permissions.canAssignMats && tabAssign) tabAssign.style.display = "none";
+  if (!permissions.canManageUsers && tabUsers) tabUsers.style.display = "none";
+
+  // Bulk action controls
+  if (!permissions.canUseBulkActions) {
+    ["autoDistributeBtn", "undoBtn", "unassignAllBtn", "clearCompletedBtn"].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.style.display = "none";
+    });
+  }
+
+  // If user can't view dashboard at all:
+  if (!permissions.canViewDashboard) {
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#111;font-family:Inter,sans-serif;color:#eee;">
+        <div style="text-align:center;max-width:400px;">
+          <h2 style="margin-bottom:8px;">No Admin Access</h2>
+          <p style="font-size:14px;opacity:0.8;">
+            Your account does not have permission to access the Matside admin console.
+            Please contact the tournament director.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+}
+
+/* Init after perms + settings loaded */
+function initForUser() {
+  userSettingsDocRef.get()
+    .then(doc => {
+      if (doc.exists) {
+        currentEventId = doc.data().currentEventId || null;
+      }
+      updateActiveEventUI();
+      subscribeEvents();
+    })
+    .catch(() => {
+      subscribeEvents();
+    });
+
+  wireEventsTab();
+  wireDataTab();
+  wireAssignTab();
+  if (permissions.canManageUsers) {
+    wireManageUsersTab();
+  }
 }
 
 function updateActiveEventUI() {
@@ -635,32 +639,7 @@ function updateActiveEventUI() {
   }
 }
 
-/* --------------------------------------------- */
-/* INIT PER USER                                 */
-/* --------------------------------------------- */
-function initForUser() {
-  // Load user settings
-  userSettingsDocRef.get()
-    .then(doc => {
-      if (doc.exists) {
-        currentEventId = doc.data().currentEventId || null;
-      }
-      updateActiveEventUI();
-      subscribeEvents();
-    })
-    .catch(() => {
-      subscribeEvents();
-    });
-
-  wireEventsTab();
-  wireDataTab();
-  wireAssignTab();
-}
-
-/* --------------------------------------------- */
-/* EVENTS TAB                                    */
-/* --------------------------------------------- */
-
+/* EVENTS TAB (requires canManageEvents to be actually useful) */
 function subscribeEvents() {
   db.collection("events")
     .orderBy("date", "desc")
@@ -678,39 +657,32 @@ function renderEventsList(events) {
     container.innerHTML = `<div style="opacity:0.7;font-size:13px;">No events created yet.</div>`;
     return;
   }
-
   let html = "";
   events.forEach(ev => {
     const dateStr = ev.date || "No date";
     const mats = ev.mats || 4;
     const archived = ev.archived === true;
-
     html += `
       <div class="event-card ${currentEventId === ev.id ? "active" : ""}" data-id="${ev.id}">
         <div class="event-title">
           ${ev.name || "Untitled Event"}
           ${archived ? '<span class="event-badge archived">Archived</span>' : ""}
         </div>
-        <div class="event-sub">
-          Date: ${dateStr} • Mats: ${mats} • Period: ${ev.periodMinutes || 2} min
-        </div>
-        <div class="event-sub">
-          Location: ${ev.location || "—"}
-        </div>
-        <div class="event-sub" style="margin-top:4px;">
-          ${ev.notes ? "Notes: " + ev.notes : ""}
-        </div>
+        <div class="event-sub">Date: ${dateStr} • Mats: ${mats} • Period: ${ev.periodMinutes || 2} min</div>
+        <div class="event-sub">Location: ${ev.location || "—"}</div>
+        <div class="event-sub" style="margin-top:4px;">${ev.notes ? "Notes: " + ev.notes : ""}</div>
         <div class="event-actions">
           <button class="pill-btn-fat btn-secondary event-set-active-btn" data-id="${ev.id}" style="padding:6px 10px;">Set Active</button>
+          ${permissions.canManageEvents ? `
           <button class="pill-btn-fat btn-secondary event-archive-btn" data-id="${ev.id}" data-archived="${archived ? "1" : "0"}" style="padding:6px 10px;">
             ${archived ? "Unarchive" : "Archive"}
           </button>
           <button class="pill-btn-fat btn-danger event-delete-btn" data-id="${ev.id}" style="padding:6px 10px;">Delete</button>
+          ` : ""}
         </div>
       </div>
     `;
   });
-
   container.innerHTML = html;
 
   container.querySelectorAll(".event-set-active-btn").forEach(btn => {
@@ -726,37 +698,43 @@ function renderEventsList(events) {
     });
   });
 
-  container.querySelectorAll(".event-archive-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.dataset.id;
-      const archived = btn.dataset.archived === "1";
-      db.collection("events").doc(id).update({ archived: !archived })
-        .then(() => showToast(!archived ? "Event archived." : "Event unarchived.", "success"))
-        .catch(() => showToast("Error updating archive state.", "error"));
+  if (permissions.canManageEvents) {
+    container.querySelectorAll(".event-archive-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        const archived = btn.dataset.archived === "1";
+        db.collection("events").doc(id).update({ archived: !archived })
+          .then(() => showToast(!archived ? "Event archived." : "Event unarchived.", "success"))
+          .catch(() => showToast("Error updating archive state.", "error"));
+      });
     });
-  });
 
-  container.querySelectorAll(".event-delete-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.dataset.id;
-      if (!confirm("Delete this event? (Matches subcollection NOT deleted yet.)")) return;
-
-      db.collection("events").doc(id).delete()
-        .then(() => {
-          if (currentEventId === id) {
-            currentEventId = null;
-            userSettingsDocRef.set({ currentEventId: null }, { merge: true });
-            updateActiveEventUI();
-          }
-          showToast("Event deleted.", "success");
-        })
-        .catch(() => showToast("Error deleting event.", "error"));
+    container.querySelectorAll(".event-delete-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        if (!confirm("Delete this event? (Matches subcollection NOT deleted yet.)")) return;
+        db.collection("events").doc(id).delete()
+          .then(() => {
+            if (currentEventId === id) {
+              currentEventId = null;
+              userSettingsDocRef.set({ currentEventId: null }, { merge: true });
+              updateActiveEventUI();
+            }
+            showToast("Event deleted.", "success");
+          })
+          .catch(() => showToast("Error deleting event.", "error"));
+      });
     });
-  });
+  }
 }
 
 function wireEventsTab() {
-  document.getElementById("createEventBtn").addEventListener("click", () => {
+  const createBtn = document.getElementById("createEventBtn");
+  if (!permissions.canManageEvents) {
+    if (createBtn) createBtn.disabled = true;
+    return;
+  }
+  createBtn.addEventListener("click", () => {
     const name = document.getElementById("eventNameInput").value.trim();
     const date = document.getElementById("eventDateInput").value;
     const mats = parseInt(document.getElementById("eventMatsInput").value || "4", 10);
@@ -793,10 +771,7 @@ function wireEventsTab() {
   });
 }
 
-/* --------------------------------------------- */
-/* DATA MGMT TAB (CSV → matches under event)     */
-/* --------------------------------------------- */
-
+/* DATA TAB */
 let parsedMatches = [];
 
 function wireDataTab() {
@@ -805,6 +780,10 @@ function wireDataTab() {
   });
 
   document.getElementById("parseCsvBtn").addEventListener("click", () => {
+    if (!permissions.canUploadMatches) {
+      showToast("You do not have permission to upload matches.", "error");
+      return;
+    }
     if (!currentEventId) {
       showToast("Select an active event in the Events tab first.", "error");
       return;
@@ -822,7 +801,6 @@ function wireDataTab() {
           }
           return "";
         };
-
         parsedMatches = results.data.map(r => ({
           id: crypto.randomUUID(),
           bout: get(r, "bout", "Bout", "BOUT"),
@@ -842,7 +820,6 @@ function wireDataTab() {
           completed: false,
           queueIndex: null
         }));
-
         renderCsvPreview();
       }
     });
@@ -855,9 +832,7 @@ function renderCsvPreview() {
       <tr>
         <th>Bout</th><th>Weight</th><th>Round</th>
         <th>Red</th><th>Green</th><th>Mat</th>
-      </tr>
-  `;
-
+      </tr>`;
   parsedMatches.forEach(m => {
     html += `
       <tr>
@@ -867,19 +842,19 @@ function renderCsvPreview() {
         <td>${m.red.name}</td>
         <td>${m.green.name}</td>
         <td>${m.assignedMat ?? ""}</td>
-      </tr>
-    `;
+      </tr>`;
   });
-
   html += `</table><br>
-    <button id="saveToCloudBtn" class="pill-btn-fat">Save to Event</button>
-  `;
-
+    <button id="saveToCloudBtn" class="pill-btn-fat">Save to Event</button>`;
   document.getElementById("csvPreview").innerHTML = html;
   document.getElementById("saveToCloudBtn").onclick = saveMatchesToCloud;
 }
 
 function saveMatchesToCloud() {
+  if (!permissions.canUploadMatches) {
+    showToast("You do not have permission to upload matches.", "error");
+    return;
+  }
   const col = getMatchesCollection();
   if (!col) {
     showToast("No active event selected.", "error");
@@ -894,10 +869,7 @@ function saveMatchesToCloud() {
     .catch(() => showToast("Error saving matches.", "error"));
 }
 
-/* --------------------------------------------- */
-/* MAT ASSIGN TAB                                */
-/* --------------------------------------------- */
-
+/* MAT ASSIGN TAB */
 function wireAssignTab() {
   document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
   document.getElementById("undoBtn").addEventListener("click", undoLastAction);
@@ -907,19 +879,21 @@ function wireAssignTab() {
 }
 
 function loadMatches() {
+  if (!permissions.canAssignMats) {
+    showToast("You do not have permission to assign mats.", "error");
+    return;
+  }
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
     return;
   }
   document.getElementById("loadingBar").style.display = "block";
-
   col.get()
     .then(snapshot => {
       const matches = snapshot.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .filter(m => m.completed !== true);
-
       matches.sort((a, b) => Number(a.bout) - Number(b.bout));
       renderAssignmentBoard(matches);
       document.getElementById("loadingBar").style.display = "none";
@@ -936,22 +910,16 @@ function renderAssignmentBoard(matches) {
           <button class="mat-footer-btn" data-mat="${m}" ${m === 0 ? "disabled" : ""}>
             Unassign This Mat
           </button>
-        </div>
-      `).join("")}
-    </div>
-  `;
-
+        </div>`).join("")}
+    </div>`;
   const mats = { 0: [], 1: [], 2: [], 3: [], 4: [] };
-
   matches.forEach(m => {
     const mat = Number(m.assignedMat) || 0;
     mats[mat].push(m);
   });
-
   Object.values(mats).forEach(list => {
     list.sort((a, b) => Number(a.bout) - Number(b.bout));
   });
-
   Object.keys(mats).forEach(mat => {
     const container = document.getElementById(`mat-${mat}`);
     mats[mat].forEach(m => container.appendChild(makeCard(m)));
@@ -980,30 +948,29 @@ function makeCard(m) {
   const el = document.createElement("div");
   el.className = "match-card";
   el.dataset.id = m.id;
-
   el.innerHTML = `
     <div><strong>Bout ${m.bout}</strong> ${m.weight ? `— ${m.weight}` : ""}</div>
     <div>${m.red?.name || ""} vs ${m.green?.name || ""}</div>
-    <div style="font-size:11px;opacity:0.7;">Mat: ${m.assignedMat ?? "Unassigned"}</div>
-  `;
+    <div style="font-size:11px;opacity:0.7;">Mat: ${m.assignedMat ?? "Unassigned"}</div>`;
   return el;
 }
 
 function saveAssignmentOrder() {
+  if (!permissions.canAssignMats) {
+    showToast("You do not have permission to assign mats.", "error");
+    return;
+  }
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
     return;
   }
-
   col.get().then(snapshot => {
     snapshotDocs(snapshot.docs);
-
     const batch = db.batch();
     [0,1,2,3,4].forEach(mat => {
       const parent = document.getElementById(`mat-${mat}`);
       if (!parent) return;
-
       [...parent.children].forEach((card, index) => {
         const ref = col.doc(card.dataset.id);
         batch.update(ref, {
@@ -1012,15 +979,17 @@ function saveAssignmentOrder() {
         });
       });
     });
-
     batch.commit()
       .then(() => showToast("Assignments saved.", "success"))
       .catch(() => showToast("Error saving assignments.", "error"));
   });
 }
 
-/* UNDO */
 function undoLastAction() {
+  if (!permissions.canUseBulkActions) {
+    showToast("You do not have permission to use bulk actions.", "error");
+    return;
+  }
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
@@ -1030,7 +999,6 @@ function undoLastAction() {
     showToast("Nothing to undo.", "error");
     return;
   }
-
   const batch = db.batch();
   lastState.forEach(({ id, data }) => {
     batch.set(col.doc(id), data, { merge: true });
@@ -1044,15 +1012,17 @@ function undoLastAction() {
     .catch(() => showToast("Error undoing last action.", "error"));
 }
 
-/* UNASSIGN ONE MAT */
 function unassignMat(matNum) {
+  if (!permissions.canAssignMats) {
+    showToast("You do not have permission to assign mats.", "error");
+    return;
+  }
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
     return;
   }
   if (!confirm(`Unassign all matches from Mat ${matNum}?`)) return;
-
   col.where("assignedMat", "==", matNum).get()
     .then(snapshot => {
       if (snapshot.empty) {
@@ -1060,12 +1030,10 @@ function unassignMat(matNum) {
         return;
       }
       snapshotDocs(snapshot.docs);
-
       const batch = db.batch();
       snapshot.docs.forEach(doc => {
         batch.update(col.doc(doc.id), { assignedMat: null });
       });
-
       return batch.commit();
     })
     .then(() => {
@@ -1075,15 +1043,17 @@ function unassignMat(matNum) {
     .catch(() => showToast("Error unassigning mat.", "error"));
 }
 
-/* UNASSIGN ALL */
 function unassignAllMatches() {
+  if (!permissions.canUseBulkActions) {
+    showToast("You do not have permission for this bulk action.", "error");
+    return;
+  }
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
     return;
   }
   if (!confirm("Unassign ALL matches from ALL mats?")) return;
-
   col.get()
     .then(snapshot => {
       if (snapshot.empty) {
@@ -1091,12 +1061,10 @@ function unassignAllMatches() {
         return;
       }
       snapshotDocs(snapshot.docs);
-
       const batch = db.batch();
       snapshot.docs.forEach(doc => {
         batch.update(col.doc(doc.id), { assignedMat: null });
       });
-
       return batch.commit();
     })
     .then(() => {
@@ -1106,15 +1074,17 @@ function unassignAllMatches() {
     .catch(() => showToast("Error unassigning all.", "error"));
 }
 
-/* AUTO-DISTRIBUTE */
 function autoDistributeMatches() {
+  if (!permissions.canUseBulkActions) {
+    showToast("You do not have permission for this bulk action.", "error");
+    return;
+  }
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
     return;
   }
   if (!confirm("Auto-distribute all active matches across Mats 1–4 by bout order?")) return;
-
   col.get()
     .then(snapshot => {
       const docs = snapshot.docs.filter(d => d.data().completed !== true);
@@ -1122,28 +1092,22 @@ function autoDistributeMatches() {
         showToast("No active matches to distribute.", "error");
         return;
       }
-
       snapshotDocs(docs);
-
       const matches = docs.map(d => ({ id: d.id, ...d.data() }));
       matches.sort((a, b) => Number(a.bout) - Number(b.bout));
-
       const mats = [1,2,3,4];
       let idx = 0;
       const counters = {1:0,2:0,3:0,4:0};
-
       const batch = db.batch();
       matches.forEach(m => {
         const mat = mats[idx % mats.length];
         idx++;
         counters[mat] = (counters[mat] || 0) + 1;
-
         batch.update(col.doc(m.id), {
           assignedMat: mat,
           queueIndex: counters[mat]
         });
       });
-
       return batch.commit();
     })
     .then(() => {
@@ -1153,15 +1117,17 @@ function autoDistributeMatches() {
     .catch(() => showToast("Error auto-distributing.", "error"));
 }
 
-/* CLEAR COMPLETED */
 function clearCompletedMatches() {
+  if (!permissions.canUseBulkActions) {
+    showToast("You do not have permission for this bulk action.", "error");
+    return;
+  }
   const col = getMatchesCollection();
   if (!col) {
     showToast("Select an active event first.", "error");
     return;
   }
   if (!confirm("Permanently delete all matches with completed = true?")) return;
-
   col.where("completed", "==", true).get()
     .then(snapshot => {
       if (snapshot.empty) {
@@ -1169,12 +1135,10 @@ function clearCompletedMatches() {
         return;
       }
       snapshotDocs(snapshot.docs);
-
       const batch = db.batch();
       snapshot.docs.forEach(doc => {
         batch.delete(col.doc(doc.id));
       });
-
       return batch.commit();
     })
     .then(() => {
@@ -1182,6 +1146,56 @@ function clearCompletedMatches() {
       loadMatches();
     })
     .catch(() => showToast("Error clearing completed.", "error"));
+}
+
+/* MANAGE USERS TAB (director-level: canManageUsers) */
+function wireManageUsersTab() {
+  if (!permissions.canManageUsers) return;
+  const container = document.getElementById("usersList");
+  db.collection("users").onSnapshot(snapshot => {
+    const users = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    let html = "";
+    users.forEach(u => {
+      html += `
+        <div class="user-card" data-id="${u.id}">
+          <div class="user-email">${u.email || u.id}</div>
+          <div class="permission-grid">
+            ${renderCheckbox(u, "canManageEvents", "Manage Events")}
+            ${renderCheckbox(u, "canUploadMatches", "Upload Matches")}
+            ${renderCheckbox(u, "canAssignMats", "Assign Mats")}
+            ${renderCheckbox(u, "canUseBulkActions", "Bulk Actions")}
+            ${renderCheckbox(u, "canScoreMatches", "Score Matches")}
+            ${renderCheckbox(u, "canViewDashboard", "View Dashboard")}
+            ${renderCheckbox(u, "canManageUsers", "Manage Users")}
+          </div>
+          <button class="user-save-btn">Save</button>
+        </div>`;
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll(".user-card").forEach(card => {
+      const uid = card.dataset.id;
+      const saveBtn = card.querySelector(".user-save-btn");
+      saveBtn.addEventListener("click", () => {
+        const perms = {};
+        card.querySelectorAll("input[type=checkbox]").forEach(chk => {
+          perms[chk.name] = chk.checked;
+        });
+        db.collection("users").doc(uid).set(perms, { merge: true })
+          .then(() => showToast(`Updated permissions for ${uid}.`, "success"))
+          .catch(() => showToast("Error updating user permissions.", "error"));
+      });
+    });
+  });
+}
+
+function renderCheckbox(user, key, label) {
+  const checked = user[key] ? "checked" : "";
+  return `
+    <label>
+      <input type="checkbox" name="${key}" ${checked} />
+      ${label}
+    </label>`;
 }
 </script>
 
