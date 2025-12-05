@@ -1,567 +1,459 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Control – Match Upload & Assignment</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Matside — Admin Control Panel</title>
 
-  <!-- PapaParse CSV Parser -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<!-- PapaParse -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
-  <!-- SortableJS for drag-and-drop -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<!-- Sortable -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-    }
+<style>
+/* ----------------------------------------- */
+/* GLOBAL DARK DASHBOARD THEME (Option A)    */
+/* ----------------------------------------- */
 
-    h2, h3 { margin-top: 0; }
+body {
+  margin: 0;
+  padding: 20px;
+  background: #1a1a1a;
+  font-family: "Inter", sans-serif;
+  color: #e6e6e6;
+}
 
-    .section {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      max-width: 1100px;
-      margin: 30px auto;
-    }
+h2 {
+  margin: 0 0 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
 
-    .pill-btn-fat {
-      padding: 10px 18px;
-      font-size: 14px;
-      border-radius: 25px;
-      border: none;
-      cursor: pointer;
-      background: #0077ff;
-      color: white;
-      transition: 0.2s;
-    }
+.section {
+  background: #222;
+  padding: 24px;
+  border-radius: 12px;
+  margin: 24px auto;
+  max-width: 1100px;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 0 12px rgba(0,0,0,0.2);
+}
 
-    .pill-btn-fat:disabled {
-      background: #9bbcf0;
-      cursor: not-allowed;
-    }
+/* ----------------------------------------- */
+/* BUTTONS                                   */
+/* ----------------------------------------- */
 
-    .csv-preview {
-      margin-top: 20px;
-      max-height: 350px;
-      overflow-y: auto;
-    }
+.pill-btn-fat {
+  padding: 10px 20px;
+  border-radius: 24px;
+  border: none;
+  background: #3a77ff;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 
-    .csv-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 13px;
-    }
+.pill-btn-fat:hover {
+  background: #5a8cff;
+  box-shadow: 0 0 10px rgba(90,140,255,0.6);
+}
 
-    .csv-table th,
-    .csv-table td {
-      border: 1px solid #ccc;
-      padding: 6px 8px;
-      vertical-align: top;
-    }
+.pill-btn-fat:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
 
-    .csv-table th {
-      background: #e7e7e7;
-      font-weight: bold;
-    }
+/* ----------------------------------------- */
+/* CSV PREVIEW TABLE                         */
+/* ----------------------------------------- */
 
-    /* Toast System */
-    #toastContainer {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-    }
+.csv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 12px;
+}
 
-    .toast {
-      display: flex;
-      align-items: center;
-      background-color: #333;
-      color: #fff;
-      padding: 12px 18px;
-      border-radius: 6px;
-      margin-top: 10px;
-      font-size: 14px;
-      opacity: 0;
-      transform: translateY(-10px);
-      animation: fadeInUp 0.3s forwards, fadeOut 0.4s 2.4s forwards;
-    }
+.csv-table th {
+  background: #333;
+  padding: 10px;
+  text-align: left;
+  border-bottom: 2px solid #444;
+}
 
-    .toast.success {
-      background-color: #28a745;
-    }
+.csv-table td {
+  padding: 8px;
+  border-bottom: 1px solid #333;
+}
 
-    .toast.error {
-      background-color: #dc3545;
-    }
+/* ----------------------------------------- */
+/* TOAST NOTIFICATIONS                       */
+/* ----------------------------------------- */
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+#toastContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 5000;
+}
 
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; transform: translateY(-10px); }
-    }
+.toast {
+  background: #333;
+  padding: 12px 18px;
+  border-radius: 8px;
+  margin-top: 10px;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: fadeIn 0.3s forwards, fadeOut 0.4s 2.4s forwards;
+  font-size: 14px;
+}
 
-    /* Loading Bar */
-    .loading-bar {
-      width: 100%;
-      height: 4px;
-      background: #ddd;
-      border-radius: 2px;
-      overflow: hidden;
-      margin-top: 10px;
-      display: none;
-    }
+.toast.success { border-left: 4px solid #3cff9d; }
+.toast.error   { border-left: 4px solid #ff4b4b; }
 
-    .loading-bar-inner {
-      width: 0%;
-      height: 100%;
-      background: #0077ff;
-      animation: loadingAnim 1.2s infinite;
-    }
+@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
-    @keyframes loadingAnim {
-      0% { width: 0%; }
-      50% { width: 80%; }
-      100% { width: 0%; }
-    }
+/* ----------------------------------------- */
+/* LOADING BAR                               */
+/* ----------------------------------------- */
 
-    /* Drag & Drop Layout */
-    .drag-container {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
-      margin-top: 20px;
-    }
+.loading-bar {
+  width: 100%;
+  height: 4px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 12px;
+  display: none;
+}
 
-    .list-column {
-      background: #fafafa;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      display: flex;
-      flex-direction: column;
-      max-height: 500px;
-    }
+.loading-bar-inner {
+  width: 0%;
+  height: 100%;
+  background: #3a77ff;
+  animation: loadAnim 1.25s infinite;
+}
 
-    .list-column h3 {
-      margin: 0;
-      padding: 10px;
-      font-size: 14px;
-      text-align: center;
-      background: #f0f0f0;
-      border-bottom: 1px solid #ddd;
-    }
+@keyframes loadAnim {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 0%; }
+}
 
-    .match-list {
-      flex: 1;
-      padding: 8px;
-      overflow-y: auto;
-      min-height: 50px;
-    }
+/* ----------------------------------------- */
+/* DRAG AND DROP ASSIGNMENT UI               */
+/* ----------------------------------------- */
 
-    .match-card {
-      background: #fff;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      padding: 8px;
-      margin-bottom: 8px;
-      font-size: 12px;
-      cursor: grab;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
+.drag-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+  margin-top: 20px;
+}
 
-    .match-card.dragging {
-      opacity: 0.6;
-    }
+.list-column {
+  background: #242424;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 0;
+  height: 560px;
+  display: flex;
+  flex-direction: column;
+}
 
-    .match-card-header {
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
+.list-column h3 {
+  padding: 12px;
+  text-align: center;
+  background: #2b2b2b;
+  border-bottom: 1px solid #333;
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
 
-    .match-card-body {
-      line-height: 1.3;
-    }
+.match-list {
+  overflow-y: auto;
+  padding: 10px;
+}
 
-    .match-card-meta {
-      margin-top: 4px;
-      font-size: 11px;
-      color: #555;
-    }
-  </style>
+/* Match Cards */
+.match-card {
+  background: #2d2d2d;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid #3a3a3a;
+  font-size: 13px;
+  cursor: grab;
+  transition: 0.15s;
+}
 
+.match-card:hover {
+  background: #353535;
+  border-color: #4a4a4a;
+}
+
+.match-card.dragging {
+  opacity: 0.5;
+}
+
+.match-card-header {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.match-card-body {
+  opacity: 0.9;
+  line-height: 1.25;
+}
+
+.match-card-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* Scrollbars */
+.match-list::-webkit-scrollbar { width: 6px; }
+.match-list::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 6px;
+}
+
+/* ----------------------------------------- */
+
+</style>
 </head>
+
 <body>
 
-  <!-- TOAST CONTAINER -->
-  <div id="toastContainer"></div>
+<!-- Toasts -->
+<div id="toastContainer"></div>
 
-  <!-- SECTION 1: CSV UPLOAD -->
-  <div class="section">
-    <h2>Upload Matches (CSV)</h2>
-    <p>Select a CSV file containing match data.</p>
+<!-- ---------------- SECTION: CSV UPLOAD ---------------- -->
+<div class="section">
+  <h2>Upload Matches (CSV)</h2>
 
-    <input type="file" id="matchCsvInput" accept=".csv" />
-    <br><br>
-    <button id="parseCsvBtn" class="pill-btn-fat" disabled>Parse CSV</button>
+  <input type="file" id="matchCsvInput" accept=".csv" />
+  <br><br>
 
-    <div id="csvPreview" class="csv-preview"></div>
+  <button id="parseCsvBtn" class="pill-btn-fat" disabled>Parse CSV</button>
+
+  <div id="csvPreview"></div>
+</div>
+
+<!-- ---------------- SECTION: MATCH ASSIGNMENT ---------------- -->
+<div class="section">
+  <h2>Assign Matches to Mats</h2>
+
+  <button id="loadMatchesBtn" class="pill-btn-fat">Load Matches</button>
+
+  <div id="loadingBar" class="loading-bar">
+    <div class="loading-bar-inner"></div>
   </div>
 
-  <!-- SECTION 2: MATCH ASSIGNMENT (DRAG & DROP) -->
-  <div class="section">
-    <h2>Assign Matches to Mats (Drag & Drop)</h2>
+  <div id="assignmentBoard"></div>
+</div>
 
-    <button id="loadMatchesBtn" class="pill-btn-fat">Load Matches from Cloud</button>
+<script>
+/* ---------------------------------------------------- */
+/* Firebase Init                                        */
+/* ---------------------------------------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
+  authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
+  projectId: "matsidewrestlingco-fb85f",
+  storageBucket: "matsidewrestlingco-fb85f.firebasestorage.app",
+  messagingSenderId: "898197416726",
+  appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    <div id="loadingBar" class="loading-bar">
-      <div class="loading-bar-inner"></div>
-    </div>
+/* -------------------------- */
+/* Toast System               */
+/* -------------------------- */
+function showToast(msg, type="success") {
+  const div = document.createElement("div");
+  div.className = `toast ${type}`;
+  div.textContent = msg;
+  document.getElementById("toastContainer").appendChild(div);
+  setTimeout(() => div.remove(), 3000);
+}
 
-    <div id="assignmentBoard" class="csv-preview"></div>
-  </div>
+/* -------------------------- */
+/* CSV UPLOAD & PARSE         */
+/* -------------------------- */
+let parsedMatches = [];
 
-  <script>
-    /////////////////////////////////////////////////////////////////////////////
-    // 🔥 FIREBASE INITIALIZATION
-    /////////////////////////////////////////////////////////////////////////////
-    const firebaseConfig = {
-      apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
-      authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
-      projectId: "matsidewrestlingco-fb85f",
-      storageBucket: "matsidewrestlingco-fb85f.firebasestorage.app",
-      messagingSenderId: "898197416726",
-      appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
-    };
+document.getElementById("matchCsvInput").addEventListener("change", e => {
+  document.getElementById("parseCsvBtn").disabled = !e.target.files[0];
+});
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+document.getElementById("parseCsvBtn").addEventListener("click", () => {
+  const file = document.getElementById("matchCsvInput").files[0];
+  if (!file) return;
 
-    /////////////////////////////////////////////////////////////////////////////
-    // TOAST SYSTEM
-    /////////////////////////////////////////////////////////////////////////////
-    function showToast(message, type = "success") {
-      const container = document.getElementById("toastContainer");
-      const toast = document.createElement("div");
-      toast.className = "toast " + type;
-      toast.textContent = message;
-
-      container.appendChild(toast);
-
-      setTimeout(() => toast.remove(), 3000);
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: results => {
+      parsedMatches = results.data.map(r => ({
+        id: crypto.randomUUID(),
+        bout: r.bout || r.Bout || "",
+        weight: r.weight || r.Weight || "",
+        round: r.round || r.Round || "",
+        red: { name: r.redName || "", team: r.redTeam || "" },
+        green: { name: r.greenName || "", team: r.greenTeam || "" },
+        assignedMat: null,
+        queueIndex: null,
+      }));
+      renderCsvPreview();
     }
+  });
+});
 
-    /////////////////////////////////////////////////////////////////////////////
-    // STEP 1 — CSV UPLOAD + PARSE
-    /////////////////////////////////////////////////////////////////////////////
-    let uploadedCsvFile = null;
-    let parsedMatches = [];
+function renderCsvPreview() {
+  let html = `
+    <table class="csv-table">
+      <tr>
+        <th>Bout</th><th>Weight</th><th>Red</th><th>Green</th><th>Round</th>
+      </tr>
+  `;
+  parsedMatches.forEach(m => {
+    html += `
+      <tr>
+        <td>${m.bout}</td>
+        <td>${m.weight}</td>
+        <td>${m.red.name}</td>
+        <td>${m.green.name}</td>
+        <td>${m.round}</td>
+      </tr>
+    `;
+  });
+  html += `</table><br>
+    <button id="saveToCloudBtn" class="pill-btn-fat">Save to Cloud</button>
+  `;
+  document.getElementById("csvPreview").innerHTML = html;
 
-    document.getElementById("matchCsvInput").addEventListener("change", (e) => {
-      uploadedCsvFile = e.target.files[0];
-      document.getElementById("parseCsvBtn").disabled = !uploadedCsvFile;
+  document.getElementById("saveToCloudBtn").onclick = saveMatchesToCloud;
+}
+
+function saveMatchesToCloud() {
+  const batch = db.batch();
+  parsedMatches.forEach(m => {
+    const ref = db.collection("matchLibrary").doc(m.id);
+    batch.set(ref, m);
+  });
+  batch.commit()
+    .then(() => showToast("Saved matches!", "success"))
+    .catch(() => showToast("Error saving", "error"));
+}
+
+/* -------------------------- */
+/* Load Matches & Drag/Drop   */
+/* -------------------------- */
+document.getElementById("loadMatchesBtn").addEventListener("click", loadMatches);
+
+function loadMatches() {
+  const bar = document.getElementById("loadingBar");
+  bar.style.display = "block";
+
+  db.collection("matchLibrary")
+    .get()
+    .then(snap => {
+      const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderAssignmentBoard(matches);
+      bar.style.display = "none";
     });
+}
 
-    document.getElementById("parseCsvBtn").addEventListener("click", () => {
-      if (!uploadedCsvFile) return;
-
-      Papa.parse(uploadedCsvFile, {
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          parsedMatches = results.data.map(row => {
-            return {
-              id: crypto.randomUUID(),
-              bout: row.bout || row.Bout || "",
-              weight: row.weight || row.Weight || "",
-              round: row.round || row.Round || "",
-              preferredMat: Number(row.mat || row.Mat || 0),
-
-              red: {
-                name: row.redName || row.RedName || row.Red || "",
-                team: row.redTeam || row.RedTeam || ""
-              },
-              green: {
-                name: row.greenName || row.GreenName || row.Green || "",
-                team: row.greenTeam || row.GreenTeam || ""
-              },
-
-              assignedMat: null,
-              queueIndex: null,
-              status: "upcoming"
-            };
-          });
-
-          showCsvPreview(parsedMatches);
-        }
-      });
-    });
-
-    /////////////////////////////////////////////////////////////////////////////
-    // CSV PREVIEW TABLE
-    /////////////////////////////////////////////////////////////////////////////
-    function showCsvPreview(matches) {
-      const container = document.getElementById("csvPreview");
-
-      if (!matches.length) {
-        container.innerHTML = "<p>No matches parsed.</p>";
-        return;
-      }
-
-      let html = `
-        <h3>Preview (${matches.length} matches)</h3>
-        <table class="csv-table">
-          <tr>
-            <th>Bout</th>
-            <th>Weight</th>
-            <th>Red Wrestler</th>
-            <th>Green Wrestler</th>
-            <th>Round</th>
-            <th>Mat Pref</th>
-          </tr>
-      `;
-
-      matches.slice(0, 50).forEach(m => {
-        html += `
-          <tr>
-            <td>${m.bout}</td>
-            <td>${m.weight}</td>
-            <td>${m.red.name} (${m.red.team})</td>
-            <td>${m.green.name} (${m.green.team})</td>
-            <td>${m.round}</td>
-            <td>${m.preferredMat || "-"}</td>
-          </tr>
-        `;
-      });
-
-      html += "</table><br>";
-
-      html += `
-        <button id="saveToCloudBtn" class="pill-btn-fat">Save Matches to Cloud</button>
-      `;
-
-      container.innerHTML = html;
-
-      document.getElementById("saveToCloudBtn")
-        .addEventListener("click", saveMatchesToCloud);
-    }
-
-    /////////////////////////////////////////////////////////////////////////////
-    // SAVE MATCHES TO FIRESTORE
-    /////////////////////////////////////////////////////////////////////////////
-    function saveMatchesToCloud() {
-      if (!parsedMatches.length) {
-        showToast("No matches to save.", "error");
-        return;
-      }
-
-      const batch = db.batch();
-      const matchCollection = db.collection("matchLibrary");
-
-      parsedMatches.forEach(match => {
-        const docRef = matchCollection.doc(match.id);
-        batch.set(docRef, match);
-      });
-
-      batch.commit()
-        .then(() => showToast("Matches saved to cloud!", "success"))
-        .catch(err => {
-          console.error(err);
-          showToast("Error saving matches.", "error");
-        });
-    }
-
-    /////////////////////////////////////////////////////////////////////////////
-    // STEP 3 — LOAD MATCHES FOR DRAG & DROP ASSIGNMENT
-    /////////////////////////////////////////////////////////////////////////////
-    document.getElementById("loadMatchesBtn").addEventListener("click", loadMatchesFromCloud);
-
-    function loadMatchesFromCloud() {
-      const loadingBar = document.getElementById("loadingBar");
-      loadingBar.style.display = "block";
-
-      db.collection("matchLibrary")
-        .get()
-        .then(snapshot => {
-          const matches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          showAssignmentBoard(matches);
-          showToast("Matches loaded!", "success");
-        })
-        .catch(err => {
-          console.error(err);
-          showToast("Error loading matches.", "error");
-        })
-        .finally(() => {
-          loadingBar.style.display = "none";
-        });
-    }
-
-    /////////////////////////////////////////////////////////////////////////////
-    // DRAG & DROP ASSIGNMENT BOARD
-    /////////////////////////////////////////////////////////////////////////////
-    let dragInitialized = false;
-
-    function showAssignmentBoard(matches) {
-      const container = document.getElementById("assignmentBoard");
-
-      if (!matches.length) {
-        container.innerHTML = "<p>No matches found in cloud.</p>";
-        return;
-      }
-
-      // Build column layout: Unassigned + Mats 1–4
-      let html = `
-        <div class="drag-container">
-          <div class="list-column">
-            <h3>Unassigned</h3>
-            <div id="mat-0" class="match-list"></div>
-          </div>
-          <div class="list-column">
-            <h3>Mat 1</h3>
-            <div id="mat-1" class="match-list"></div>
-          </div>
-          <div class="list-column">
-            <h3>Mat 2</h3>
-            <div id="mat-2" class="match-list"></div>
-          </div>
-          <div class="list-column">
-            <h3>Mat 3</h3>
-            <div id="mat-3" class="match-list"></div>
-          </div>
-          <div class="list-column">
-            <h3>Mat 4</h3>
-            <div id="mat-4" class="match-list"></div>
-          </div>
+function renderAssignmentBoard(matches) {
+  let html = `
+    <div class="drag-container">
+      ${[0,1,2,3,4].map(m => `
+        <div class="list-column">
+          <h3>${m === 0 ? "Unassigned" : "Mat " + m}</h3>
+          <div id="mat-${m}" class="match-list"></div>
         </div>
-      `;
+      `).join("")}
+    </div>
+  `;
 
-      container.innerHTML = html;
+  document.getElementById("assignmentBoard").innerHTML = html;
 
-      // Group matches by assignedMat
-      const columns = {
-        0: [],
-        1: [],
-        2: [],
-        3: [],
-        4: []
-      };
+  const groups = { 0: [], 1:[],2:[],3:[],4:[] };
+  matches.forEach(m => {
+    const mat = Number(m.assignedMat) || 0;
+    groups[mat].push(m);
+  });
 
-      matches.forEach(m => {
-        const mat = m.assignedMat || 0;
-        columns[mat].push(m);
+  // sort by queue
+  Object.values(groups).forEach(list =>
+    list.sort((a,b) => (a.queueIndex ?? 9999) - (b.queueIndex ?? 9999))
+  );
+
+  // populate cards
+  Object.keys(groups).forEach(mat => {
+    const div = document.getElementById(`mat-${mat}`);
+    groups[mat].forEach(m => div.appendChild(makeCard(m)));
+  });
+
+  // initialize sortable
+  [0,1,2,3,4].forEach(m => {
+    Sortable.create(document.getElementById(`mat-${m}`), {
+      group: "mats",
+      animation: 150,
+      onEnd: saveAssignmentOrder
+    });
+  });
+}
+
+function makeCard(m) {
+  const div = document.createElement("div");
+  div.className = "match-card";
+  div.dataset.id = m.id;
+
+  div.innerHTML = `
+    <div class="match-card-header">Bout ${m.bout} — ${m.weight} lbs</div>
+    <div class="match-card-body">${m.red.name} vs ${m.green.name}</div>
+    <div class="match-card-meta">Round: ${m.round}</div>
+  `;
+  return div;
+}
+
+function saveAssignmentOrder() {
+  const batch = db.batch();
+  const mats = [0,1,2,3,4];
+
+  mats.forEach(mat => {
+    const parent = document.getElementById(`mat-${mat}`);
+    [...parent.children].forEach((card, i) => {
+      const ref = db.collection("matchLibrary").doc(card.dataset.id);
+      batch.update(ref, {
+        assignedMat: mat === 0 ? null : mat,
+        queueIndex: i
       });
+    });
+  });
 
-      // Sort each column by queueIndex, then bout
-      Object.keys(columns).forEach(matKey => {
-        columns[matKey].sort((a, b) => {
-          const qa = (a.queueIndex !== null && a.queueIndex !== undefined) ? a.queueIndex : 9999;
-          const qb = (b.queueIndex !== null && b.queueIndex !== undefined) ? b.queueIndex : 9999;
-          if (qa !== qb) return qa - qb;
-          const ba = Number(a.bout) || 0;
-          const bb = Number(b.bout) || 0;
-          return ba - bb;
-        });
-      });
+  batch.commit()
+    .then(() => showToast("Order updated!", "success"))
+    .catch(() => showToast("Error updating order", "error"));
+}
 
-      // Render match cards into each list
-      Object.keys(columns).forEach(matKey => {
-        const listEl = document.getElementById(`mat-${matKey}`);
-        const listMatches = columns[matKey];
-
-        listMatches.forEach(m => {
-          const card = document.createElement("div");
-          card.className = "match-card";
-          card.setAttribute("data-id", m.id);
-
-          card.innerHTML = `
-            <div class="match-card-header">
-              Bout ${m.bout || "-"} – ${m.weight || "?"} lbs
-            </div>
-            <div class="match-card-body">
-              <div>${m.red.name || "Red"} (${m.red.team || ""})</div>
-              <div>vs</div>
-              <div>${m.green.name || "Green"} (${m.green.team || ""})</div>
-            </div>
-            <div class="match-card-meta">
-              Round: ${m.round || "-"}
-            </div>
-          `;
-
-          listEl.appendChild(card);
-        });
-      });
-
-      // Initialize SortableJS once
-      if (!dragInitialized) {
-        const matIds = [0, 1, 2, 3, 4];
-
-        matIds.forEach(matNum => {
-          const listEl = document.getElementById(`mat-${matNum}`);
-
-          Sortable.create(listEl, {
-            group: "mats",
-            animation: 150,
-            ghostClass: "dragging",
-            onEnd: handleDragEnd
-          });
-        });
-
-        dragInitialized = true;
-      }
-    }
-
-    /////////////////////////////////////////////////////////////////////////////
-    // HANDLE DRAG END — UPDATE FIRESTORE (assignedMat + queueIndex)
-    /////////////////////////////////////////////////////////////////////////////
-    function handleDragEnd(evt) {
-      const toListId = evt.to.id;       // e.g., 'mat-2'
-      const toMatNum = Number(toListId.split("-")[1]); // 0–4
-
-      const matchCollection = db.collection("matchLibrary");
-      const batch = db.batch();
-      const matIds = [0, 1, 2, 3, 4];
-
-      matIds.forEach(matNum => {
-        const listEl = document.getElementById(`mat-${matNum}`);
-        if (!listEl) return;
-
-        const children = Array.from(listEl.children);
-        children.forEach((cardEl, index) => {
-          const id = cardEl.getAttribute("data-id");
-          if (!id) return;
-
-          const docRef = matchCollection.doc(id);
-          const assignedMat = matNum === 0 ? null : matNum;
-          const queueIndex = index;
-
-          batch.update(docRef, { assignedMat, queueIndex });
-        });
-      });
-
-      batch.commit()
-        .then(() => {
-          showToast("Mat assignments updated!", "success");
-        })
-        .catch(err => {
-          console.error(err);
-          showToast("Error updating assignments.", "error");
-        });
-    }
-
-  </script>
+</script>
 
 </body>
 </html>
