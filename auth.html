@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matside Admin Login</title>
+
+  <!-- Firebase App + Auth (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      font-family: "Inter", sans-serif;
+      color: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: #1e1e1e;
+      padding: 24px 26px;
+      border-radius: 12px;
+      width: 320px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      border: 1px solid #333;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 20px;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      opacity: 0.7;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    label {
+      font-size: 12px;
+      opacity: 0.8;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      background: #141414;
+      border-radius: 6px;
+      border: 1px solid #444;
+      color: #eee;
+      margin-bottom: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 20px;
+      border: none;
+      background: #3a77ff;
+      color: #fff;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #5a8cff;
+      box-shadow: 0 0 10px rgba(90,140,255,0.6);
+    }
+
+    .toggle {
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: center;
+      opacity: 0.8;
+    }
+
+    .toggle span {
+      color: #3a77ff;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .error {
+      font-size: 12px;
+      color: #ff8080;
+      margin-top: 6px;
+      min-height: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Matside Admin</h1>
+  <div class="subtitle" id="modeTitle">Sign in to continue</div>
+
+  <form id="authForm">
+    <label for="emailInput">Email</label>
+    <input id="emailInput" type="email" required />
+
+    <label for="passwordInput">Password</label>
+    <input id="passwordInput" type="password" required minlength="6" />
+
+    <button type="submit" id="submitBtn">Sign In</button>
+    <div class="error" id="errorBox"></div>
+  </form>
+
+  <div class="toggle">
+    <span id="toggleModeSpan">Need an account? Create one</span>
+  </div>
+</div>
+
+<script>
+  // Firebase config — same project as the rest of your app
+  const firebaseConfig = {
+    apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
+    authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
+    projectId: "matsidewrestlingco-fb85f",
+    storageBucket: "matsidewrestlingco-fb85f.firebasestorage.app",
+    messagingSenderId: "898197416726",
+    appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  let mode = "login"; // or "signup"
+
+  const modeTitle = document.getElementById("modeTitle");
+  const submitBtn = document.getElementById("submitBtn");
+  const toggleSpan = document.getElementById("toggleModeSpan");
+  const errorBox = document.getElementById("errorBox");
+
+  function setMode(newMode) {
+    mode = newMode;
+    if (mode === "login") {
+      modeTitle.textContent = "Sign in to continue";
+      submitBtn.textContent = "Sign In";
+      toggleSpan.textContent = "Need an account? Create one";
+    } else {
+      modeTitle.textContent = "Create an admin account";
+      submitBtn.textContent = "Create Account";
+      toggleSpan.textContent = "Already have an account? Sign in";
+    }
+    errorBox.textContent = "";
+  }
+
+  toggleSpan.addEventListener("click", () => {
+    setMode(mode === "login" ? "signup" : "login");
+  });
+
+  document.getElementById("authForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    errorBox.textContent = "";
+    const email = document.getElementById("emailInput").value.trim();
+    const password = document.getElementById("passwordInput").value;
+
+    if (!email || !password) {
+      errorBox.textContent = "Email and password are required.";
+      return;
+    }
+
+    if (mode === "login") {
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          window.location.href = "admin-control.html";
+        })
+        .catch(err => {
+          errorBox.textContent = err.message || "Error signing in.";
+        });
+    } else {
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          window.location.href = "admin-control.html";
+        })
+        .catch(err => {
+          errorBox.textContent = err.message || "Error creating account.";
+        });
+    }
+  });
+
+  // If already signed in, go straight to admin
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      window.location.href = "admin-control.html";
+    }
+  });
+</script>
+
+</body>
+</html>
