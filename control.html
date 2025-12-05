@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Matside — Control Panel v4.1</title>
 
+<!-- Firebase (match feed) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+
+
 <style>
   :root {
     --bg: #05060a;
@@ -578,6 +583,36 @@ button.gray:hover {
   opacity: 0.8;
 }
   
+
+  /* Upcoming matches card */
+  .upcoming-card {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--panel-soft);
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+  .upcoming-title {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .up-line {
+    font-size: 13px;
+    display: flex;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+  .up-label {
+    width: 80px;
+    opacity: 0.75;
+  }
+  .up-value {
+    flex: 1;
+    font-weight: 500;
+  }
 </style>
 </head>
 <body>
@@ -624,7 +659,16 @@ button.gray:hover {
     <div class="summary-item">Green: <strong id="sumGreen" class="greenText">0</strong></div>
   </div>
 
-  <!-- MAIN GRID -->
+  
+  <div class="upcoming-card">
+    <div class="upcoming-title">Upcoming on this Mat</div>
+    <div class="up-line"><div class="up-label">Now:</div><div class="up-value" id="upNow">No event selected</div></div>
+    <div class="up-line"><div class="up-label">On Deck:</div><div class="up-value" id="upDeck">—</div></div>
+    <div class="up-line"><div class="up-label">In The Hole:</div><div class="up-value" id="upHole">—</div></div>
+    <div class="up-line"><div class="up-label">Queue:</div><div class="up-value" id="upQueue">—</div></div>
+  </div>
+
+<!-- MAIN GRID -->
   <div class="grid">
 
     <!-- LEFT COLUMN -->
@@ -861,7 +905,123 @@ button.gray:hover {
   const lastMatchMainEl  = document.getElementById("lastMatchMain");
   const lastMatchMetaEl  = document.getElementById("lastMatchMeta");
 
-  const SEGMENTS = {
+  
+  // Firebase (match feed) init
+  const firebaseConfig = {
+    apiKey: "AIzaSyD_uk47fURmQiHZnN8avfcGoNObMntdu_s",
+    authDomain: "matsidewrestlingco-fb85f.firebaseapp.com",
+    projectId: "matsidewrestlingco-fb85f",
+    storageBucket: "matsidewrestlingco-fb85f.firebasestorage.app",
+    messagingSenderId: "898197416726",
+    appId: "1:898197416726:web:921ccbd0f63f7fd6537e37"
+  };
+
+  let db = null;
+  let currentEventId = null;
+  let unsubscribeMatches = null;
+
+  const upNowEl   = document.getElementById("upNow");
+  const upDeckEl  = document.getElementById("upDeck");
+  const upHoleEl  = document.getElementById("upHole");
+  const upQueueEl = document.getElementById("upQueue");
+
+  function formatMatchLine(m) {
+    if (!m) return "—";
+    const bout = m.bout ? `Bout ${m.bout}` : "";
+    const wt   = m.weight ? ` • ${m.weight}` : "";
+    const red  = (m.red && m.red.name) ? m.red.name : "Red";
+    const green= (m.green && m.green.name) ? m.green.name : "Green";
+    const left = bout || wt ? `${bout}${wt}`.trim() + " — " : "";
+    return left + `${red} vs ${green}`;
+  }
+
+  function renderUpcoming(list) {
+    if (!upNowEl) return;
+    const now  = list[0];
+    const deck = list[1];
+    const hole = list[2];
+    const queue = list.slice(3);
+
+    upNowEl.textContent  = formatMatchLine(now);
+    upDeckEl.textContent = formatMatchLine(deck);
+    upHoleEl.textContent = formatMatchLine(hole);
+    if (upQueueEl) {
+      upQueueEl.textContent = queue.length ? `${queue.length} more` : "No additional matches";
+    }
+
+    // Store current match doc so we can mark completed on submit
+    window._currentMatchDocForMat = now || null;
+  }
+
+  function subscribeToMatches() {
+    if (!db || !currentEventId) return;
+    if (unsubscribeMatches) {
+      unsubscribeMatches();
+      unsubscribeMatches = null;
+    }
+    if (!currentMat) currentMat = 1;
+
+    unsubscribeMatches = db
+      .collection("events")
+      .doc(currentEventId)
+      .collection("matches")
+      .where("assignedMat", "==", currentMat)
+      .where("completed", "==", false)
+      .orderBy("queueIndex", "asc")
+      .onSnapshot((snap) => {
+        const matches = [];
+        snap.forEach(doc => {
+          matches.push({ id: doc.id, ...doc.data() });
+        });
+        renderUpcoming(matches);
+      }, (err) => {
+        console.error("Error listening for matches", err);
+        if (upNowEl) upNowEl.textContent = "Error loading matches";
+      });
+  }
+
+  // Resolve event from URL and init Firestore
+  (function initMatchFeed(){
+    try {
+      if (typeof firebase === "undefined") return;
+      const params = new URLSearchParams(window.location.search);
+      const ev = params.get("event");
+      if (!ev) {
+        // no event param; leave upcoming card as informational only
+        return;
+      }
+      currentEventId = ev;
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      db = firebase.firestore();
+
+      db.collection("events").doc(ev).get().then(doc => {
+        if (!doc.exists) return;
+        const data = doc.data() || {};
+        const matsCount = Number(data.mats) || 4;
+
+        if (matSelect) {
+          matSelect.innerHTML = "";
+          for (let i = 1; i <= matsCount; i++) {
+            const opt = document.createElement("option");
+            opt.value = String(i);
+            opt.textContent = `Mat ${i}`;
+            matSelect.appendChild(opt);
+          }
+        }
+        currentMat = parseInt(matSelect.value || "1",10) || 1;
+        sumMatEl.textContent = currentMat;
+        subscribeToMatches();
+      }).catch(err => {
+        console.error("Error loading event for control", err);
+      });
+    } catch (e) {
+      console.error("initMatchFeed error", e);
+    }
+  })();
+
+const SEGMENTS = {
     REG1:{ id:"REG1", period:1, time:60 },
     REG2:{ id:"REG2", period:2, time:90 },
     REG3:{ id:"REG3", period:3, time:120 },
@@ -1024,6 +1184,9 @@ button.gray:hover {
     currentMat = parseInt(matSelect.value || "1",10) || 1;
     renderSummary();
     renderTimeline();
+    if (typeof subscribeToMatches === "function") {
+      subscribeToMatches();
+    }
   });
 
   // TIMER
@@ -1369,6 +1532,31 @@ document.getElementById("undoBtn").addEventListener("click", undoTimelineEntry);
       ]
     };
     socket.emit("updateState",{ mat:currentMat, updates:resetUpdates });
+
+
+    // Mark current match as completed in Firestore (if match feed is active)
+    try {
+      if (db && currentEventId && window._currentMatchDocForMat && window._currentMatchDocForMat.id) {
+        const matchId = window._currentMatchDocForMat.id;
+        db.collection("events")
+          .doc(currentEventId)
+          .collection("matches")
+          .doc(matchId)
+          .set({
+            completed: true,
+            result: {
+              winner: selectedWinner,
+              method: selectedMethod,
+              redScore: red,
+              greenScore: green,
+              endedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }
+          }, { merge: true })
+          .catch(err => console.error("Error updating match completion", err));
+      }
+    } catch (e) {
+      console.error("Firestore completion error", e);
+    }
 
     closeMatchModal();
     showToast("Match submitted & mat reset");
