@@ -1122,29 +1122,52 @@
   }
 
   function subscribeToMatchesForMat(eventId, matNumber) {
-    if (!db || !eventId || !matNumber) return;
-    if (unsubscribeMatches) {
-      unsubscribeMatches();
-      unsubscribeMatches = null;
-    }
-
-    const matchesRef = db
-      .collection("events")
-      .doc(eventId)
-      .collection("matches");
-
-    unsubscribeMatches = matchesRef
-  .where("assignedMat","==", matNumber)
-  .where("completed","==", false)
-  .orderBy("bout","asc")
-  .onSnapshot(snapshot => {
-    const upcoming = [];
-    snapshot.forEach(doc => upcoming.push({ id: doc.id, ...doc.data() }));
-    renderUpcomingFromList(upcoming);
-  }, err => {
-    console.error("Error subscribing to matches", err);
-  });
+  if (!db || !eventId || !matNumber) {
+    console.warn("subscribeToMatchesForMat: missing db/eventId/matNumber", {
+      hasDb: !!db,
+      eventId,
+      matNumber
+    });
+    return;
   }
+
+  if (unsubscribeMatches) {
+    unsubscribeMatches();
+    unsubscribeMatches = null;
+  }
+
+  console.log("[MATSIDE] Subscribing to matches", { eventId, matNumber });
+
+  const matchesRef = db
+    .collection("events")
+    .doc(eventId)
+    .collection("matches");
+
+  // Relaxed server-side filters: only assignedMat, sort by bout.
+  // We’ll filter out completed ones on the client safely.
+  unsubscribeMatches = matchesRef
+    .where("assignedMat", "==", matNumber)
+    .orderBy("bout", "asc")
+    .onSnapshot(
+      snapshot => {
+        const all = [];
+        snapshot.forEach(doc => all.push({ id: doc.id, ...doc.data() }));
+
+        console.log(
+          `[MATSIDE] Snapshot for mat ${matNumber}:`,
+          { count: all.length, sample: all[0] || null }
+        );
+
+        // Client-side filter: hide completed matches if they’re marked
+        const upcoming = all.filter(m => m.completed !== true);
+
+        renderUpcomingFromList(upcoming);
+      },
+      err => {
+        console.error("Error subscribing to matches", err);
+      }
+    );
+}
 
   function applyMatCountFromEventDoc(ev) {
     if (!ev || !matSelect) return;
@@ -1168,28 +1191,53 @@
   }
 
   function resolveEventAndSubscribe() {
-    if (!window.firebase) {
-      console.warn("Firebase SDK not loaded; upcoming card inactive.");
-      return;
-    }
-    initFirebaseIfNeeded();
+  if (!window.firebase) {
+    console.warn("Firebase SDK not loaded; upcoming card inactive.");
+    return;
+  }
+  initFirebaseIfNeeded();
 
-    const { event } = getQueryParams();
-    if (event) {
-      currentEventId = event;
-      db.collection("events").doc(event).get()
-        .then(doc => {
-          if (doc.exists) {
-            applyMatCountFromEventDoc(doc.data());
-          }
-          subscribeToMatchesForMat(currentEventId, currentMat);
-        })
-        .catch(err => {
-          console.error("Error loading event doc", err);
-          subscribeToMatchesForMat(currentEventId, currentMat);
-        });
-      return;
-    }
+  const { event } = getQueryParams();
+  if (event) {
+    currentEventId = event;
+    console.log("[MATSIDE] Using event from URL", { eventId: event });
+
+    db.collection("events").doc(event).get()
+      .then(doc => {
+        if (doc.exists) {
+          applyMatCountFromEventDoc(doc.data());
+        }
+        subscribeToMatchesForMat(currentEventId, currentMat);
+      })
+      .catch(err => {
+        console.error("Error loading event doc", err);
+        subscribeToMatchesForMat(currentEventId, currentMat);
+      });
+    return;
+  }
+
+  // Fallback: use active event
+  db.collection("events")
+    .where("isActive","==", true)
+    .limit(1)
+    .get()
+    .then(snap => {
+      if (snap.empty) {
+        console.warn("No active event found; upcoming card will show placeholders.");
+        renderUpcomingFromList([]);
+        return;
+      }
+      const doc = snap.docs[0];
+      currentEventId = doc.id;
+      console.log("[MATSIDE] Using active event fallback", { eventId: currentEventId });
+
+      applyMatCountFromEventDoc(doc.data());
+      subscribeToMatchesForMat(currentEventId, currentMat);
+    })
+    .catch(err => {
+      console.error("Error resolving active event", err);
+    });
+}
 
     // Fallback: use active event
     db.collection("events")
