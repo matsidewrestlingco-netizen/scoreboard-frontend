@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Matside Broadcast Control (Lite)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #05060a;
+      --panel: #10121b;
+      --accent: #1e88e5;
+      --accent-soft: rgba(30,136,229,0.22);
+      --muted: #9aa0a6;
+      --red: #d32f2f;
+      --green: #43a047;
+      --outline: rgba(255,255,255,0.08);
+      --shadow-soft: 0 18px 45px rgba(0,0,0,0.7);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+      background: radial-gradient(circle at top,#151829 0,#05060a 40%,#020308 100%);
+      color: #e9eaee;
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: linear-gradient(135deg,rgba(25,118,210,0.18),rgba(2,3,8,0.96));
+      border: 1px solid rgba(120,172,255,0.35);
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: #02030a;
+      padding: 4px;
+      border: 1px solid rgba(255,255,255,0.08);
+      object-fit: contain;
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .conn-pill {
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: radial-gradient(circle at top left,#30344b,#141624);
+    }
+
+    .conn-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #f44336;
+    }
+
+    .conn-pill.connected .conn-dot {
+      background: #4caf50;
+    }
+
+    .mat-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: #0b0d15;
+    }
+
+    .mat-select-wrap label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+    }
+
+    .mat-select-wrap select {
+      background: #151829;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #fff;
+      font-size: 12px;
+      padding: 3px 9px;
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: 18px;
+      padding: 14px 16px 16px;
+      border: 1px solid var(--outline);
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 14px;
+    }
+
+    .card h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .card-sub {
+      margin: 0 0 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(2,minmax(0,1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 720px) {
+      .two-col { grid-template-columns: minmax(0,1fr); }
+    }
+
+    .side-box {
+      border-radius: 16px;
+      padding: 10px 12px;
+      border: 1px solid var(--outline);
+      background: radial-gradient(circle at top,rgba(211,47,47,0.18),#11131b);
+    }
+
+    .side-box.green {
+      background: radial-gradient(circle at top,rgba(67,160,71,0.18),#11131b);
+    }
+
+    .label-small {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .name-input,
+    .team-input {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: #050711;
+      color: #fff;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .name-input::placeholder,
+    .team-input::placeholder {
+      color: rgba(255,255,255,0.4);
+    }
+
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      gap: 10px;
+    }
+
+    .score-value {
+      font-size: 30px;
+      font-weight: 700;
+      min-width: 36px;
+      text-align: left;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .btn {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #181a26;
+      color: #f5f5f5;
+      cursor: pointer;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .btn.main {
+      background: linear-gradient(135deg,#2196f3,#1976d2);
+      border-color: rgba(144,202,249,0.9);
+    }
+
+    .btn.warn {
+      background: linear-gradient(135deg,#fbc02d,#f57f17);
+      border-color: rgba(255,241,118,0.8);
+      color: #111;
+    }
+
+    .btn.red {
+      background: linear-gradient(135deg,#ef5350,#c62828);
+      border-color: rgba(255,138,128,0.9);
+    }
+
+    .timer-grid {
+      display: grid;
+      grid-template-columns: minmax(0,2.3fr) minmax(0,1.7fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 720px) {
+      .timer-grid { grid-template-columns: minmax(0,1fr); }
+    }
+
+    .clock-display {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+
+    .timer-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .period-select {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .period-select select {
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: #050711;
+      color: #e9eaee;
+      font-size: 12px;
+    }
+
+    .set-clock-block {
+      border-radius: 14px;
+      padding: 8px 10px 10px;
+      background: #080a12;
+      border: 1px solid rgba(255,255,255,0.12);
+      font-size: 12px;
+    }
+
+    .set-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .set-row input {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: #050711;
+      color: #fff;
+      font-size: 12px;
+    }
+
+    .set-row input::placeholder {
+      color: rgba(255,255,255,0.4);
+    }
+
+    .help-text {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .footer-hints {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(22,24,34,0.95);
+      color: #fff;
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      opacity: 0;
+      transition: opacity 0.16s ease-out, transform 0.14s ease-out;
+      z-index: 50;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <header class="header">
+    <div class="brand">
+      <img src="https://www.matside.org/assets/images/image01.png" class="brand-logo" alt="Matside logo" />
+      <div class="brand-title">Matside Broadcast Control</div>
+    </div>
+    <div class="header-right">
+      <div class="conn-pill" id="connPill">
+        <span class="conn-dot"></span>
+        <span id="connText">Connecting…</span>
+      </div>
+      <div class="mat-select-wrap">
+        <label for="matSelect">Mat</label>
+        <select id="matSelect">
+          <option value="1">Mat 1</option>
+          <option value="2">Mat 2</option>
+          <option value="3">Mat 3</option>
+          <option value="4">Mat 4</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- Names & Scores -->
+  <section class="card">
+    <h3>Names & Scoring</h3>
+    <p class="card-sub">Set names and teams, then adjust scores. This feeds the live overlay.</p>
+
+    <div class="two-col">
+      <!-- Red side -->
+      <div class="side-box">
+        <div class="label-small">Red wrestler</div>
+        <input id="redNameInput" class="name-input" placeholder="Red wrestler name" />
+        <input id="redTeamInput" class="team-input" placeholder="Red team (optional)" />
+
+        <div class="score-row">
+          <div>
+            <div class="label-small">Score</div>
+            <div id="redScoreDisplay" class="score-value">0</div>
+          </div>
+          <div class="btn-group">
+            <button class="btn" data-score="red" data-pts="1">+1</button>
+            <button class="btn" data-score="red" data-pts="2">+2</button>
+            <button class="btn" data-score="red" data-pts="3">+3</button>
+            <button class="btn" data-score="red" data-pts="-1">-1</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Green side -->
+      <div class="side-box green">
+        <div class="label-small">Green wrestler</div>
+        <input id="greenNameInput" class="name-input" placeholder="Green wrestler name" />
+        <input id="greenTeamInput" class="team-input" placeholder="Green team (optional)" />
+
+        <div class="score-row">
+          <div>
+            <div class="label-small">Score</div>
+            <div id="greenScoreDisplay" class="score-value">0</div>
+          </div>
+          <div class="btn-group">
+            <button class="btn" data-score="green" data-pts="1">+1</button>
+            <button class="btn" data-score="green" data-pts="2">+2</button>
+            <button class="btn" data-score="green" data-pts="3">+3</button>
+            <button class="btn" data-score="green" data-pts="-1">-1</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Timer / Period -->
+  <section class="card">
+    <h3>Clock & Period</h3>
+    <p class="card-sub">Simple clock control for the broadcast overlay.</p>
+
+    <div class="timer-grid">
+      <div>
+        <div class="clock-display" id="clockDisplay">01:00</div>
+
+        <div class="timer-line">
+          <div class="period-select">
+            <span class="label-small" style="margin-bottom:0;">Period</span>
+            <select id="periodSelect">
+              <option value="REG1">Reg 1</option>
+              <option value="REG2">Reg 2</option>
+              <option value="REG3">Reg 3</option>
+              <option value="OT">OT</option>
+              <option value="TB1">TB1</option>
+              <option value="TB2">TB2</option>
+              <option value="UT">UT</option>
+            </select>
+          </div>
+          <div class="label-small" style="margin-bottom:0;">Running</div>
+        </div>
+
+        <div class="btn-group">
+          <button id="startBtn" class="btn main">Start</button>
+          <button id="stopBtn" class="btn">Stop</button>
+          <button id="resetBtn" class="btn warn">Reset</button>
+        </div>
+      </div>
+
+      <div class="set-clock-block">
+        <div class="label-small" style="margin-bottom:4px;">Set clock (seconds)</div>
+        <div class="set-row">
+          <input id="setSecondsInput" type="number" min="0" step="1" placeholder="e.g. 60, 90, 120" />
+          <button id="setSecondsBtn" class="btn">Apply</button>
+        </div>
+        <div class="help-text">
+          60 = 1:00, 90 = 1:30, 120 = 2:00. Applying will stop the clock.
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-hints">
+      Keyboard: Space = start/stop, R = reset, 1/2/3/- for red, 7/8/9/= for green.
+    </div>
+  </section>
+</div>
+
+<div id="toast">Saved</div>
+
+<script>
+  const SERVER_URL = "https://scoreboard-server-er33.onrender.com";
+  const socket = io(SERVER_URL, { transports:["websocket","polling"] });
+
+  const connPill   = document.getElementById("connPill");
+  const connText   = document.getElementById("connText");
+  const matSelect  = document.getElementById("matSelect");
+
+  const redNameInput   = document.getElementById("redNameInput");
+  const redTeamInput   = document.getElementById("redTeamInput");
+  const greenNameInput = document.getElementById("greenNameInput");
+  const greenTeamInput = document.getElementById("greenTeamInput");
+
+  const redScoreDisplay   = document.getElementById("redScoreDisplay");
+  const greenScoreDisplay = document.getElementById("greenScoreDisplay");
+
+  const clockDisplay  = document.getElementById("clockDisplay");
+  const periodSelect  = document.getElementById("periodSelect");
+
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn  = document.getElementById("stopBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const setSecondsInput = document.getElementById("setSecondsInput");
+  const setSecondsBtn   = document.getElementById("setSecondsBtn");
+
+  const toastEl = document.getElementById("toast");
+
+  let mats = {};
+  let currentMat = 1;
+  let lastTickTs = Date.now();
+
+  const SEGMENTS = {
+    REG1:{ id:"REG1", period:1, time:60 },
+    REG2:{ id:"REG2", period:2, time:90 },
+    REG3:{ id:"REG3", period:3, time:120 },
+    OT:  { id:"OT",   period:4, time:60 },
+    TB1: { id:"TB1",  period:5, time:30 },
+    TB2: { id:"TB2",  period:6, time:30 },
+    UT:  { id:"UT",   period:7, time:30 }
+  };
+
+  function showToast(msg){
+    toastEl.textContent = msg || "Saved";
+    toastEl.classList.add("show");
+    setTimeout(()=>toastEl.classList.remove("show"), 1400);
+  }
+
+  function getMatState(){
+    return mats[String(currentMat)] || {
+      running:false,
+      timeRemaining:60,
+      segmentId:"REG1",
+      period:1,
+      red:0,
+      green:0
+    };
+  }
+
+  function formatTime(sec) {
+    const s = Math.max(0, Math.floor(sec));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return String(m).padStart(2,"0") + ":" + String(r).padStart(2,"0");
+  }
+
+  function renderFromState(){
+    const s = getMatState();
+    clockDisplay.textContent = formatTime(s.timeRemaining ?? 60);
+    periodSelect.value = s.segmentId || "REG1";
+    redScoreDisplay.textContent   = s.red ?? 0;
+    greenScoreDisplay.textContent = s.green ?? 0;
+
+    // Names/teams (if present from another device)
+    if (s.redName && !redNameInput.matches(":focus")) {
+      redNameInput.value = s.redName;
+    }
+    if (s.greenName && !greenNameInput.matches(":focus")) {
+      greenNameInput.value = s.greenName;
+    }
+    if (s.redTeam && !redTeamInput.matches(":focus")) {
+      redTeamInput.value = s.redTeam;
+    }
+    if (s.greenTeam && !greenTeamInput.matches(":focus")) {
+      greenTeamInput.value = s.greenTeam;
+    }
+  }
+
+  // Socket events
+  socket.on("connect",()=>{
+    connPill.classList.add("connected");
+    connText.textContent = "Connected";
+    socket.emit("registerDevice",{ type:"control-lite", mat: currentMat });
+  });
+
+  socket.on("disconnect",()=>{
+    connPill.classList.remove("connected");
+    connText.textContent = "Disconnected";
+  });
+
+  socket.on("stateUpdate",(payload)=>{
+    if (payload && payload.mats) {
+      mats = payload.mats;
+      renderFromState();
+    }
+  });
+
+  // Mat selection
+  matSelect.addEventListener("change",()=>{
+    currentMat = parseInt(matSelect.value || "1",10) || 1;
+    socket.emit("registerDevice",{ type:"control-lite", mat: currentMat });
+    renderFromState();
+    showToast("Switched to Mat " + currentMat);
+  });
+
+  // Names & teams -> push into mat state
+  function pushNames(){
+    socket.emit("updateState",{
+      mat: currentMat,
+      updates: {
+        redName:   redNameInput.value.trim()   || null,
+        redTeam:   redTeamInput.value.trim()   || null,
+        greenName: greenNameInput.value.trim() || null,
+        greenTeam: greenTeamInput.value.trim() || null
+      }
+    });
+  }
+
+  redNameInput.addEventListener("input", pushNames);
+  redTeamInput.addEventListener("input", pushNames);
+  greenNameInput.addEventListener("input", pushNames);
+  greenTeamInput.addEventListener("input", pushNames);
+
+  // Score buttons
+  document.querySelectorAll("[data-score]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const who = btn.dataset.score;
+      const pts = parseInt(btn.dataset.pts || "0",10);
+      if (!who || Number.isNaN(pts)) return;
+      const s = getMatState();
+      const cur = (s[who] || 0) + pts;
+      const next = Math.max(0, cur);
+      socket.emit("updateState",{
+        mat: currentMat,
+        updates: { [who]: next }
+      });
+    });
+  });
+
+  // Period select -> segmentId + period + default time for that seg (don’t auto-reset if you don’t want)
+  periodSelect.addEventListener("change",()=>{
+    const segId = periodSelect.value || "REG1";
+    const seg = SEGMENTS[segId] || SEGMENTS.REG1;
+    socket.emit("updateState",{
+      mat: currentMat,
+      updates: {
+        segmentId: segId,
+        period: seg.period
+      }
+    });
+    showToast("Period changed to " + segId);
+  });
+
+  // Timer controls
+  startBtn.addEventListener("click",()=>{
+    socket.emit("updateState",{ mat: currentMat, updates:{ running:true }});
+  });
+
+  stopBtn.addEventListener("click",()=>{
+    socket.emit("updateState",{ mat: currentMat, updates:{ running:false }});
+  });
+
+  resetBtn.addEventListener("click",()=>{
+    const s = getMatState();
+    const seg = SEGMENTS[s.segmentId || "REG1"] || SEGMENTS.REG1;
+    socket.emit("updateState",{
+      mat: currentMat,
+      updates: {
+        timeRemaining: seg.time,
+        running:false
+      }
+    });
+  });
+
+  setSecondsBtn.addEventListener("click",()=>{
+    const raw = (setSecondsInput.value || "").trim();
+    const value = Number(raw);
+    if (!raw || Number.isNaN(value) || value < 0) {
+      showToast("Enter valid seconds (0+)");
+      return;
+    }
+    const seconds = Math.floor(value);
+    socket.emit("updateState",{
+      mat: currentMat,
+      updates:{ timeRemaining: seconds, running:false }
+    });
+    showToast("Clock set");
+  });
+
+  // Local timer loop (client-side tick pushing to server)
+  setInterval(()=>{
+    const s = getMatState();
+    if (!s.running) {
+      lastTickTs = Date.now();
+      return;
+    }
+    const now = Date.now();
+    const elapsed = (now - lastTickTs) / 1000;
+    if (elapsed < 0.2) return;
+    lastTickTs = now;
+
+    let remaining = (s.timeRemaining ?? 0) - elapsed;
+    if (remaining <= 0) remaining = 0;
+
+    socket.emit("updateState",{
+      mat: currentMat,
+      updates:{
+        timeRemaining: remaining,
+        running: remaining > 0
+      }
+    });
+  }, 200);
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown",(ev)=>{
+    const tag = (ev.target && ev.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    if (ev.key === " ") {
+      ev.preventDefault();
+      const s = getMatState();
+      socket.emit("updateState",{
+        mat: currentMat,
+        updates:{ running: !s.running }
+      });
+      return;
+    }
+
+    if (ev.key === "r" || ev.key === "R") {
+      resetBtn.click();
+      return;
+    }
+
+    // Red quick scoring
+    if (ev.key === "1") socket.emit("updateState",{ mat: currentMat, updates:{ red:(getMatState().red||0)+1 }});
+    if (ev.key === "2") socket.emit("updateState",{ mat: currentMat, updates:{ red:(getMatState().red||0)+2 }});
+    if (ev.key === "3") socket.emit("updateState",{ mat: currentMat, updates:{ red:(getMatState().red||0)+3 }});
+
+    // Green quick scoring
+    if (ev.key === "7") socket.emit("updateState",{ mat: currentMat, updates:{ green:(getMatState().green||0)+1 }});
+    if (ev.key === "8") socket.emit("updateState",{ mat: currentMat, updates:{ green:(getMatState().green||0)+2 }});
+    if (ev.key === "9") socket.emit("updateState",{ mat: currentMat, updates:{ green:(getMatState().green||0)+3 }});
+  });
+</script>
+</body>
+</html>
