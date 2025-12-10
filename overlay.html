@@ -36,10 +36,9 @@
       position: relative;
       width: 100%;
       height: 100%;
-      pointer-events: none; /* overlay is display-only */
+      pointer-events: none;
     }
 
-    /* Lower-third bar */
     .scorebar-wrap {
       position: absolute;
       left: 50%;
@@ -51,7 +50,7 @@
 
     .scorebar {
       display: grid;
-      grid-template-columns: minmax(0,1.7fr) minmax(0,1.2fr) minmax(0,1.7fr);
+      grid-template-columns: minmax(0,1.7fr) minmax(0,1.4fr) minmax(0,1.7fr);
       align-items: stretch;
       gap: 2px;
       border-radius: 18px;
@@ -84,14 +83,46 @@
       min-width: 0;
     }
 
+    .team-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .team-line.right {
+      justify-content: flex-end;
+    }
+
     .team-name {
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.18em;
-      color: rgba(255,255,255,0.68);
+      color: rgba(255,255,255,0.78);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .team-score-badge {
+      font-size: 11px;
+      min-width: 22px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.55);
+      background: rgba(0,0,0,0.4);
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .team-score-badge.red {
+      border-color: rgba(244,67,54,0.9);
+      box-shadow: 0 0 12px rgba(244,67,54,0.6);
+    }
+
+    .team-score-badge.green {
+      border-color: rgba(102,187,106,0.9);
+      box-shadow: 0 0 12px rgba(102,187,106,0.6);
     }
 
     .wrestler-name {
@@ -100,31 +131,15 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-top: 2px;
     }
 
-    .score-pill {
-      min-width: 46px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.3);
-      text-align: center;
-      font-size: 20px;
-      font-weight: 700;
-      margin-left: 10px;
-      background: rgba(0,0,0,0.4);
+    .team-block.right {
+      align-items: flex-end;
+      text-align: right;
     }
 
-    .score-pill.red {
-      border-color: rgba(244,67,54,0.9);
-      box-shadow: 0 0 18px rgba(244,67,54,0.55);
-    }
-
-    .score-pill.green {
-      border-color: rgba(102,187,106,0.9);
-      box-shadow: 0 0 18px rgba(102,187,106,0.55);
-    }
-
-    /* Center clock/period block */
+    /* Center block */
     .center-block {
       position: relative;
       background: radial-gradient(circle at top, rgba(30,136,229,0.26), rgba(3,4,10,0.98));
@@ -137,11 +152,42 @@
       gap: 2px;
     }
 
+    .center-row {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr);
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-pill-center {
+      min-width: 42px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 750;
+      font-variant-numeric: tabular-nums;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.6);
+      text-shadow: 0 0 14px rgba(0,0,0,0.9);
+    }
+
+    .score-pill-center.red {
+      border-color: rgba(244,67,54,0.95);
+      box-shadow: 0 0 20px rgba(244,67,54,0.7);
+    }
+
+    .score-pill-center.green {
+      border-color: rgba(102,187,106,0.95);
+      box-shadow: 0 0 20px rgba(102,187,106,0.7);
+    }
+
     .clock {
       font-variant-numeric: tabular-nums;
       font-size: 26px;
       font-weight: 750;
       letter-spacing: 0.08em;
+      text-align: center;
       text-shadow: 0 0 14px rgba(0,0,0,0.9);
     }
 
@@ -150,6 +196,7 @@
       text-transform: uppercase;
       letter-spacing: 0.18em;
       color: rgba(255,255,255,0.82);
+      margin-top: 2px;
     }
 
     .mat-tag {
@@ -201,22 +248,20 @@
 
     @media (max-width: 800px) {
       .scorebar {
-        grid-template-columns: minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.6fr);
+        grid-template-columns: minmax(0,1.7fr) minmax(0,1.4fr) minmax(0,1.7fr);
       }
       .wrestler-name { font-size: 14px; }
       .clock { font-size: 22px; }
+      .score-pill-center { font-size: 20px; }
     }
 
     @media (max-width: 600px) {
       .scorebar-wrap {
         width: 98%;
       }
-      .scorebar {
-        grid-template-columns: minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.6fr);
-      }
       .team-name { font-size: 10px; }
       .wrestler-name { font-size: 13px; }
-      .score-pill { font-size: 18px; }
+      .score-pill-center { font-size: 18px; }
     }
   </style>
 </head>
@@ -227,26 +272,34 @@
       <!-- Red side -->
       <div class="side red">
         <div class="team-block">
-          <div id="redTeam" class="team-name">Red Team</div>
+          <div class="team-line">
+            <div id="redTeamName" class="team-name">Red Team</div>
+            <div id="redTeamScoreBadge" class="team-score-badge red">0</div>
+          </div>
           <div id="redName" class="wrestler-name">Red Wrestler</div>
         </div>
-        <div id="redScore" class="score-pill red">0</div>
       </div>
 
       <!-- Center -->
       <div class="center-block">
         <div class="mat-tag" id="matTag">MAT 1</div>
-        <div id="clock" class="clock">01:00</div>
+        <div class="center-row">
+          <div id="redScore" class="score-pill-center red">0</div>
+          <div id="clock" class="clock">01:00</div>
+          <div id="greenScore" class="score-pill-center green">0</div>
+        </div>
         <div id="periodTag" class="period-tag">PERIOD 1</div>
       </div>
 
       <!-- Green side -->
       <div class="side green">
-        <div class="team-block" style="text-align:right; align-items:flex-end;">
-          <div id="greenTeam" class="team-name">Green Team</div>
+        <div class="team-block right">
+          <div class="team-line right">
+            <div id="greenTeamName" class="team-name">Green Team</div>
+            <div id="greenTeamScoreBadge" class="team-score-badge green">0</div>
+          </div>
           <div id="greenName" class="wrestler-name">Green Wrestler</div>
         </div>
-        <div id="greenScore" class="score-pill green">0</div>
       </div>
     </div>
   </div>
@@ -265,12 +318,15 @@
   const SERVER_URL = "https://scoreboard-server-er33.onrender.com";
   const socket = io(SERVER_URL, { transports:["websocket","polling"] });
 
-  const redTeamEl   = document.getElementById("redTeam");
-  const redNameEl   = document.getElementById("redName");
-  const redScoreEl  = document.getElementById("redScore");
+  const redTeamNameEl        = document.getElementById("redTeamName");
+  const redTeamScoreBadgeEl  = document.getElementById("redTeamScoreBadge");
+  const redNameEl            = document.getElementById("redName");
 
-  const greenTeamEl  = document.getElementById("greenTeam");
-  const greenNameEl  = document.getElementById("greenName");
+  const greenTeamNameEl       = document.getElementById("greenTeamName");
+  const greenTeamScoreBadgeEl = document.getElementById("greenTeamScoreBadge");
+  const greenNameEl           = document.getElementById("greenName");
+
+  const redScoreEl   = document.getElementById("redScore");
   const greenScoreEl = document.getElementById("greenScore");
 
   const clockEl     = document.getElementById("clock");
@@ -280,7 +336,6 @@
   let mats = {};
   let currentMat = 1;
 
-  // Read ?mat= from query string
   (function initMatFromQuery(){
     try {
       const params = new URLSearchParams(window.location.search || "");
@@ -304,7 +359,9 @@
       redName:null,
       greenName:null,
       redTeam:null,
-      greenTeam:null
+      greenTeam:null,
+      redTeamScore:0,
+      greenTeamScore:0
     };
   }
 
@@ -330,14 +387,19 @@
   function render(){
     const s = getMatState();
 
-    const redTeam  = s.redTeam   || "";
-    const redName  = s.redName   || "Red Wrestler";
-    const greenTeam= s.greenTeam || "";
-    const greenName= s.greenName || "Green Wrestler";
+    const redTeam        = s.redTeam   || "Red Team";
+    const greenTeam      = s.greenTeam || "Green Team";
+    const redTeamScore   = s.redTeamScore ?? 0;
+    const greenTeamScore = s.greenTeamScore ?? 0;
+    const redName        = s.redName   || "Red Wrestler";
+    const greenName      = s.greenName || "Green Wrestler";
 
-    redTeamEl.textContent   = redTeam  || "Red Team";
+    redTeamNameEl.textContent        = redTeam;
+    redTeamScoreBadgeEl.textContent  = redTeamScore;
+    greenTeamNameEl.textContent      = greenTeam;
+    greenTeamScoreBadgeEl.textContent= greenTeamScore;
+
     redNameEl.textContent   = redName;
-    greenTeamEl.textContent = greenTeam || "Green Team";
     greenNameEl.textContent = greenName;
 
     redScoreEl.textContent   = (s.red != null ? s.red : 0);
@@ -358,7 +420,6 @@
     }
   });
 
-  // Just in case there are small drifts or late packets, re-render periodically
   setInterval(render, 500);
 </script>
 </body>
