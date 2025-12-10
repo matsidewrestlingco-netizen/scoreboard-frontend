@@ -505,10 +505,7 @@
 <div id="toast">Saved</div>
 
 <script>
- const socket = io("https://scoreboard-server-er33.onrender.com", {
-  transports: ["websocket"],
-  secure: true
-});
+  const SERVER_URL = "https://scoreboard-server-er33.onrender.com";
   const socket = io(SERVER_URL, { transports:["websocket","polling"] });
 
   const connPill   = document.getElementById("connPill");
