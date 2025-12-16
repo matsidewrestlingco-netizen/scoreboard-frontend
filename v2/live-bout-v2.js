@@ -94,30 +94,36 @@ function renderActions(bout) {
   // IN PROGRESS
   // -----------------------------
   if (bout.state === 'BOUT_IN_PROGRESS') {
+    const scoreCard = document.createElement('div');
+    scoreCard.className = 'card score-card';
+
     const redGroup = document.createElement('div');
     redGroup.className = 'score-group red';
+    redGroup.innerHTML = `<div class="label red-label">RED</div>`;
     redGroup.appendChild(
-      secondaryBtn('+3 TD', () => score('RED', 3))
-    );
+    secondaryBtn('+3 TD', () => score('RED', 3))
+  );
 
     const greenGroup = document.createElement('div');
     greenGroup.className = 'score-group green';
+    greenGroup.innerHTML = `<div class="label green-label">GREEN</div>`;
     greenGroup.appendChild(
-      secondaryBtn('+3 TD', () => score('GREEN', 3))
-    );
+    secondaryBtn('+3 TD', () => score('GREEN', 3))
+  );
+
+scoreCard.append(redGroup, greenGroup);
 
     const clockBtn = bout.clock_running
       ? primaryBtn('Stop Clock', clockStop)
       : primaryBtn('Start Clock', clockStart);
 
     panel.append(
-      redGroup,
-      greenGroup,
-      clockBtn,
-      secondaryBtn('End Period', endPeriod),
-      dangerBtn('Undo Last Action', undoLastAction),
-      dangerBtn('End Match', endMatch)
-    );
+  scoreCard,
+  clockBtn,
+  secondaryBtn('End Period', endPeriod),
+  dangerBtn('Undo Last Action', undoLastAction),
+  dangerBtn('End Match', endMatch)
+);
     return;
   }
 
