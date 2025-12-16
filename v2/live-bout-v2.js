@@ -9,10 +9,7 @@ const supabase = createClient(
 
 async function fetchBout() {
   const { data, error } = await supabase
-    .from('matside_v2.bouts')
-    .select('*')
-    .eq('id', BOUT_ID)
-    .single();
+    .rpc('rpc_get_bout', { p_bout_id: BOUT_ID });
 
   if (error) {
     console.error(error);
