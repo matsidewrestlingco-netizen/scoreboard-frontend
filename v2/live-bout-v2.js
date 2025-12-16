@@ -4,7 +4,7 @@
 const BOUT_ID = '93c1b3b2-e2d0-4b77-9582-c2bed2099d05';
 
 // ===============================
-// SUPABASE CLIENT
+// SUPABASE
 // ===============================
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -14,7 +14,7 @@ const supabase = createClient(
 );
 
 // ===============================
-// DATA FETCH
+// FETCH
 // ===============================
 async function fetchBout() {
   const { data, error } = await supabase.rpc('rpc_get_bout', {
@@ -67,68 +67,11 @@ function renderStateBanner(bout) {
 
 function renderActions(bout) {
   const panel = document.getElementById('actionPanel');
-
-  // Clear panel
   panel.innerHTML = '';
 
-  // BOUT_READY → Start Match
-  if (bout.state === 'BOUT_READY') {
-    const btn = document.createElement('button');
-    btn.className = 'primary';
-    btn.textContent = 'Start Match';
-    btn.onclick = startMatch;
-
-    panel.appendChild(btn);
-    return;
-  }
-
-    // BOUT_IN_PROGRESS → scoring
-    if (bout.state === 'BOUT_IN_PROGRESS') {
-    const panel = document.getElementById('actionPanel');
-    panel.innerHTML = '';
-  
-    const btn = document.createElement('button');
-    btn.className = 'secondary';
-    btn.textContent = 'TD Red +3';
-    btn.onclick = () => score('RED', 3);
-  
-    panel.appendChild(btn);
-    return;
-  }
-
-    if (bout.state === 'BOUT_IN_PROGRESS') {
-    const panel = document.getElementById('actionPanel');
-    panel.innerHTML = '';
-  
-    const tdBtn = document.createElement('button');
-    tdBtn.className = 'secondary';
-    tdBtn.textContent = 'TD Red +3';
-    tdBtn.onclick = () => score('RED', 3);
-  
-    const undoBtn = document.createElement('button');
-    undoBtn.className = 'danger';
-    undoBtn.textContent = 'Undo Last Action';
-    undoBtn.onclick = undoLastAction;
-  
-    panel.appendChild(tdBtn);
-    panel.appendChild(undoBtn);
-    return;
-  }
-  
-  // All other states (for now)
-  panel.innerHTML = `<div class="muted">No actions available</div>`;
-}
-
-// ===============================
-// ACTIONS
-// ===============================
-  function renderActions(bout) {
-  const panel = document.getElementById('actionPanel');
-  panel.innerHTML = '';
-
-  // =========================
+  // -----------------------------
   // BOUT_READY
-  // =========================
+  // -----------------------------
   if (bout.state === 'BOUT_READY') {
     const startBtn = document.createElement('button');
     startBtn.className = 'primary';
@@ -139,9 +82,9 @@ function renderActions(bout) {
     return;
   }
 
-  // =========================
+  // -----------------------------
   // BOUT_IN_PROGRESS
-  // =========================
+  // -----------------------------
   if (bout.state === 'BOUT_IN_PROGRESS') {
     const tdBtn = document.createElement('button');
     tdBtn.className = 'secondary';
@@ -158,10 +101,61 @@ function renderActions(bout) {
     return;
   }
 
-  // =========================
+  // -----------------------------
   // ALL OTHER STATES
-  // =========================
+  // -----------------------------
   panel.innerHTML = `<div class="muted">No actions available</div>`;
+}
+
+// ===============================
+// ACTIONS
+// ===============================
+async function startMatch() {
+  const { error } = await supabase.rpc('rpc_bout_start', {
+    p_actor_id: crypto.randomUUID(),
+    p_bout_id: BOUT_ID
+  });
+
+  if (error) {
+    console.error('startMatch error:', error);
+    alert('Failed to start match');
+    return;
+  }
+
+  await refresh();
+}
+
+async function score(color, points) {
+  const { error } = await supabase.rpc('rpc_apply_score_action', {
+    p_actor_id: crypto.randomUUID(),
+    p_bout_id: BOUT_ID,
+    p_action_type: 'SCORE_TAKEDOWN',
+    p_color: color,
+    p_points: points
+  });
+
+  if (error) {
+    console.error('score error:', error);
+    alert('Failed to apply score');
+    return;
+  }
+
+  await refresh();
+}
+
+async function undoLastAction() {
+  const { error } = await supabase.rpc('rpc_undo_last_action', {
+    p_actor_id: crypto.randomUUID(),
+    p_bout_id: BOUT_ID
+  });
+
+  if (error) {
+    console.error('undo error:', error);
+    alert('Failed to undo last action');
+    return;
+  }
+
+  await refresh();
 }
 
 // ===============================
@@ -176,5 +170,5 @@ async function refresh() {
   renderActions(bout);
 }
 
-// Initial load
+// INITIAL LOAD
 refresh();
