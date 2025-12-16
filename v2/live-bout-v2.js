@@ -20,28 +20,7 @@ async function fetchBout() {
     return null;
   }
 
-  return data;  
-}
-
-function render(bout) {
-  renderHeader(bout);
-  renderStateBanner(bout);
-  renderActions(bout);
-}
-
-async function startMatch() {
-  await rpc('rpc_bout_start', { bout_id: BOUT_ID });
-  await refresh();
-}
-
-async function score(color, points) {
-  await rpc('rpc_apply_score_action', { /* explicit args */ });
-  await refresh();
-}
-
-async function refresh() {
-  const bout = await fetchBout();
-  render(bout);
+  return data;
 }
 
 async function refresh() {
