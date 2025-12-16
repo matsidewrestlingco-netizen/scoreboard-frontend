@@ -215,6 +215,21 @@ async function clockStop() {
   await refresh();
 }
 
+async function endPeriod() {
+  const { error } = await supabase.rpc('rpc_end_period', {
+    p_actor_id: crypto.randomUUID(),
+    p_bout_id: BOUT_ID
+  });
+
+  if (error) {
+    console.error('endPeriod error:', error);
+    alert('Failed to end period');
+    return;
+  }
+
+  await refresh();
+}
+
 // ===============================
 // REFRESH LOOP
 // ===============================
