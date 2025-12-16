@@ -178,9 +178,10 @@ async function undoLastAction() {
 }
 
 async function clockStart() {
-  const { error } = await supabase.rpc('rpc_clock_start', {
+  const { error } = await supabase.rpc('rpc_clock_action', {
     p_actor_id: crypto.randomUUID(),
-    p_bout_id: BOUT_ID
+    p_bout_id: BOUT_ID,
+    p_action_type: 'CLOCK_START'
   });
 
   if (error) {
@@ -193,9 +194,10 @@ async function clockStart() {
 }
 
 async function clockStop() {
-  const { error } = await supabase.rpc('rpc_clock_stop', {
+  const { error } = await supabase.rpc('rpc_clock_action', {
     p_actor_id: crypto.randomUUID(),
-    p_bout_id: BOUT_ID
+    p_bout_id: BOUT_ID,
+    p_action_type: 'CLOCK_STOP'
   });
 
   if (error) {
