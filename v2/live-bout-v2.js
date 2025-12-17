@@ -1,7 +1,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const BOUT_ID = '499a9796-1997-4524-892a-7466eacd88e1';
+const BOUT_ID = 'PUT_YOUR_BOUT_ID_HERE';
 
 // ===============================
 // SUPABASE
@@ -10,8 +10,23 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabase = createClient(
   'https://polfteqwekkhzlhfjhsn.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbGZ0ZXF3ZWtraHpsaGZqaHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTU2MzAsImV4cCI6MjA4MDY5MTYzMH0.npJCJJKOLTQddFH-xtU_ZtlT9_M8JWWpScDIsZAGY4M'
+  'YOUR_PUBLIC_ANON_KEY'
 );
+
+// ===============================
+// UI STATE (FRONT-END ONLY)
+// ===============================
+// This is intentionally NOT persisted yet. A2.1 is UI-only.
+const choiceUI = {
+  isOpen: false,
+  pendingPeriod: null,     // the period we need a choice for
+  chooser: 'RED',          // who currently has the choice
+  deferUsed: false,        // defer can happen only once per match
+  lastChooser: null,       // who last made (or deferred) the choice
+  // For the current period, we store an initial position hint override:
+  // 'NEUTRAL' | 'RED_CONTROL' | 'GREEN_CONTROL'
+  positionOverrideByPeriod: {}
+};
 
 // ===============================
 // FETCH
@@ -33,29 +48,251 @@ async function fetchBout() {
 // ===============================
 // POSITION CONTEXT (DERIVED)
 // ===============================
-function derivePositionContext(actions = []) {
-  if (!actions || actions.length === 0) return 'NEUTRAL';
+// We derive context from the last meaningful action, and allow a UI-only override
+// for the beginning of a period (based on the period choice modal).
+function derivePositionContext(bout, actions = []) {
+  const currentPeriod = bout?.current_period ?? null;
 
+  // Helper: maps color to control context
+  const controlOf = (color) => (color === 'RED' ? 'RED_CONTROL' : 'GREEN_CONTROL');
+
+  // Walk backwards through actions to find the last context-defining event
   for (let i = actions.length - 1; i >= 0; i--) {
     const a = actions[i];
-    if (a.is_voided) continue;
+    if (!a || a.is_voided) continue;
 
+    // If we reached the start of the current period and haven't seen
+    // a context-defining action yet, use the UI override (if present).
+    if (a.action_type === 'PERIOD_START' && currentPeriod != null) {
+      if (a.period === currentPeriod) {
+        const ov = choiceUI.positionOverrideByPeriod[currentPeriod];
+        return ov || 'NEUTRAL';
+      }
+      // If it's a prior period start, we're still safe to return neutral baseline
+      // (unless newer actions already set control above).
+      return 'NEUTRAL';
+    }
+
+    // Support both “new style” (SCORE_*) and “older style” names defensively.
     switch (a.action_type) {
+      // --- Primary folkstyle position drivers ---
+      case 'SCORE_TAKEDOWN':
       case 'TAKEDOWN_RED':
-      case 'REVERSAL_RED':
-        return 'RED_CONTROL';
-
       case 'TAKEDOWN_GREEN':
-      case 'REVERSAL_GREEN':
-        return 'GREEN_CONTROL';
+        // If your action row contains a.color (RED/GREEN), use it.
+        if (a.color === 'RED' || a.color === 'GREEN') return controlOf(a.color);
+        // Fallback for explicit action types:
+        if (a.action_type === 'TAKEDOWN_RED') return 'RED_CONTROL';
+        if (a.action_type === 'TAKEDOWN_GREEN') return 'GREEN_CONTROL';
+        break;
 
+      case 'SCORE_REVERSAL':
+      case 'REVERSAL_RED':
+      case 'REVERSAL_GREEN':
+        if (a.color === 'RED' || a.color === 'GREEN') return controlOf(a.color);
+        if (a.action_type === 'REVERSAL_RED') return 'RED_CONTROL';
+        if (a.action_type === 'REVERSAL_GREEN') return 'GREEN_CONTROL';
+        break;
+
+      case 'SCORE_ESCAPE':
       case 'ESCAPE_RED':
       case 'ESCAPE_GREEN':
         return 'NEUTRAL';
+
+      // --- These do NOT change control context ---
+      case 'SCORE_NEARFALL':
+      case 'PENALTY':
+      case 'STALLING':
+      case 'CAUTION':
+      case 'UNSPORTSMANLIKE':
+      case 'TECHNICAL_VIOLATION':
+      case 'CLOCK_START':
+      case 'CLOCK_STOP':
+      case 'PERIOD_END':
+      case 'MATCH_CONFIRM':
+      default:
+        break;
     }
   }
 
+  // No actions found? Beginning of match => neutral.
+  // If a UI override exists for current period, apply it.
+  if (currentPeriod != null) {
+    const ov = choiceUI.positionOverrideByPeriod[currentPeriod];
+    if (ov) return ov;
+  }
   return 'NEUTRAL';
+}
+
+// ===============================
+// MODAL UI (A2.1 FRONT-END ONLY)
+// ===============================
+function ensureChoiceModal() {
+  if (document.getElementById('choiceModalOverlay')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'choiceModalOverlay';
+  overlay.className = 'ms-modal-overlay hidden';
+
+  overlay.innerHTML = `
+    <div class="ms-modal">
+      <div class="ms-modal-header">
+        <div class="ms-modal-title" id="choiceModalTitle">Period — Choice</div>
+        <button class="ms-modal-x" id="choiceModalClose" title="Close">✕</button>
+      </div>
+
+      <div class="ms-modal-body">
+        <div class="ms-modal-row">
+          <div class="ms-modal-sub" id="choiceModalSub">Chooser</div>
+        </div>
+
+        <div class="ms-chooser-row">
+          <button class="ms-pill" id="chooserRed">Red has choice</button>
+          <button class="ms-pill" id="chooserGreen">Green has choice</button>
+        </div>
+
+        <div class="ms-choice-grid">
+          <button class="ms-choice" id="choiceNeutral">
+            <div class="ms-choice-name">Neutral</div>
+            <div class="ms-choice-desc">Start neutral</div>
+          </button>
+
+          <button class="ms-choice" id="choiceTop">
+            <div class="ms-choice-name">Top</div>
+            <div class="ms-choice-desc">Chooser in control</div>
+          </button>
+
+          <button class="ms-choice" id="choiceBottom">
+            <div class="ms-choice-name">Bottom</div>
+            <div class="ms-choice-desc">Opponent in control</div>
+          </button>
+
+          <button class="ms-choice ms-choice-secondary" id="choiceDefer">
+            <div class="ms-choice-name">Defer</div>
+            <div class="ms-choice-desc">Pass choice</div>
+          </button>
+        </div>
+
+        <div class="ms-modal-note" id="choiceModalNote"></div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Wire close behavior
+  document.getElementById('choiceModalClose').onclick = () => {
+    // For A2.1, we do NOT allow closing if choice is required.
+    // If you want to allow it later, we can soften this.
+    alert('A starting position must be selected before continuing.');
+  };
+
+  // Chooser toggles
+  document.getElementById('chooserRed').onclick = () => setChooser('RED');
+  document.getElementById('chooserGreen').onclick = () => setChooser('GREEN');
+
+  // Choices
+  document.getElementById('choiceNeutral').onclick = () => applyChoice('NEUTRAL');
+  document.getElementById('choiceTop').onclick = () => applyChoice('TOP');
+  document.getElementById('choiceBottom').onclick = () => applyChoice('BOTTOM');
+  document.getElementById('choiceDefer').onclick = () => applyChoice('DEFER');
+}
+
+function openChoiceModal(periodNumber) {
+  ensureChoiceModal();
+
+  choiceUI.isOpen = true;
+  choiceUI.pendingPeriod = periodNumber;
+
+  const overlay = document.getElementById('choiceModalOverlay');
+  overlay.classList.remove('hidden');
+
+  updateChoiceModal();
+}
+
+function closeChoiceModal() {
+  choiceUI.isOpen = false;
+
+  const overlay = document.getElementById('choiceModalOverlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+function setChooser(color) {
+  choiceUI.chooser = color;
+  updateChoiceModal();
+}
+
+function otherColor(color) {
+  return color === 'RED' ? 'GREEN' : 'RED';
+}
+
+function updateChoiceModal() {
+  const title = document.getElementById('choiceModalTitle');
+  const sub = document.getElementById('choiceModalSub');
+  const note = document.getElementById('choiceModalNote');
+
+  const chooserRed = document.getElementById('chooserRed');
+  const chooserGreen = document.getElementById('chooserGreen');
+  const deferBtn = document.getElementById('choiceDefer');
+
+  title.textContent = `Period ${choiceUI.pendingPeriod} — Choice`;
+  sub.textContent = `${choiceUI.chooser === 'RED' ? 'Red' : 'Green'} has the choice`;
+
+  // Highlight active chooser
+  chooserRed.classList.toggle('active', choiceUI.chooser === 'RED');
+  chooserGreen.classList.toggle('active', choiceUI.chooser === 'GREEN');
+
+  // Defer availability (UI-only rule)
+  const deferAllowed = !choiceUI.deferUsed;
+  deferBtn.disabled = !deferAllowed;
+  deferBtn.title = deferAllowed ? '' : 'Defer already used';
+
+  note.textContent = deferAllowed
+    ? 'Select Neutral, Top, Bottom, or Defer.'
+    : 'Defer already used — select Neutral, Top, or Bottom.';
+}
+
+function applyChoice(choice) {
+  const period = choiceUI.pendingPeriod;
+  const chooser = choiceUI.chooser;
+
+  if (!period) return;
+
+  // Defer: pass the choice immediately to opponent and lock defer thereafter
+  if (choice === 'DEFER') {
+    if (choiceUI.deferUsed) return;
+
+    choiceUI.deferUsed = true;
+    choiceUI.lastChooser = chooser;
+
+    // Opponent now chooses immediately; defer is now disabled.
+    choiceUI.chooser = otherColor(chooser);
+    updateChoiceModal();
+    return;
+  }
+
+  // Determine the initial position hint for this period
+  let context = 'NEUTRAL';
+
+  if (choice === 'NEUTRAL') {
+    context = 'NEUTRAL';
+  } else if (choice === 'TOP') {
+    context = chooser === 'RED' ? 'RED_CONTROL' : 'GREEN_CONTROL';
+  } else if (choice === 'BOTTOM') {
+    // Opponent in control
+    const opp = otherColor(chooser);
+    context = opp === 'RED' ? 'RED_CONTROL' : 'GREEN_CONTROL';
+  }
+
+  // Store UI-only override for the current period
+  choiceUI.positionOverrideByPeriod[period] = context;
+
+  // Close and clear pending
+  closeChoiceModal();
+  choiceUI.pendingPeriod = null;
+
+  // Re-render banner immediately
+  refresh();
 }
 
 // ===============================
@@ -102,8 +339,7 @@ function renderStateBanner(bout, actions = []) {
     label = `FINAL • Winner: ${bout.winner}`;
   }
 
-  // 🔑 Derived position context
-  const position = derivePositionContext(actions);
+  const position = derivePositionContext(bout, actions);
 
   let positionLabel = '';
   if (bout.state === 'BOUT_IN_PROGRESS') {
@@ -120,12 +356,24 @@ function renderStateBanner(bout, actions = []) {
         ? `<div class="position-hint ${position.toLowerCase()}">${positionLabel}</div>`
         : ''
     }
+    ${
+      choiceUI.isOpen
+        ? `<div class="position-hint neutral">Select starting position for Period ${choiceUI.pendingPeriod}…</div>`
+        : ''
+    }
   `;
 }
 
 function renderActions(bout) {
   const panel = document.getElementById('actionPanel');
   panel.innerHTML = '';
+
+  // Helper to disable controls while choice modal is open for current period
+  const choicePendingNow =
+    choiceUI.isOpen &&
+    choiceUI.pendingPeriod != null &&
+    bout.current_period === choiceUI.pendingPeriod &&
+    bout.state === 'BOUT_IN_PROGRESS';
 
   // -----------------------------
   // READY
@@ -139,23 +387,22 @@ function renderActions(bout) {
   // IN PROGRESS
   // -----------------------------
   if (bout.state === 'BOUT_IN_PROGRESS') {
-    // SCORE CARD
     const scoreCard = document.createElement('div');
     scoreCard.className = 'card score-card';
 
     const redGroup = document.createElement('div');
     redGroup.className = 'score-group red';
     redGroup.innerHTML = `<div class="label red-label">RED</div>`;
-    redGroup.appendChild(
-      secondaryBtn('+3 TD', () => score('RED', 3))
-    );
+    const tdRed = secondaryBtn('+3 TD', () => score('RED', 3));
+    tdRed.disabled = choicePendingNow;
+    redGroup.appendChild(tdRed);
 
     const greenGroup = document.createElement('div');
     greenGroup.className = 'score-group green';
     greenGroup.innerHTML = `<div class="label green-label">GREEN</div>`;
-    greenGroup.appendChild(
-      secondaryBtn('+3 TD', () => score('GREEN', 3))
-    );
+    const tdGreen = secondaryBtn('+3 TD', () => score('GREEN', 3));
+    tdGreen.disabled = choicePendingNow;
+    greenGroup.appendChild(tdGreen);
 
     scoreCard.append(redGroup, greenGroup);
 
@@ -163,13 +410,21 @@ function renderActions(bout) {
       ? primaryBtn('Stop Clock', clockStop)
       : primaryBtn('Start Clock', clockStart);
 
-    panel.append(
-      scoreCard,
-      clockBtn,
-      secondaryBtn('End Period', endPeriod),
-      dangerBtn('Undo Last Action', undoLastAction),
-      dangerBtn('End Match', endMatch)
-    );
+    // Block clock until choice is made (UI-only)
+    clockBtn.disabled = choicePendingNow;
+
+    const endPeriodBtn = secondaryBtn('End Period', endPeriod);
+    // You can still end period without a choice pending, but once choice is pending, don’t allow it again
+    endPeriodBtn.disabled = choicePendingNow;
+
+    const undoBtn = dangerBtn('Undo Last Action', undoLastAction);
+    // Undo can remain available; if you prefer to lock it while modal open, set disabled = choicePendingNow
+    // undoBtn.disabled = choicePendingNow;
+
+    const endMatchBtn = dangerBtn('End Match', endMatch);
+    // End match can remain available
+
+    panel.append(scoreCard, clockBtn, endPeriodBtn, undoBtn, endMatchBtn);
     return;
   }
 
@@ -241,7 +496,21 @@ async function clockStop() {
 }
 
 async function endPeriod() {
-  await rpc('rpc_end_period');
+  // End period in backend (auto-advances and starts next period)
+  const ok = await rpc('rpc_end_period');
+
+  if (!ok) return;
+
+  // After backend moves us to the next period, require a choice (UI-only)
+  const bout = await lastBoutSnapshot();
+  if (!bout) return;
+
+  // Only prompt for choice if match still in progress
+  if (bout.state === 'BOUT_IN_PROGRESS') {
+    // Default chooser: RED (ref can toggle). If you want to get fancy,
+    // we can set default chooser to the wrestler who didn't choose last time.
+    openChoiceModal(bout.current_period);
+  }
 }
 
 async function endMatch() {
@@ -252,6 +521,8 @@ async function endMatch() {
 // ===============================
 // RPC HELPER
 // ===============================
+let _lastBout = null;
+
 async function rpc(name, extra = {}) {
   const { error } = await supabase.rpc(name, {
     p_actor_id: crypto.randomUUID(),
@@ -262,11 +533,18 @@ async function rpc(name, extra = {}) {
   if (error) {
     console.error(`${name} error:`, error);
     alert(`Failed to ${name.replace('rpc_', '').replaceAll('_', ' ')}`);
-    return;
+    return false;
   }
 
   flash();
   await refresh();
+  return true;
+}
+
+async function lastBoutSnapshot() {
+  if (_lastBout) return _lastBout;
+  const bout = await fetchBout();
+  return bout;
 }
 
 // ===============================
@@ -283,6 +561,8 @@ function flash() {
 async function refresh() {
   const bout = await fetchBout();
   if (!bout) return;
+
+  _lastBout = bout;
 
   renderHeader(bout);
   renderStateBanner(bout, bout.actions || []);
