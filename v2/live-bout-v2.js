@@ -690,32 +690,50 @@ function startClockTicker() {
 }
 
 function syncClockFromBout(bout) {
-  let ms = Number(bout.clock_ms ?? 0);
-  if (!Number.isFinite(ms)) ms = 0;
+  const now = performance.now();
 
-  // Fallback: if backend sends 0 during an in-progress bout, use configured length
-  if (ms <= 0 && bout.state === 'BOUT_IN_PROGRESS') {
-    ms = PERIOD_LENGTH_MS[bout.current_period] ?? ms;
-  }
+  // What the UI currently believes (pre-refresh), used to avoid "jumping" upward
+  const localRemaining = (_clockRunning ? getDisplayedClockMs() : _clockBaseMs);
 
-  _clockBaseMs = ms;
-  _clockBaseTs = performance.now();
+  // What the backend reports
+  let serverMs = Number(bout.clock_ms ?? 0);
+  if (!Number.isFinite(serverMs)) serverMs = 0;
 
   const serverRunning = !!bout.clock_running;
   const inGrace = Date.now() < _desiredRunningUntil;
+  const effectiveRunning = serverRunning || (inGrace && _desiredRunning === true);
 
-  if (serverRunning) {
-    _clockRunning = true;
-  } else if (inGrace && _desiredRunning === true) {
-    _clockRunning = true;
+  // If the backend isn't authoritative yet, NEVER let refresh reset the clock upward.
+  if (effectiveRunning) {
+    if (serverMs <= 0) {
+      // backend not tracking remaining; keep local if we have it, else init from defaults
+      serverMs = (localRemaining > 0)
+        ? localRemaining
+        : (PERIOD_LENGTH_MS[bout.current_period] ?? 0);
+    } else {
+      // Prevent "reset to full period" when backend returns stale values during running clock
+      if (localRemaining > 0 && serverMs > localRemaining + 500) {
+        serverMs = localRemaining;
+      }
+    }
   } else {
-    _clockRunning = false;
+    // Not running: prefer backend, but fall back to local/default if backend gives 0
+    if (serverMs <= 0 && bout.state === 'BOUT_IN_PROGRESS') {
+      serverMs = (localRemaining > 0)
+        ? localRemaining
+        : (PERIOD_LENGTH_MS[bout.current_period] ?? 0);
+    }
   }
+
+  _clockBaseMs = Math.max(0, serverMs);
+  _clockBaseTs = now;
+  _clockRunning = effectiveRunning;
 
   updateClockDisplay();
   if (_clockRunning) startClockTicker();
   else stopClockTicker();
 }
+
 
 // ===============================
 // REFRESH
