@@ -1,7 +1,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const BOUT_ID = '8fd100f0-154f-4552-8749-40409eebb922';
+const BOUT_ID = 'f1187435-ae3c-45ff-b9f5-b9884be880e5';
 
 // V2 UI fallback (until backend period timing is fully authoritative)
 const PERIOD_LENGTH_MS = {
