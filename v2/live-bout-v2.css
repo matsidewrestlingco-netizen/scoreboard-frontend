@@ -489,6 +489,13 @@ button:disabled{
   color: #fde68a;
 }
 
+.clock {
+  margin-top: 6px;
+  font-size: 28px;
+  font-weight: 950;
+  letter-spacing: 1px;
+}
+
 /* ---------- Small screens ---------- */
 @media (max-width: 520px){
   .score{
