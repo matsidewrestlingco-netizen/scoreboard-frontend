@@ -1,7 +1,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const BOUT_ID = '6495a2b8-53fd-48db-9da8-f5bd237b3d67';
+const BOUT_ID = 'PUT_YOUR_BOUT_ID_HERE';
 
 // ===============================
 // SUPABASE
@@ -10,7 +10,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabase = createClient(
   'https://polfteqwekkhzlhfjhsn.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBvbGZ0ZXF3ZWtraHpsaGZqaHNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMTU2MzAsImV4cCI6MjA4MDY5MTYzMH0.npJCJJKOLTQddFH-xtU_ZtlT9_M8JWWpScDIsZAGY4M'
+  'YOUR_PUBLIC_ANON_KEY'
 );
 
 // ===============================
@@ -28,6 +28,34 @@ async function fetchBout() {
   }
 
   return data;
+}
+
+// ===============================
+// POSITION CONTEXT (DERIVED)
+// ===============================
+function derivePositionContext(actions = []) {
+  if (!actions || actions.length === 0) return 'NEUTRAL';
+
+  for (let i = actions.length - 1; i >= 0; i--) {
+    const a = actions[i];
+    if (a.is_voided) continue;
+
+    switch (a.action_type) {
+      case 'TAKEDOWN_RED':
+      case 'REVERSAL_RED':
+        return 'RED_CONTROL';
+
+      case 'TAKEDOWN_GREEN':
+      case 'REVERSAL_GREEN':
+        return 'GREEN_CONTROL';
+
+      case 'ESCAPE_RED':
+      case 'ESCAPE_GREEN':
+        return 'NEUTRAL';
+    }
+  }
+
+  return 'NEUTRAL';
 }
 
 // ===============================
@@ -56,7 +84,7 @@ function renderHeader(bout) {
   `;
 }
 
-function renderStateBanner(bout) {
+function renderStateBanner(bout, actions = []) {
   const banner = document.getElementById('stateBanner');
 
   let stateClass = 'idle';
@@ -74,8 +102,25 @@ function renderStateBanner(bout) {
     label = `FINAL • Winner: ${bout.winner}`;
   }
 
+  // 🔑 Derived position context
+  const position = derivePositionContext(actions);
+
+  let positionLabel = '';
+  if (bout.state === 'BOUT_IN_PROGRESS') {
+    if (position === 'RED_CONTROL') positionLabel = 'RED IN CONTROL';
+    if (position === 'GREEN_CONTROL') positionLabel = 'GREEN IN CONTROL';
+    if (position === 'NEUTRAL') positionLabel = 'NEUTRAL';
+  }
+
   banner.className = `state-banner ${stateClass}`;
-  banner.innerHTML = `<strong>${label}</strong>`;
+  banner.innerHTML = `
+    <strong>${label}</strong>
+    ${
+      positionLabel
+        ? `<div class="position-hint ${position.toLowerCase()}">${positionLabel}</div>`
+        : ''
+    }
+  `;
 }
 
 function renderActions(bout) {
@@ -94,6 +139,7 @@ function renderActions(bout) {
   // IN PROGRESS
   // -----------------------------
   if (bout.state === 'BOUT_IN_PROGRESS') {
+    // SCORE CARD
     const scoreCard = document.createElement('div');
     scoreCard.className = 'card score-card';
 
@@ -101,29 +147,29 @@ function renderActions(bout) {
     redGroup.className = 'score-group red';
     redGroup.innerHTML = `<div class="label red-label">RED</div>`;
     redGroup.appendChild(
-    secondaryBtn('+3 TD', () => score('RED', 3))
-  );
+      secondaryBtn('+3 TD', () => score('RED', 3))
+    );
 
     const greenGroup = document.createElement('div');
     greenGroup.className = 'score-group green';
     greenGroup.innerHTML = `<div class="label green-label">GREEN</div>`;
     greenGroup.appendChild(
-    secondaryBtn('+3 TD', () => score('GREEN', 3))
-  );
+      secondaryBtn('+3 TD', () => score('GREEN', 3))
+    );
 
-scoreCard.append(redGroup, greenGroup);
+    scoreCard.append(redGroup, greenGroup);
 
     const clockBtn = bout.clock_running
       ? primaryBtn('Stop Clock', clockStop)
       : primaryBtn('Start Clock', clockStart);
 
     panel.append(
-  scoreCard,
-  clockBtn,
-  secondaryBtn('End Period', endPeriod),
-  dangerBtn('Undo Last Action', undoLastAction),
-  dangerBtn('End Match', endMatch)
-);
+      scoreCard,
+      clockBtn,
+      secondaryBtn('End Period', endPeriod),
+      dangerBtn('Undo Last Action', undoLastAction),
+      dangerBtn('End Match', endMatch)
+    );
     return;
   }
 
@@ -239,8 +285,9 @@ async function refresh() {
   if (!bout) return;
 
   renderHeader(bout);
-  renderStateBanner(bout);
+  renderStateBanner(bout, bout.actions || []);
   renderActions(bout);
 }
 
+// INITIAL LOAD
 refresh();
