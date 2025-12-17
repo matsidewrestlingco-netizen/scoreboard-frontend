@@ -451,6 +451,7 @@ function startClockTicker() {
 }
 
 function syncClockFromBout(bout) {
+  console.log('[clock]', { running: bout.clock_running, ms: bout.clock_ms, period: bout.current_period });
   // Expecting bout.clock_ms = remaining time in ms
   const ms = Number(bout.clock_ms ?? 0);
   _clockBaseMs = Number.isFinite(ms) ? ms : 0;
