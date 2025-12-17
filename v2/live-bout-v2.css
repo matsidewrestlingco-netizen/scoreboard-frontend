@@ -496,6 +496,18 @@ button:disabled{
   letter-spacing: 1px;
 }
 
+.more-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+button.armed {
+  outline: 2px solid rgba(250,204,21,0.85);
+  outline-offset: 2px;
+  filter: brightness(1.05);
+}
+
 /* ---------- Small screens ---------- */
 @media (max-width: 520px){
   .score{
