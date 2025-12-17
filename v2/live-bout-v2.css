@@ -95,3 +95,23 @@ button {
 
 .red-label { color:#f87171; }
 .green-label { color:#4ade80; }
+
+.position-hint {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  opacity: 0.9;
+}
+
+.position-hint.red_control {
+  color: #f87171;
+}
+
+.position-hint.green_control {
+  color: #4ade80;
+}
+
+.position-hint.neutral {
+  color: #9ca3af;
+}
