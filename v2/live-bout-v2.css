@@ -115,3 +115,117 @@ button {
 .position-hint.neutral {
   color: #9ca3af;
 }
+/* Modal overlay */
+.ms-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+}
+
+.ms-modal-overlay.hidden {
+  display: none;
+}
+
+.ms-modal {
+  width: min(560px, calc(100vw - 24px));
+  background: #0b1220;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.ms-modal-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ms-modal-title {
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+.ms-modal-x {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.ms-modal-sub {
+  color:#9ca3af;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.ms-chooser-row {
+  display:flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ms-pill {
+  flex: 1;
+  border-radius: 999px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: #0f172a;
+  color: #e5e7eb;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ms-pill.active {
+  outline: 2px solid #2563eb;
+}
+
+.ms-choice-grid {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ms-choice {
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: #0f172a;
+  color: #e5e7eb;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ms-choice:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ms-choice-secondary {
+  background: #111827;
+}
+
+.ms-choice-name {
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.ms-choice-desc {
+  color:#9ca3af;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.ms-modal-note {
+  margin-top: 10px;
+  color:#9ca3af;
+  font-weight: 700;
+  font-size: 12px;
+}
