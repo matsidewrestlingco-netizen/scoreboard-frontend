@@ -1,7 +1,7 @@
 // ===============================
 // CONFIG
 // ===============================
-const BOUT_ID = 'd51a057f-923b-45e8-bc77-10036bd21ccc';
+const BOUT_ID = '403e35a5-032c-4492-85b2-c0d1a64da5e3';
 
 // V2 UI fallback (until backend period timing is fully authoritative)
 const PERIOD_LENGTH_MS = {
@@ -704,18 +704,23 @@ function syncClockFromBout(bout) {
   const inGrace = Date.now() < _desiredRunningUntil;
   const effectiveRunning = serverRunning || (inGrace && _desiredRunning === true);
 
-  // If backend isn't authoritative yet, NEVER let refresh reset the clock upward.
+  // If backend isn't authoritative yet, NEVER let refresh reset the clock upward
+  // during the SAME period. (This prevents the "stop clock -> resets to 2:00" bug.)
+  const samePeriod =
+    (_lastBout?.state === 'BOUT_IN_PROGRESS') &&
+    (bout.state === 'BOUT_IN_PROGRESS') &&
+    (Number(bout.current_period) === Number(_lastBout?.current_period));
+
+  if (samePeriod && localRemaining > 0 && serverMs > localRemaining + 500) {
+    serverMs = localRemaining;
+  }
+
   if (effectiveRunning) {
     if (serverMs <= 0) {
       // backend not tracking remaining; keep local if we have it, else init from defaults
       serverMs = (localRemaining > 0)
         ? localRemaining
         : (PERIOD_LENGTH_MS[bout.current_period] ?? 0);
-    } else {
-      // Prevent "reset to full period" when backend returns stale values during running clock
-      if (localRemaining > 0 && serverMs > localRemaining + 500) {
-        serverMs = localRemaining;
-      }
     }
   } else {
     // Not running: prefer backend, but fall back to local/default if backend gives 0
@@ -734,6 +739,7 @@ function syncClockFromBout(bout) {
   if (_clockRunning) startClockTicker();
   else stopClockTicker();
 }
+
 
 
 // ===============================
