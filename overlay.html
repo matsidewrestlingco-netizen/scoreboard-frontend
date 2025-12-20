@@ -15,6 +15,13 @@
       --red: #f44336;
       --green: #66bb6a;
       --muted: #9aa0a6;
+
+      /* Overlay sizing defaults (tune in OBS or via URL params):
+         overlay.html?mat=1&scale=1.35&width=60&bottom=4 */
+      --overlay-scale: 1.35;     /* makes everything bigger */
+      --overlay-width: 56%;      /* makes the bar narrower */
+      --overlay-max-width: 1050px;
+      --overlay-bottom: 4%;      /* lift it slightly off the bottom */
     }
 
     * {
@@ -42,10 +49,13 @@
     .scorebar-wrap {
       position: absolute;
       left: 50%;
-      bottom: 3%;
-      transform: translateX(-50%);
-      width: 94%;
-      max-width: 1280px;
+      bottom: var(--overlay-bottom);
+      width: var(--overlay-width);
+      max-width: var(--overlay-max-width);
+
+      /* Bigger + still centered */
+      transform: translateX(-50%) scale(var(--overlay-scale));
+      transform-origin: bottom center;
     }
 
     .scorebar {
@@ -53,7 +63,7 @@
       grid-template-columns: minmax(0,1.7fr) minmax(0,1.4fr) minmax(0,1.7fr);
       align-items: stretch;
       gap: 2px;
-      border-radius: 18px;
+      border-radius: 22px;
       overflow: hidden;
       background: linear-gradient(to top, var(--bg-bar-strong), var(--bg-bar));
       box-shadow: 0 18px 55px rgba(0,0,0,0.85);
@@ -63,7 +73,7 @@
     .side {
       display: flex;
       align-items: center;
-      padding: 8px 12px;
+      padding: 14px 16px;
       position: relative;
       overflow: hidden;
     }
@@ -95,7 +105,7 @@
     }
 
     .team-name {
-      font-size: 12px;
+      font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 0.18em;
       color: rgba(255,255,255,0.78);
@@ -105,7 +115,7 @@
     }
 
     .team-score-badge {
-      font-size: 11px;
+      font-size: 13px;
       min-width: 22px;
       padding: 2px 7px;
       border-radius: 999px;
@@ -126,7 +136,7 @@
     }
 
     .wrestler-name {
-      font-size: 16px;
+      font-size: 34px;
       font-weight: 650;
       white-space: nowrap;
       overflow: hidden;
@@ -160,11 +170,11 @@
     }
 
     .score-pill-center {
-      min-width: 42px;
-      padding: 4px 8px;
+      min-width: 58px;
+      padding: 6px 12px;
       border-radius: 999px;
       text-align: center;
-      font-size: 22px;
+      font-size: 34px;
       font-weight: 750;
       font-variant-numeric: tabular-nums;
       background: rgba(0,0,0,0.5);
@@ -184,7 +194,7 @@
 
     .clock {
       font-variant-numeric: tabular-nums;
-      font-size: 26px;
+      font-size: 38px;
       font-weight: 750;
       letter-spacing: 0.08em;
       text-align: center;
@@ -192,7 +202,7 @@
     }
 
     .period-tag {
-      font-size: 11px;
+      font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 0.18em;
       color: rgba(255,255,255,0.82);
@@ -203,7 +213,7 @@
       position: absolute;
       top: 4px;
       right: 8px;
-      font-size: 10px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.18em;
       color: rgba(255,255,255,0.7);
@@ -225,8 +235,8 @@
     }
 
     .logo-bug img {
-      width: 30px;
-      height: 30px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: #02030a;
       border: 1px solid rgba(255,255,255,0.3);
@@ -235,14 +245,14 @@
     }
 
     .logo-text-main {
-      font-size: 11px;
+      font-size: 12px;
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: rgba(255,255,255,0.86);
     }
 
     .logo-text-sub {
-      font-size: 10px;
+      font-size: 11px;
       color: rgba(255,255,255,0.65);
     }
 
@@ -251,7 +261,7 @@
         grid-template-columns: minmax(0,1.7fr) minmax(0,1.4fr) minmax(0,1.7fr);
       }
       .wrestler-name { font-size: 14px; }
-      .clock { font-size: 22px; }
+      .clock { font-size: 34px; }
       .score-pill-center { font-size: 20px; }
     }
 
@@ -259,10 +269,14 @@
       .scorebar-wrap {
         width: 98%;
       }
-      .team-name { font-size: 10px; }
+      .team-name { font-size: 11px; }
       .wrestler-name { font-size: 13px; }
       .score-pill-center { font-size: 18px; }
     }
+  
+    /* Hide MAT tag + clock per request */
+    #matTag, .mat-tag, #clockEl, #clock { display: none !important; }
+
   </style>
 </head>
 <body>
@@ -282,10 +296,9 @@
 
       <!-- Center -->
       <div class="center-block">
-        <div class="mat-tag" id="matTag">MAT 1</div>
+        <div id="eventTitle" class="event-title">Pine-Richland Girls Ram Slam</div>
         <div class="center-row">
           <div id="redScore" class="score-pill-center red">0</div>
-          <div id="clock" class="clock">01:00</div>
           <div id="greenScore" class="score-pill-center green">0</div>
         </div>
         <div id="periodTag" class="period-tag">PERIOD 1</div>
@@ -331,8 +344,6 @@
 
   const clockEl     = document.getElementById("clock");
   const periodTagEl = document.getElementById("periodTag");
-  const matTagEl    = document.getElementById("matTag");
-
   let mats = {};
   let currentMat = 1;
 
@@ -347,6 +358,36 @@
       currentMat = 1;
     }
     matTagEl.textContent = "MAT " + currentMat;
+  })();
+
+  (function applyOverlaySizingFromQuery(){
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      const scale = parseFloat(params.get("scale") || "");
+      const width = parseFloat(params.get("width") || "");
+      const bottom = parseFloat(params.get("bottom") || "");
+      const title = params.get("title");
+
+      if (!Number.isNaN(scale) && scale >= 0.5 && scale <= 3) {
+        document.documentElement.style.setProperty("--overlay-scale", String(scale));
+      }
+      if (!Number.isNaN(width) && width >= 20 && width <= 100) {
+        document.documentElement.style.setProperty("--overlay-width", String(width) + "%");
+      }
+      if (!Number.isNaN(bottom) && bottom >= 0 && bottom <= 20) {
+      if (title && typeof title === "string" && title.trim().length > 0) {
+        const titleEl = document.getElementById("eventTitle");
+        if (titleEl) titleEl.textContent = title.trim();
+      }
+
+        document.documentElement.style.setProperty("--overlay-bottom", String(bottom) + "%");
+      }
+    } catch (e) {
+      // ignore
+    }
+  })();
+
+  // (mat already set above)
   })();
 
   function getMatState(){
@@ -405,7 +446,6 @@
     redScoreEl.textContent   = (s.red != null ? s.red : 0);
     greenScoreEl.textContent = (s.green != null ? s.green : 0);
 
-    clockEl.textContent = formatTime(s.timeRemaining ?? 60);
     periodTagEl.textContent = prettyPeriod(s.segmentId, s.period);
   }
 
