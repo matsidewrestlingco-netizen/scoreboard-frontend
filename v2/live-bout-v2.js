@@ -1,4 +1,13 @@
 // ===============================
+
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
 // CONFIG
 // ===============================
 let BOUT_ID = new URLSearchParams(location.search).get('bout_id') || localStorage.getItem('matside_last_bout_id') || '';
