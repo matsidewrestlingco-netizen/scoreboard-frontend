@@ -48,17 +48,7 @@ async function fetchBout() {
     alert('Failed to fetch bout');
     return null;
   }
-
-  // RPC can return an object or an array depending on SQL return type
-  const bout = Array.isArray(data) ? data[0] : data;
-
-  if (!bout) {
-    console.error('fetchBout: no data returned for bout_id', BOUT_ID, 'raw:', data);
-    alert('No bout data returned (check bout_id)');
-    return null;
-  }
-
-  return bout;
+  return data;
 }
 
 // ===============================
@@ -190,11 +180,6 @@ function ensureChoiceModal() {
 function openChoiceModal(periodNumber) {
   ensureChoiceModal();
   _moreOpen = false;
-
-  if (Number(periodNumber) > MAX_PERIOD) {
-    alert(`Max periods reached (${MAX_PERIOD}). End match / confirm result.`);
-    return;
-  }
   // Freeze clock/ticker while choosing (never auto-start)
   _clockRunning = false;
   _desiredRunning = false;
@@ -503,9 +488,17 @@ function renderActions(bout) {
         endPeriod,
         2000
       );
-      endPeriodConfirm.disabled = choicePendingNow || !['PERIOD_ACTIVE','PERIOD_PAUSED'].includes(bout.period_state);
+      endPeriodConfirm.disabled = choicePendingNow;
 
-      moreCard.append(endPeriodConfirm);
+      const resetConfirm = doubleTapConfirmBtn(
+        'Reset Match',
+        'Tap again to RESET MATCH',
+        resetMatch,
+        2500
+      );
+      resetConfirm.disabled = choicePendingNow;
+
+      moreCard.append(endPeriodConfirm, resetConfirm);
       panel.append(moreCard);
     }
 
@@ -591,22 +584,12 @@ async function clockStop() {
   _clockBaseMs = getDisplayedClockMs();
   _clockRunning = false;
   _desiredRunning = false;
-  _desiredRunningUntil = 0;
+  _desiredRunningUntil = Date.now() + 2000;
   stopClockTicker();
   updateClockDisplay();
 }
 
 async function endPeriod() {
-  // Front-end guard (backend should also enforce)
-  if (_lastBout && !['PERIOD_ACTIVE','PERIOD_PAUSED'].includes(_lastBout.period_state)) {
-    alert('Cannot end period unless it is active/paused.');
-    return;
-  }
-  if (_lastBout && Number(_lastBout.current_period) >= MAX_PERIOD) {
-    alert(`Max periods reached (${MAX_PERIOD}). End match / confirm result.`);
-    return;
-  }
-
   const ok = await rpc('rpc_end_period');
   if (!ok) return;
 
@@ -635,6 +618,40 @@ async function endMatch() {
   if (!confirm('End match and finalize result?')) return;
   await rpc('rpc_end_match');
 }
+
+
+async function resetMatch() {
+  const ok = confirm('Reset match? This will set score to 0–0, clock to 2:00, and period to 1. (Actions will be voided.)');
+  if (!ok) return;
+
+  // UI local resets
+  _moreOpen = false;
+  if (typeof _autoEndInFlight !== 'undefined') _autoEndInFlight = false;
+  if (typeof _autoEndFiredKey !== 'undefined') _autoEndFiredKey = null;
+
+  // Reset choice UI memory
+  choiceUI.isOpen = false;
+  choiceUI.pendingPeriod = null;
+  choiceUI.chooser = null;
+  choiceUI.deferUsedByColor = { RED: false, GREEN: false };
+  choiceUI.deferredColor = null;
+  choiceUI.lastChoiceColor = null;
+  choiceUI.positionOverrideByPeriod = {};
+  choiceUI.rideByPeriod = {};
+
+  closeChoiceModal?.(); // if available
+
+  // Reset local clock view immediately (backend is source of truth)
+  _clockRunning = false;
+  _desiredRunning = false;
+  _desiredRunningUntil = 0;
+  _clockBaseMs = 120000;
+  stopClockTicker();
+  updateClockDisplay();
+
+  await rpc('rpc_reset_match');
+}
+
 
 // ===============================
 // RPC HELPER
@@ -679,10 +696,6 @@ let _clockRunning = false;
 let _desiredRunning = null;   // true/false/null
 let _desiredRunningUntil = 0; // epoch ms
 
-// Auto-end (UI-driven): when local clock reaches 0, end period once
-let _autoEndInFlight = false;
-let _autoEndFiredKey = null;
-
 function formatClockMs(ms) {
   const clamped = Math.max(0, Math.floor(ms));
   const totalSeconds = Math.floor(clamped / 1000);
@@ -705,68 +718,6 @@ function updateClockDisplay() {
   const el = document.getElementById('clockDisplay');
   if (!el) return;
   el.textContent = formatClockMs(getDisplayedClockMs());
-  maybeAutoEndPeriod();
-}
-
-function maybeAutoEndPeriod() {
-  // Only auto-end while running and only once per period
-  if (!_clockRunning) return;
-
-  const remaining = getDisplayedClockMs();
-  if (remaining > 0) return;
-
-  const period = _lastBout?.current_period ?? null;
-  const boutState = _lastBout?.state ?? null;
-  const periodState = _lastBout?.period_state ?? null;
-
-  // Only during an in-progress bout and active/paused period
-  if (boutState !== 'BOUT_IN_PROGRESS' || period == null) return;
-  if (!['PERIOD_ACTIVE','PERIOD_PAUSED'].includes(periodState)) return;
-
-  const key = `${BOUT_ID}:${period}`;
-  if (_autoEndInFlight) return;
-  if (_autoEndFiredKey === key) return;
-
-  _autoEndInFlight = true;
-
-  // Freeze UI at 0
-  _clockRunning = false;
-  _desiredRunning = false;
-  _desiredRunningUntil = 0;
-  _clockBaseMs = 0;
-
-  stopClockTicker();
-  const el = document.getElementById('clockDisplay');
-  if (el) el.textContent = '00:00.0';
-
-  (async () => {
-    try {
-      const ok = await rpc('rpc_end_period');
-      if (!ok) {
-        console.warn('auto-end: rpc_end_period failed; use More → End Period.');
-        return;
-      }
-      _autoEndFiredKey = key;
-
-      const bout = await fetchBout();
-      if (!bout) return;
-
-      const prev = _lastBout;
-      _lastBout = bout;
-      renderHeader(bout);
-      syncClockFromBout(bout, prev);
-      renderStateBanner(bout, bout.actions || []);
-      renderActions(bout);
-
-      if (bout.state === 'BOUT_IN_PROGRESS') {
-        openChoiceModal(bout.current_period);
-      }
-    } catch (e) {
-      console.error('auto-endPeriod error:', e);
-    } finally {
-      _autoEndInFlight = false;
-    }
-  })();
 }
 
 function stopClockTicker() {
@@ -781,7 +732,7 @@ function startClockTicker() {
   _clockTimer = setInterval(updateClockDisplay, 100);
 }
 
-function syncClockFromBout(bout, prevBout = null) {
+function syncClockFromBout(bout) {
   const now = performance.now();
 
   // What the UI currently believes (pre-refresh), used to avoid "jumping" upward
@@ -798,9 +749,9 @@ function syncClockFromBout(bout, prevBout = null) {
   // If backend isn't authoritative yet, NEVER let refresh reset the clock upward
   // during the SAME period. (This prevents the "stop clock -> resets to 2:00" bug.)
   const samePeriod =
-    (prevBout?.state === 'BOUT_IN_PROGRESS') &&
+    (_lastBout?.state === 'BOUT_IN_PROGRESS') &&
     (bout.state === 'BOUT_IN_PROGRESS') &&
-    (Number(bout.current_period) === Number(prevBout?.current_period));
+    (Number(bout.current_period) === Number(_lastBout?.current_period));
 
   if (samePeriod && localRemaining > 0 && serverMs > localRemaining + 500) {
     serverMs = localRemaining;
@@ -837,20 +788,16 @@ function syncClockFromBout(bout, prevBout = null) {
 // REFRESH
 // ===============================
 async function refresh() {
-  const prev = _lastBout;
   const bout = await fetchBout();
   if (!bout) return;
 
   _lastBout = bout;
 
   renderHeader(bout);
-  syncClockFromBout(bout, prev);
+  syncClockFromBout(bout);
   renderStateBanner(bout, bout.actions || []);
   renderActions(bout);
 }
-
-// INITIAL LOAD
-refresh();
 
 // INITIAL LOAD
 refresh();
