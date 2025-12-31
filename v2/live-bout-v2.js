@@ -53,7 +53,10 @@ async function fetchBout() {
 
 
 async function fetchMatQueue(matId) {
-  if (!matId) return [];
+  if (!matId) {
+    return { rows: [], error: { message: 'Missing mat_id on bout (rpc_get_bout must return mat_id)' } };
+  }
+
   const { data, error } = await supabase.rpc('rpc_get_mat_queue', {
     p_mat_id: matId,
     p_limit: 25
@@ -61,10 +64,10 @@ async function fetchMatQueue(matId) {
 
   if (error) {
     console.error('fetchMatQueue error:', error);
-    return [];
+    return { rows: [], error };
   }
 
-  return Array.isArray(data) ? data : [];
+  return { rows: (Array.isArray(data) ? data : []), error: null };
 }
 
 function gotoBout(boutId) {
@@ -88,12 +91,14 @@ async function renderMatQueue(bout) {
   }
 
   const matId = bout?.mat_id;
+  console.log('[matQueue]', { bout_id: bout?.id, mat_id: matId, state: bout?.state });
   if (!matId) {
     q.innerHTML = '';
     return;
   }
 
-  const rows = await fetchMatQueue(matId);
+  const res = await fetchMatQueue(matId);
+  const rows = res.rows;
 
   const currentId = bout?.id;
   const items = rows
@@ -103,13 +108,21 @@ async function renderMatQueue(bout) {
   q.innerHTML = `
     <div class="mat-queue__header">
       <div class="mat-queue__title">Mat Queue</div>
-      <div class="mat-queue__sub">Tap a bout to load it</div>
+      <div class="mat-queue__sub">Mat: ${escapeHtml(matId)} • ${items.length} bout(s)</div>
     </div>
     <div class="mat-queue__list" id="matQueueList"></div>
   `;
 
   const list = q.querySelector('#matQueueList');
   if (!list) return;
+
+  if (res.error) {
+    list.innerHTML = `<div class="muted" style="padding:10px;">
+      Queue error: ${escapeHtml(res.error.message || 'Unknown')}<br/>
+      (Check: RPC exists, permissions/RLS, and rpc_get_bout returns mat_id)
+    </div>`;
+    return;
+  }
 
   if (items.length === 0) {
     list.innerHTML = `<div class="muted" style="padding:10px;">No bouts found for this mat.</div>`;
