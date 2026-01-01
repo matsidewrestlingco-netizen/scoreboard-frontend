@@ -800,27 +800,65 @@ async function clockStop() {
 }
 
 async function endPeriod() {
+  // Capture what period we are ending BEFORE we call the server.
+  const endedPeriod = Number(_lastBout?.current_period ?? 0);
+
+  
+  // If this is the end of Period 3 and NOT tied, end the match (do NOT advance to OT/Period 4).
+  // This keeps the UI from jumping into a 4th period when the bout is decided.
+  const _redScoreNow = Number(bout.red_score ?? 0);
+  const _greenScoreNow = Number(bout.green_score ?? 0);
+  if (endedPeriod === 3 && _redScoreNow !== _greenScoreNow && bout.state !== 'BOUT_COMPLETE') {
+    if (_autoMatchEndInFlight) return;
+    _autoMatchEndInFlight = true;
+    try {
+      await rpc('rpc_end_match', { bout_id: boutId });
+      await fetchBout();
+      renderFromQueue();
+    } catch (e) {
+      console.error('[autoEndMatchAfterP3] failed', e);
+    } finally {
+      _autoMatchEndInFlight = false;
+    }
+    return;
+  }
+
   const ok = await rpc('rpc_end_period');
   if (!ok) return;
 
-  // Ensure clock is stopped while transitioning / choosing
-  _clockRunning = false;
-  _desiredRunning = false;
-  _desiredRunningUntil = 0;
   stopClockTicker();
 
-  // Fetch fresh state (cached _lastBout may be pre-period-advance)
   const bout = await fetchBout();
-  if (!bout) return;
+  if (bout) {
+    _lastBout = bout;
+    renderFromBout(bout);
+    renderFromQueue();
+  }
 
-  _lastBout = bout;
-  renderHeader(bout);
-  syncClockFromBout(bout);
-  renderStateBanner(bout, bout.actions || []);
-  renderActions(bout);
+  // If regulation (Period 3) ends and the score is NOT tied, auto-end the match.
+  // Only go to Period 4 (OT) when tied.
+  if (
+    endedPeriod === 3 &&
+    bout &&
+    bout.state !== 'BOUT_COMPLETE'
+  ) {
+    const red = Number(bout.red_score ?? 0);
+    const green = Number(bout.green_score ?? 0);
 
-  if (bout.state === 'BOUT_IN_PROGRESS') {
-    openChoiceModal(bout.current_period);
+    if (red !== green && !_autoMatchEndInFlight) {
+      _autoMatchEndInFlight = true;
+      const ok2 = await rpc('rpc_end_match');
+      _autoMatchEndInFlight = false;
+
+      // rpc() already refreshes; just make sure the local ticker stays stopped.
+      stopClockTicker();
+      return;
+    }
+  }
+
+  // Keep existing behavior: show the chooser for the next segment when we end a period.
+  if (bout && bout.state === 'BOUT_IN_PROGRESS') {
+    openChoiceModal(Number(bout.current_period) || endedPeriod + 1);
   }
 }
 
@@ -900,6 +938,7 @@ function flash() {
 // Auto-end period guards
 let _autoEndInFlight = false;
 let _autoEndFiredKey = null;
+let _autoMatchEndInFlight = false;
 // ===============================
 let _clockTimer = null;
 let _clockBaseMs = 0;      // remaining ms at last sync
